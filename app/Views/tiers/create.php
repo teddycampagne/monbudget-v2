@@ -1,6 +1,5 @@
 <?php 
 require_once __DIR__ . '/../layouts/header.php';
-require_once __DIR__ . '/../components/ui-helpers.php';
 ?>
 
 <div class="container-fluid px-4 py-4">
@@ -9,7 +8,9 @@ require_once __DIR__ . '/../components/ui-helpers.php';
             <h1 class="h3 mb-0"><i class="bi bi-plus-lg"></i> Nouveau Tiers</h1>
             <p class="text-muted mb-0">Ajouter un créditeur, débiteur ou mixte</p>
         </div>
-        <?= linkButton('Retour', url('tiers'), 'btn-secondary', 'bi-arrow-left') ?>
+        <a href="<?= url('tiers') ?>" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
     </div>
 
     <div class="row">
@@ -53,9 +54,11 @@ require_once __DIR__ . '/../components/ui-helpers.php';
                             'text',
                             '',
                             false,
-                            'Ex: Fournisseurs, Abonnements, Amis...',
-                            'Permet de regrouper plusieurs tiers'
+                            'Ex: Fournisseurs, Abonnements, Amis...'
                         ) ?>
+                        <small class="text-muted d-block mt-n2 mb-3">
+                            Permet de regrouper plusieurs tiers
+                        </small>
 
                         <div class="mb-3">
                             <label for="notes" class="form-label">Notes</label>
@@ -66,8 +69,12 @@ require_once __DIR__ . '/../components/ui-helpers.php';
                 </div>
 
                 <div class="d-flex gap-2 mt-3">
-                    <?= linkButton('Annuler', url('tiers'), 'btn-secondary', 'bi-x-lg') ?>
-                    <?= submitButton('Créer le tiers', 'btn-primary', 'bi-save') ?>
+                    <a href="<?= url('tiers') ?>" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Créer le tiers
+                    </button>
                 </div>
             </form>
         </div>

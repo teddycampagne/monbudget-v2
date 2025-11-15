@@ -1,6 +1,5 @@
 <?php 
 require_once __DIR__ . '/../layouts/header.php';
-require_once __DIR__ . '/../components/ui-helpers.php';
 ?>
 
 <div class="container-fluid px-4 py-4">
@@ -9,7 +8,9 @@ require_once __DIR__ . '/../components/ui-helpers.php';
             <h1 class="h3 mb-0"><i class="bi bi-pencil"></i> Modifier le Tiers</h1>
             <p class="text-muted mb-0"><?= htmlspecialchars($tiers['nom']) ?></p>
         </div>
-        <?= linkButton('Retour', url('tiers'), 'btn-secondary', 'bi-arrow-left') ?>
+        <a href="<?= url('tiers') ?>" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
     </div>
 
     <div class="row">
@@ -61,14 +62,16 @@ require_once __DIR__ . '/../components/ui-helpers.php';
                     </div>
                 </div>
 
-                <div class="d-flex gap-2 mt-3">
-                    <?= linkButton('Annuler', url('tiers'), 'btn-secondary', 'bi-x-lg') ?>
-                    <?= submitButton('Enregistrer', 'btn-primary', 'bi-save') ?>
-                </div>
-            </form>
-        </div>
-
-        <div class="col-lg-4">
+            <div class="d-flex gap-2 mt-3">
+                <a href="<?= url('tiers') ?>" class="btn btn-secondary">
+                    <i class="bi bi-x-lg"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Enregistrer
+                </button>
+            </div>
+        </form>
+    </div>        <div class="col-lg-4">
             <div class="card">
                 <div class="card-header bg-light">
                     <h6 class="mb-0"><i class="bi bi-info-circle"></i> Informations</h6>

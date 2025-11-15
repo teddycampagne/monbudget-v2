@@ -518,8 +518,9 @@ class Budget
         $sql = "
             SELECT c.*
             FROM categories c
-            WHERE (c.user_id = ? OR c.is_system = 1)
+            WHERE (c.user_id = ? OR c.user_id IS NULL)
             AND c.type = 'depense'
+            AND c.parent_id IS NULL
             AND c.id NOT IN (
                 SELECT categorie_id 
                 FROM " . self::$table . " 

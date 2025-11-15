@@ -17,10 +17,14 @@ class IconPicker {
     
     async loadIcons() {
         try {
-            const response = await fetch('/monbudgetV2/storage/config/bootstrap-icons.json');
+            // Utiliser la route API
+            const baseUrl = window.location.pathname.includes('/monbudgetV2') ? '/monbudgetV2' : '';
+            const response = await fetch(`${baseUrl}/api/bootstrap-icons`);
             if (response.ok) {
                 bootstrapIcons = await response.json();
+                console.log(`${bootstrapIcons.length} icônes chargées depuis l'API`);
             } else {
+                console.warn('API bootstrap-icons non disponible, utilisation du fallback');
                 // Fallback si le fichier n'existe pas
                 bootstrapIcons = ['bi-tag', 'bi-star', 'bi-heart', 'bi-cash-coin'];
             }

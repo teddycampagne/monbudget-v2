@@ -139,12 +139,17 @@
                             
                             <div class="col-md-6 mb-3">
                                 <label for="categorie_id" class="form-label">Catégorie</label>
-                                <select class="form-select" id="categorie_id" name="categorie_id">
-                                    <option value="">-- Détection automatique --</option>
-                                    <?php foreach ($categories as $cat): ?>
-                                        <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nom']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
+                                <div class="input-group">
+                                    <select class="form-select" id="categorie_id" name="categorie_id">
+                                        <option value="">-- Détection automatique --</option>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nom']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalCreateCategorie" title="Créer une catégorie">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
@@ -170,9 +175,9 @@
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
-                                <a href="<?= url('tiers/create') ?>" class="btn btn-outline-secondary" target="_blank" title="Créer un tiers">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalCreateTiers" title="Créer un tiers">
                                     <i class="bi bi-plus-lg"></i>
-                                </a>
+                                </button>
                             </div>
                             <small class="text-muted">Personne ou organisme concerné par la transaction</small>
                         </div>
@@ -391,7 +396,192 @@ document.getElementById('categorie_id').addEventListener('change', function() {
 });
 
 // Initialiser l'état du select des sous-catégories
-document.getElementById('sous_categorie_id').disabled = true;
+</script>
+
+<!-- Modal Création Catégorie -->
+<div class="modal fade" id="modalCreateCategorie" tabindex="-1" aria-labelledby="modalCreateCategorieLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCreateCategorieLabel">
+                    <i class="bi bi-tags"></i> Nouvelle Catégorie
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCreateCategorie">
+                    <div class="mb-3">
+                        <label for="quick_cat_nom" class="form-label">Nom <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quick_cat_nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_cat_type" class="form-label">Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="quick_cat_type" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="depense">Dépense</option>
+                            <option value="revenu">Revenu</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_cat_couleur" class="form-label">Couleur</label>
+                        <input type="color" class="form-control form-control-color" id="quick_cat_couleur" value="#0d6efd">
+                    </div>
+                    <div id="quick_cat_error" class="alert alert-danger d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btnSaveCategorie">
+                    <i class="bi bi-check-lg"></i> Créer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Création Tiers -->
+<div class="modal fade" id="modalCreateTiers" tabindex="-1" aria-labelledby="modalCreateTiersLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCreateTiersLabel">
+                    <i class="bi bi-person-plus"></i> Nouveau Tiers
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCreateTiers">
+                    <div class="mb-3">
+                        <label for="quick_tiers_nom" class="form-label">Nom <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="quick_tiers_nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_tiers_type" class="form-label">Type <span class="text-danger">*</span></label>
+                        <select class="form-select" id="quick_tiers_type" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="debiteur">Débiteur (vous verse de l'argent)</option>
+                            <option value="crediteur">Créditeur (vous lui versez)</option>
+                            <option value="mixte">Mixte</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quick_tiers_groupe" class="form-label">Groupe</label>
+                        <input type="text" class="form-control" id="quick_tiers_groupe" placeholder="Ex: Fournisseurs, Clients...">
+                    </div>
+                    <div id="quick_tiers_error" class="alert alert-danger d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="btnSaveTiers">
+                    <i class="bi bi-check-lg"></i> Créer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion création rapide Catégorie
+document.getElementById('btnSaveCategorie').addEventListener('click', async function() {
+    const nom = document.getElementById('quick_cat_nom').value;
+    const type = document.getElementById('quick_cat_type').value;
+    const couleur = document.getElementById('quick_cat_couleur').value;
+    const errorDiv = document.getElementById('quick_cat_error');
+    
+    if (!nom || !type) {
+        errorDiv.textContent = 'Veuillez remplir tous les champs obligatoires';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+    
+    try {
+        const response = await fetch('<?= url("api/categories") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: JSON.stringify({ nom, type, couleur })
+        });
+        
+        if (!response.ok) throw new Error('Erreur serveur');
+        
+        const data = await response.json();
+        
+        // Ajouter la nouvelle catégorie au select
+        const select = document.getElementById('categorie_id');
+        const option = document.createElement('option');
+        option.value = data.id;
+        option.textContent = data.nom;
+        option.selected = true;
+        select.appendChild(option);
+        
+        // Fermer le modal
+        bootstrap.Modal.getInstance(document.getElementById('modalCreateCategorie')).hide();
+        
+        // Réinitialiser le formulaire
+        document.getElementById('formCreateCategorie').reset();
+        errorDiv.classList.add('d-none');
+        
+        // Toast de succès
+        alert('Catégorie créée avec succès !');
+    } catch (error) {
+        errorDiv.textContent = 'Erreur lors de la création: ' + error.message;
+        errorDiv.classList.remove('d-none');
+    }
+});
+
+// Gestion création rapide Tiers
+document.getElementById('btnSaveTiers').addEventListener('click', async function() {
+    const nom = document.getElementById('quick_tiers_nom').value;
+    const type = document.getElementById('quick_tiers_type').value;
+    const groupe = document.getElementById('quick_tiers_groupe').value;
+    const errorDiv = document.getElementById('quick_tiers_error');
+    
+    if (!nom || !type) {
+        errorDiv.textContent = 'Veuillez remplir tous les champs obligatoires';
+        errorDiv.classList.remove('d-none');
+        return;
+    }
+    
+    try {
+        const response = await fetch('<?= url("api/tiers") ?>', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: JSON.stringify({ nom, type, groupe })
+        });
+        
+        if (!response.ok) throw new Error('Erreur serveur');
+        
+        const data = await response.json();
+        
+        // Ajouter le nouveau tiers au select
+        const select = document.getElementById('tiers_id');
+        const option = document.createElement('option');
+        option.value = data.id;
+        option.textContent = data.nom + (data.groupe ? ' (' + data.groupe + ')' : '');
+        option.selected = true;
+        select.appendChild(option);
+        
+        // Fermer le modal
+        bootstrap.Modal.getInstance(document.getElementById('modalCreateTiers')).hide();
+        
+        // Réinitialiser le formulaire
+        document.getElementById('formCreateTiers').reset();
+        errorDiv.classList.add('d-none');
+        
+        // Toast de succès
+        alert('Tiers créé avec succès !');
+    } catch (error) {
+        errorDiv.textContent = 'Erreur lors de la création: ' + error.message;
+        errorDiv.classList.remove('d-none');
+    }
+});
+</script>
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

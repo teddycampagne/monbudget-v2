@@ -117,22 +117,12 @@
                     </div>
                     
                     <!-- Statut validation -->
-                    <div class="col-md-3 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="est_valide" class="form-label">Validation</label>
                         <select class="form-select" id="est_valide" name="est_valide">
                             <option value="">Tous</option>
                             <option value="1">Validé</option>
                             <option value="0">Non validé</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Statut rapprochement -->
-                    <div class="col-md-3 mb-3">
-                        <label for="est_rapproche" class="form-label">Rapprochement</label>
-                        <select class="form-select" id="est_rapproche" name="est_rapproche">
-                            <option value="">Tous</option>
-                            <option value="1">Rapproché</option>
-                            <option value="0">Non rapproché</option>
                         </select>
                     </div>
                     
@@ -443,6 +433,14 @@ async function effectuerRecherche() {
     
     try {
         const response = await fetch(`<?= url('api/recherche') ?>?${params.toString()}`);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Erreur serveur:', errorText);
+            showErrorModal('Erreur de recherche', 'Une erreur est survenue lors de la recherche. Veuillez vérifier vos critères.');
+            return;
+        }
+        
         const data = await response.json();
         
         afficherResultats(data);
@@ -456,7 +454,7 @@ async function effectuerRecherche() {
         
     } catch (error) {
         console.error('Erreur recherche:', error);
-        alert('Erreur lors de la recherche');
+        showErrorModal('Erreur de recherche', 'Impossible de communiquer avec le serveur.');
     }
 }
 
@@ -507,7 +505,6 @@ function afficherResultats(data) {
             <td class="text-end fw-bold text-${typeClass}">${formatMontant(t.montant)} €</td>
             <td class="text-center">
                 ${t.est_valide ? '<i class="bi bi-check-circle-fill text-success" title="Validé"></i>' : '<i class="bi bi-circle text-muted" title="Non validé"></i>'}
-                ${t.est_rapproche ? '<i class="bi bi-bank text-primary ms-1" title="Rapproché"></i>' : ''}
             </td>
             <td class="text-center">
                 <button class="btn btn-sm btn-outline-primary" onclick="editerTransaction(${t.id})" title="Modifier">
@@ -744,12 +741,37 @@ async function sauvegarderTransaction() {
             setTimeout(() => alertDiv.remove(), 3000);
         } else {
             console.error('Erreur serveur:', responseText);
-            alert('Erreur lors de la sauvegarde');
+            showErrorModal('Erreur de sauvegarde', 'Impossible de modifier la transaction.');
         }
     } catch (error) {
         console.error('Erreur:', error);
-        alert('Erreur lors de la sauvegarde');
+        showErrorModal('Erreur de sauvegarde', 'Impossible de communiquer avec le serveur.');
     }
+}
+
+function showErrorModal(titre, message) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.innerHTML = `
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> ${titre}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>${message}</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+    modal.addEventListener('hidden.bs.modal', () => modal.remove());
 }
 </script>
 

@@ -3,6 +3,7 @@
 namespace MonBudget\Controllers;
 
 use MonBudget\Models\Banque;
+use MonBudget\Core\Database;
 
 /**
  * Contrôleur de gestion des établissements bancaires
@@ -45,6 +46,48 @@ class BanqueController extends BaseController
         
         $this->view('banques.create', [
             'title' => 'Nouvelle Banque'
+        ]);
+    }
+    
+    /**
+     * Afficher les détails d'une banque avec ses comptes
+     */
+    public function show(int $id): void
+    {
+        $this->requireAuth();
+        
+        $banque = Banque::find($id);
+        
+        if (!$banque) {
+            flash('error', 'Banque introuvable');
+            $this->redirect('banques');
+            return;
+        }
+        
+        // Récupérer les comptes de cette banque
+        $db = Database::getConnection();
+        $stmt = $db->prepare("
+            SELECT c.*, 
+                   (SELECT COUNT(*) FROM transactions WHERE compte_id = c.id) as nb_transactions
+            FROM comptes c
+            WHERE c.banque_id = ? AND c.user_id = ?
+            ORDER BY c.nom
+        ");
+        $stmt->execute([$id, $_SESSION['user']['id']]);
+        $comptes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        // Calculer les totaux
+        $totalSolde = array_sum(array_column($comptes, 'solde_actuel'));
+        $totalComptes = count($comptes);
+        $totalTransactions = array_sum(array_column($comptes, 'nb_transactions'));
+        
+        $this->view('banques.show', [
+            'banque' => $banque,
+            'comptes' => $comptes,
+            'totalSolde' => $totalSolde,
+            'totalComptes' => $totalComptes,
+            'totalTransactions' => $totalTransactions,
+            'title' => $banque['nom']
         ]);
     }
     

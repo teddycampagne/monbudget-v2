@@ -242,42 +242,40 @@
                         </div>
 
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="date_debut" class="form-label">Date de début</label>
-                                <input type="date" 
-                                       class="form-control" 
-                                       id="date_debut" 
-                                       name="date_debut" 
-                                       value="<?= htmlspecialchars($transaction['date_debut'] ?? '') ?>">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="date_fin" class="form-label">Date de fin</label>
-                                <input type="date" 
-                                       class="form-control" 
-                                       id="date_fin" 
-                                       name="date_fin" 
-                                       value="<?= htmlspecialchars($transaction['date_fin'] ?? '') ?>">
+                        <div class="col-md-6">
+                            <label for="date_debut" class="form-label">Date de début</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date_debut" 
+                                   name="date_debut" 
+                                   value="<?= !empty($transaction['date_debut']) && $transaction['date_debut'] !== '0000-00-00' ? htmlspecialchars($transaction['date_debut']) : '' ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="date_fin" class="form-label">Date de fin</label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="date_fin" 
+                                   name="date_fin" 
+                                   value="<?= !empty($transaction['date_fin']) && $transaction['date_fin'] !== '0000-00-00' ? htmlspecialchars($transaction['date_fin']) : '' ?>">
                                 <small class="text-muted">Laisser vide pour récurrence illimitée</small>
                             </div>
-                        </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="jour_execution" class="form-label">Jour d'exécution</label>
-                                <input type="number" 
-                                       class="form-control" 
-                                       id="jour_execution" 
-                                       name="jour_execution" 
-                                       min="1" 
-                                       max="31" 
-                                       value="<?= htmlspecialchars($transaction['jour_execution'] ?? '') ?>">
-                                <small class="text-muted">Pour récurrences mensuelles (1-31)</small>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="tolerance_weekend" class="form-label">Tolérance week-end</label>
-                                <select class="form-select" id="tolerance_weekend" name="tolerance_weekend">
-                                    <option value="jour_ouvre_suivant" <?= ($transaction['tolerance_weekend'] ?? '') === 'jour_ouvre_suivant' ? 'selected' : '' ?>>
-                                        Jour ouvré suivant
+                        </div>                        <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="jour_execution" class="form-label">Jour d'exécution</label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="jour_execution" 
+                                           name="jour_execution" 
+                                           min="1" 
+                                           max="31" 
+                                           value="<?= !empty($transaction['jour_execution']) && $transaction['jour_execution'] > 0 ? htmlspecialchars($transaction['jour_execution']) : '' ?>">
+                                    <small class="text-muted">Pour récurrences mensuelles (1-31)</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="tolerance_weekend" class="form-label">Tolérance week-end</label>
+                                    <select class="form-select" id="tolerance_weekend" name="tolerance_weekend">
+                                        <option value="jour_ouvre_suivant" <?= ($transaction['tolerance_weekend'] ?? '') === 'jour_ouvre_suivant' ? 'selected' : '' ?>>
+                                            Jour ouvré suivant
                                     </option>
                                     <option value="jour_ouvre_precedent" <?= ($transaction['tolerance_weekend'] ?? '') === 'jour_ouvre_precedent' ? 'selected' : '' ?>>
                                         Jour ouvré précédent
@@ -374,6 +372,21 @@ function toggleRecurrenceFields() {
     const isRecurrente = document.getElementById('est_recurrente').checked;
     const recurrenceFields = document.getElementById('recurrence_fields');
     recurrenceFields.style.display = isRecurrente ? 'block' : 'none';
+    
+    // Désactiver la validation HTML5 sur les champs cachés pour éviter les erreurs "not focusable"
+    const fieldsToToggle = recurrenceFields.querySelectorAll('input, select');
+    fieldsToToggle.forEach(field => {
+        if (isRecurrente) {
+            // Réactiver la validation si le champ était required
+            if (field.dataset.wasRequired === 'true') {
+                field.required = true;
+            }
+        } else {
+            // Sauvegarder l'état required et désactiver temporairement
+            field.dataset.wasRequired = field.required;
+            field.required = false;
+        }
+    });
 }
 
 // Afficher le compte de destination au chargement si virement est sélectionné
@@ -381,6 +394,9 @@ if (document.getElementById('type_operation').value === 'virement') {
     document.getElementById('compte_destination_block').style.display = 'block';
     document.getElementById('compte_destination_id').required = true;
 }
+
+// Appeler toggleRecurrenceFields au chargement pour gérer l'état initial
+toggleRecurrenceFields();
 
 // Chargement dynamique des sous-catégories
 function loadSousCategories(categorieId, selectedSousCategorieId = null) {

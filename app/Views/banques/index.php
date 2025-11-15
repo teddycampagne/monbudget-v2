@@ -63,19 +63,30 @@ require_once __DIR__ . '/../layouts/header.php';
                             <?php foreach ($banques as $banque): ?>
                                 <tr>
                                     <td>
-                                        <strong><?= htmlspecialchars($banque['nom']) ?></strong>
+                                        <a href="<?= url("banques/{$banque['id']}") ?>" class="text-decoration-none">
+                                            <strong><?= htmlspecialchars($banque['nom']) ?></strong>
+                                        </a>
                                     </td>
                                     <td><?= htmlspecialchars($banque['code_banque'] ?? '-') ?></td>
                                     <td><code><?= htmlspecialchars($banque['bic'] ?? '-') ?></code></td>
                                     <td><?= htmlspecialchars($banque['ville'] ?? '-') ?></td>
                                     <td><?= htmlspecialchars($banque['telephone'] ?? '-') ?></td>
                                     <td>
-                                        <span class="badge bg-info">
-                                            <?= $banque['nb_comptes'] ?> compte(s)
-                                        </span>
+                                        <?php if ($banque['nb_comptes'] > 0): ?>
+                                            <a href="<?= url("banques/{$banque['id']}") ?>" class="badge bg-info text-decoration-none">
+                                                <?= $banque['nb_comptes'] ?> compte(s)
+                                            </a>
+                                        <?php else: ?>
+                                            <span class="badge bg-secondary">0 compte</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
+                                            <a href="<?= url("banques/{$banque['id']}") ?>" 
+                                               class="btn btn-outline-info" 
+                                               title="Voir les détails">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
                                             <a href="<?= url("banques/{$banque['id']}/edit") ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">

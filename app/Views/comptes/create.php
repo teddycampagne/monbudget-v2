@@ -1,6 +1,5 @@
 <?php 
 require_once __DIR__ . '/../layouts/header.php';
-require_once __DIR__ . '/../components/ui-helpers.php';
 ?>
 
 <div class="container-fluid px-4 py-4">
@@ -30,10 +29,15 @@ require_once __DIR__ . '/../components/ui-helpers.php';
                             <label for="banque_id" class="form-label">
                                 Banque <span class="text-danger">*</span>
                             </label>
+                            <?php 
+                            // Priorité : old() s'il est non vide, sinon selectedBanqueId
+                            $oldBanqueId = old('banque_id');
+                            $preselectedBanqueId = (!empty($oldBanqueId)) ? $oldBanqueId : ($selectedBanqueId ?? null);
+                            ?>
                             <select class="form-select" id="banque_id" name="banque_id" required>
                                 <option value="">Sélectionnez une banque</option>
                                 <?php foreach ($banques as $banque): ?>
-                                    <option value="<?= $banque['id'] ?>" <?= old('banque_id') == $banque['id'] ? 'selected' : '' ?>>
+                                    <option value="<?= $banque['id'] ?>" <?= ((int)$preselectedBanqueId === (int)$banque['id']) ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($banque['nom']) ?>
                                         <?php if ($banque['code_banque']): ?>
                                             (<?= htmlspecialchars($banque['code_banque']) ?>)
@@ -56,9 +60,11 @@ require_once __DIR__ . '/../components/ui-helpers.php';
                             'text',
                             old('nom'),
                             true,
-                            'Ex: Compte Courant Principal',
-                            'Nom personnalisé pour identifier facilement ce compte'
+                            'Ex: Compte Courant Principal'
                         ) ?>
+                        <small class="text-muted d-block mb-3">
+                            Nom personnalisé pour identifier facilement ce compte
+                        </small>
 
                         <!-- Titulaires du compte -->
                         <div class="card bg-light mb-3">
@@ -286,8 +292,12 @@ require_once __DIR__ . '/../components/ui-helpers.php';
 
                         <!-- Boutons -->
                         <div class="d-flex justify-content-between">
-                            <?= linkButton('Annuler', url('comptes'), 'btn-secondary', 'bi-arrow-left') ?>
-                            <?= submitButton('Créer le compte', 'btn-primary', 'bi-save') ?>
+                            <a href="<?= url('comptes') ?>" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Créer le compte
+                            </button>
                         </div>
                     </form>
                 </div>

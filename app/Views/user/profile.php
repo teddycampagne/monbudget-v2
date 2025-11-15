@@ -41,30 +41,17 @@
                             <form method="POST" action="<?= url('profile/update') ?>">
                                 <?= csrf_field() ?>
                                 
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <label for="prenom" class="form-label">
-                                            Prénom <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="prenom" 
-                                               name="prenom" 
-                                               value="<?= htmlspecialchars($user['prenom'] ?? '') ?>"
-                                               required>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <label for="nom" class="form-label">
-                                            Nom <span class="text-danger">*</span>
-                                        </label>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="nom" 
-                                               name="nom" 
-                                               value="<?= htmlspecialchars($user['nom'] ?? '') ?>"
-                                               required>
-                                    </div>
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">
+                                        Nom d'utilisateur
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="username" 
+                                           value="<?= htmlspecialchars($user['username'] ?? '') ?>"
+                                           disabled
+                                           readonly>
+                                    <small class="text-muted">Le nom d'utilisateur ne peut pas être modifié</small>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -77,19 +64,6 @@
                                            name="email" 
                                            value="<?= htmlspecialchars($user['email'] ?? '') ?>"
                                            required>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">
-                                        Nom d'utilisateur
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control" 
-                                           id="username" 
-                                           value="<?= htmlspecialchars($user['username'] ?? '') ?>"
-                                           disabled
-                                           readonly>
-                                    <small class="text-muted">Le nom d'utilisateur ne peut pas être modifié</small>
                                 </div>
                                 
                                 <div class="d-flex justify-content-end gap-2">

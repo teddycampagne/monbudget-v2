@@ -69,6 +69,7 @@ class RechercheController extends BaseController
         $sql = "
             SELECT 
                 t.*,
+                t.validee as est_valide,
                 c.nom as compte_nom,
                 cat.nom as categorie_nom,
                 cat.couleur as categorie_couleur,
@@ -165,15 +166,15 @@ class RechercheController extends BaseController
         
         // Filtre par statut de validation
         if (isset($_GET['est_valide']) && $_GET['est_valide'] !== '') {
-            $sql .= " AND t.est_valide = ?";
+            $sql .= " AND t.validee = ?";
             $params[] = (int) $_GET['est_valide'];
         }
         
-        // Filtre par statut de rapprochement
-        if (isset($_GET['est_rapproche']) && $_GET['est_rapproche'] !== '') {
-            $sql .= " AND t.est_rapproche = ?";
-            $params[] = (int) $_GET['est_rapproche'];
-        }
+        // Note: Le rapprochement bancaire n'est pas encore implémenté dans la table transactions
+        // if (isset($_GET['est_rapproche']) && $_GET['est_rapproche'] !== '') {
+        //     $sql .= " AND t.rapproche = ?";
+        //     $params[] = (int) $_GET['est_rapproche'];
+        // }
         
         // Compter le total
         $sqlCount = str_replace(
@@ -206,38 +207,41 @@ class RechercheController extends BaseController
             $orderDir = 'DESC';
         }
         
-        $sql .= " ORDER BY $orderBy $orderDir";
-        $sql .= " LIMIT $limit OFFSET $offset";
+        // Requête pour les résultats paginés
+        $sqlResults = $sql . " ORDER BY $orderBy $orderDir LIMIT $limit OFFSET $offset";
+        $transactions = Database::select($sqlResults, $params);
         
-        $transactions = Database::select($sql, $params);
-        
-        // Calcul des statistiques
-        $sqlStats = "
+        // Calcul du total et des statistiques (même requête, différentes colonnes SELECT)
+        $sqlCount = "
             SELECT 
-                SUM(CASE WHEN type_operation = 'debit' THEN montant ELSE 0 END) as total_debits,
-                SUM(CASE WHEN type_operation = 'credit' THEN montant ELSE 0 END) as total_credits,
-                COUNT(*) as nb_transactions
+                COUNT(*) as total,
+                SUM(CASE WHEN t.type_operation = 'debit' THEN t.montant ELSE 0 END) as total_debits,
+                SUM(CASE WHEN t.type_operation = 'credit' THEN t.montant ELSE 0 END) as total_credits
             FROM transactions t
+            INNER JOIN comptes c ON t.compte_id = c.id
+            LEFT JOIN categories cat ON t.categorie_id = cat.id
+            LEFT JOIN categories sc ON t.sous_categorie_id = sc.id
+            LEFT JOIN tiers ti ON t.tiers_id = ti.id
+            LEFT JOIN banques b ON c.banque_id = b.id
             WHERE t.user_id = ?
         ";
         
-        // Réappliquer les mêmes filtres pour les stats (sauf LIMIT/OFFSET)
-        $sqlStatsComplete = str_replace(
-            "FROM transactions t
-            WHERE t.user_id = ?",
-            "FROM transactions t
-            INNER JOIN comptes c ON t.compte_id = c.id
-            WHERE t.user_id = ?",
-            $sqlStats
-        );
+        // Réappliquer les mêmes filtres (sans ORDER BY ni LIMIT)
+        // Extraire la partie WHERE après "WHERE t.user_id = ?"
+        $whereClause = substr($sql, strpos($sql, 'WHERE t.user_id = ?') + strlen('WHERE t.user_id = ?'));
+        $sqlCount .= $whereClause;
         
-        // Ajouter tous les filtres sauf ORDER BY et LIMIT
-        $paramsStats = $params;
-        $filtresStats = substr($sql, strpos($sql, 'WHERE t.user_id = ?') + 20);
-        $filtresStats = substr($filtresStats, 0, strpos($filtresStats, 'ORDER BY'));
-        $sqlStatsComplete = $sqlStatsComplete . $filtresStats;
+        $countResult = Database::select($sqlCount, $params);
+        $total = $countResult[0]['total'] ?? 0;
+        $totalDebits = (float) ($countResult[0]['total_debits'] ?? 0);
+        $totalCredits = (float) ($countResult[0]['total_credits'] ?? 0);
         
-        $stats = Database::select($sqlStatsComplete, $paramsStats);
+        $stats = [
+            'total_debits' => $totalDebits,
+            'total_credits' => $totalCredits,
+            'balance' => $totalCredits - $totalDebits,
+            'nb_transactions' => $total
+        ];
         
         $this->json([
             'transactions' => $transactions,
@@ -245,12 +249,7 @@ class RechercheController extends BaseController
             'page' => $page,
             'limit' => $limit,
             'total_pages' => ceil($total / $limit),
-            'stats' => [
-                'total_debits' => (float) ($stats[0]['total_debits'] ?? 0),
-                'total_credits' => (float) ($stats[0]['total_credits'] ?? 0),
-                'balance' => (float) (($stats[0]['total_credits'] ?? 0) - ($stats[0]['total_debits'] ?? 0)),
-                'nb_transactions' => (int) ($stats[0]['nb_transactions'] ?? 0)
-            ]
+            'stats' => $stats
         ]);
     }
     

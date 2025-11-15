@@ -107,9 +107,13 @@ class CompteController extends BaseController
         // Récupérer tous les titulaires de l'utilisateur
         $titulaires = Titulaire::getAll();
         
+        // Récupérer le banque_id depuis l'URL si présent (pour pré-sélection)
+        $selectedBanqueId = isset($_GET['banque_id']) ? (int)$_GET['banque_id'] : null;
+        
         $this->view('comptes.create', [
             'banques' => $banques,
             'titulaires' => $titulaires,
+            'selectedBanqueId' => $selectedBanqueId,
             'title' => 'Nouveau Compte'
         ]);
     }

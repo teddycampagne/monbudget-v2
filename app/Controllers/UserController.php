@@ -52,8 +52,6 @@ class UserController extends BaseController
         if (!$this->validateCsrfOrFail('profile')) return;
         
         $data = $this->validate([
-            'nom' => 'required|max:100',
-            'prenom' => 'required|max:100',
             'email' => 'required|email|max:255'
         ]);
         
@@ -69,8 +67,6 @@ class UserController extends BaseController
         
         if ($result >= 0) {
             // Mettre à jour la session
-            $_SESSION['user']['nom'] = $data['nom'];
-            $_SESSION['user']['prenom'] = $data['prenom'];
             $_SESSION['user']['email'] = $data['email'];
             
             flash('success', 'Profil mis à jour avec succès');

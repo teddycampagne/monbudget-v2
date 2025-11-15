@@ -18,7 +18,7 @@
             <h5 class="mb-0">Configuration des colonnes</h5>
         </div>
         <div class="card-body">
-            <form method="POST" action="<?= url('imports/process') ?>">
+            <form method="POST" action="<?= url('imports/process') ?>" id="form-preview">
                 <?= csrf_field() ?>
                 
                 <div class="row mb-3">
@@ -85,11 +85,6 @@
                         <small class="text-muted">Si montant signé (+/-)</small>
                     </div>
                 </div>
-                
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-lg"></i> Importer <?= $total_rows ?> transaction<?= $total_rows > 1 ? 's' : '' ?>
-                </button>
-            </form>
         </div>
     </div>
 
@@ -131,7 +126,7 @@
         <button type="submit" class="btn btn-primary">
             <i class="bi bi-check-circle"></i> Confirmer et importer
         </button>
-        <a href="index.php?page=imports&action=cancel" class="btn btn-secondary">
+        <a href="<?= url('imports') ?>" class="btn btn-secondary">
             <i class="bi bi-x-circle"></i> Annuler
         </a>
     </div>
@@ -139,28 +134,31 @@
 </div>
 
 <script>
-document.getElementById('form-preview').addEventListener('submit', function(e) {
-    const debit = document.getElementById('col_debit').value;
-    const credit = document.getElementById('col_credit').value;
-    const montant = document.getElementById('col_montant').value;
-    
-    // Vérifier qu'au moins une option est sélectionnée
-    if (!montant && (!debit || !credit)) {
-        e.preventDefault();
-        alert('Vous devez soit sélectionner les colonnes Débit ET Crédit, soit une colonne Montant unique.');
-        return false;
-    }
-    
-    // Avertir si les deux options sont remplies
-    if (montant && (debit || credit)) {
-        if (!confirm('Vous avez sélectionné à la fois un montant unique ET débit/crédit. Le montant unique sera ignoré. Continuer ?')) {
+const formPreview = document.getElementById('form-preview');
+if (formPreview) {
+    formPreview.addEventListener('submit', function(e) {
+        const debit = document.getElementById('col_debit').value;
+        const credit = document.getElementById('col_credit').value;
+        const montant = document.getElementById('col_montant').value;
+        
+        // Vérifier qu'au moins une option est sélectionnée
+        if (!montant && (!debit || !credit)) {
             e.preventDefault();
+            alert('Vous devez soit sélectionner les colonnes Débit ET Crédit, soit une colonne Montant unique.');
             return false;
         }
-    }
-    
-    return true;
-});
+        
+        // Avertir si les deux options sont remplies
+        if (montant && (debit || credit)) {
+            if (!confirm('Vous avez sélectionné à la fois un montant unique ET débit/crédit. Le montant unique sera ignoré. Continuer ?')) {
+                e.preventDefault();
+                return false;
+            }
+        }
+        
+        return true;
+    });
+}
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

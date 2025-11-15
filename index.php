@@ -102,6 +102,7 @@ use MonBudget\Controllers\BanqueController;
 $router->get('/banques', [BanqueController::class, 'index']);
 $router->get('/banques/create', [BanqueController::class, 'create']);
 $router->post('/banques/store', [BanqueController::class, 'store']);
+$router->get('/banques/{id}', [BanqueController::class, 'show']);
 $router->get('/banques/{id}/edit', [BanqueController::class, 'edit']);
 $router->post('/banques/{id}/update', [BanqueController::class, 'update']);
 $router->post('/banques/{id}/delete', [BanqueController::class, 'destroy']);
@@ -279,6 +280,12 @@ $router->post('/admin/users/reset-passwords/process', [AdminController::class, '
 $router->get('/admin/icons', [AdminController::class, 'icons']);
 $router->post('/admin/icons/add', [AdminController::class, 'addIcon']);
 $router->post('/admin/icons/delete', [AdminController::class, 'deleteIcon']);
+
+// Routes API (création rapide)
+use MonBudget\Controllers\ApiController;
+$router->post('/api/categories', [ApiController::class, 'createCategorie']);
+$router->post('/api/tiers', [ApiController::class, 'createTiers']);
+$router->get('/api/bootstrap-icons', [ApiController::class, 'getBootstrapIcons']);
 
 // Routes Documentation
 use MonBudget\Controllers\DocumentationController;

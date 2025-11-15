@@ -105,8 +105,12 @@
 
                 <!-- Boutons -->
                 <div class="d-flex gap-2 mt-3">
-                    <?= cancelButton('categories', 'Annuler') ?>
-                    <?= submitButton('Créer la catégorie') ?>
+                    <a href="<?= url('categories') ?>" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Créer la catégorie
+                    </button>
                 </div>
             </form>
         </div>

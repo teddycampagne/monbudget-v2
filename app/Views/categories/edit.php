@@ -155,8 +155,12 @@
 
                 <!-- Boutons -->
                 <div class="d-flex gap-2">
-                    <?= cancelButton('categories', 'Annuler') ?>
-                    <?= submitButton('Enregistrer les modifications') ?>
+                    <a href="<?= url('categories') ?>" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Enregistrer les modifications
+                    </button>
                 </div>
             </form>
         </div>

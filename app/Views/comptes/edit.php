@@ -1,6 +1,5 @@
 <?php 
 require_once __DIR__ . '/../layouts/header.php';
-require_once __DIR__ . '/../components/ui-helpers.php';
 ?>
 
 <div class="container-fluid px-4 py-4">
@@ -308,30 +307,32 @@ require_once __DIR__ . '/../components/ui-helpers.php';
                                        <?= $compte['actif'] ? 'checked' : '' ?>>
                                 <label class="form-check-label" for="actif">
                                     Compte actif
-                                </label>
-                                <div class="form-text">Les comptes inactifs ne sont pas pris en compte dans les calculs</div>
-                            </div>
+                            </label>
+                            <div class="form-text">Les comptes inactifs ne sont pas pris en compte dans les calculs</div>
                         </div>
+                    </div>
 
-                        <!-- Métadonnées -->
-                        <div class="alert alert-info small">
-                            <i class="bi bi-info-circle"></i>
-                            <strong>Créé le :</strong> <?= date('d/m/Y à H:i', strtotime($compte['created_at'])) ?>
-                            <br>
-                            <strong>Dernière modification :</strong> <?= date('d/m/Y à H:i', strtotime($compte['updated_at'])) ?>
-                        </div>
+                    <!-- Métadonnées -->
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Créé le :</strong> <?= date('d/m/Y à H:i', strtotime($compte['created_at'])) ?>
+                        <br>
+                        <strong>Dernière modification :</strong> <?= date('d/m/Y à H:i', strtotime($compte['updated_at'])) ?>
+                    </div>
 
-                        <!-- Boutons -->
-                        <div class="d-flex justify-content-between">
-                            <?= linkButton('Retour', url('comptes'), 'btn-secondary', 'bi-arrow-left') ?>
-                            <?= submitButton('Enregistrer les modifications', 'btn-primary', 'bi-save') ?>
-                        </div>
-                    </form>
-                </div>
+                    <!-- Boutons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="<?= url('comptes') ?>" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Enregistrer les modifications
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-
-        <!-- Informations -->
+    </div>        <!-- Informations -->
         <div class="col-md-4">
             <div class="card bg-light">
                 <div class="card-header">
