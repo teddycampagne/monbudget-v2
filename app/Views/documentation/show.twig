@@ -1,0 +1,373 @@
+{% extends "layouts/app.twig" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Sidebar navigation -->
+        <div class="col-md-3 col-lg-2 d-none d-md-block">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-list"></i> Navigation</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush" id="docNav">
+                            <!-- Généré dynamiquement par JS -->
+                        </div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/documentation" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                    <a href="/documentation/{{ document }}/pdf" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-file-pdf"></i> Télécharger PDF
+                    </a>
+                    <button class="btn btn-outline-info btn-sm" onclick="window.print()">
+                        <i class="bi bi-printer"></i> Imprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="col-md-9 col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-book"></i> {{ title }}
+                    </h4>
+                    <div>
+                        <button class="btn btn-light btn-sm" id="fontDecrease">
+                            <i class="bi bi-dash"></i> A
+                        </button>
+                        <button class="btn btn-light btn-sm" id="fontIncrease">
+                            <i class="bi bi-plus"></i> A
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" id="docContent">
+                    {% if not hasParser %}
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        Le parser Markdown n'est pas disponible. Installez la bibliothèque Parsedown pour une meilleure expérience.
+                        <code>composer require erusev/parsedown</code>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="markdown-body" id="content">
+                        {{ content|raw }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-body">
+                    <h6><i class="bi bi-chat-left-text"></i> Cette page vous a-t-elle été utile ?</h6>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="sendFeedback('yes')">
+                            <i class="bi bi-hand-thumbs-up"></i> Oui
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="sendFeedback('no')">
+                            <i class="bi bi-hand-thumbs-down"></i> Non
+                        </button>
+                    </div>
+                    <div id="feedbackMessage" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Styles pour le contenu Markdown */
+.markdown-body {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.markdown-body h1 {
+    font-size: 2.5rem;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+    margin-top: 2rem;
+}
+
+.markdown-body h2 {
+    font-size: 2rem;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.3rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-body h3 {
+    font-size: 1.5rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.markdown-body h4 {
+    font-size: 1.25rem;
+    margin-top: 1rem;
+    margin-bottom: 0.6rem;
+}
+
+.markdown-body code {
+    background-color: #f8f9fa;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    color: #d63384;
+}
+
+.markdown-body pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    border-left: 4px solid #0d6efd;
+}
+
+.markdown-body pre code {
+    background-color: transparent;
+    padding: 0;
+    color: inherit;
+}
+
+.markdown-body blockquote {
+    border-left: 4px solid #0d6efd;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.markdown-body table {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-collapse: collapse;
+}
+
+.markdown-body table th,
+.markdown-body table td {
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+}
+
+.markdown-body table thead th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-body li {
+    margin-bottom: 0.5rem;
+}
+
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+}
+
+.markdown-body hr {
+    border: 0;
+    border-top: 2px solid #dee2e6;
+    margin: 2rem 0;
+}
+
+.markdown-body kbd {
+    background-color: #212529;
+    color: #fff;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+/* Navigation */
+#docNav .list-group-item {
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+#docNav .list-group-item.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+#docNav .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* Icônes pour les notes et avertissements */
+.markdown-body p:has(> strong:first-child) {
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.markdown-body p > strong:first-child:contains('Astuce'),
+.markdown-body p > strong:first-child:contains('💡') {
+    color: #0d6efd;
+}
+
+.markdown-body p:has(> strong:first-child:contains('Astuce')),
+.markdown-body p:has(> strong:first-child:contains('💡')) {
+    background-color: #cfe2ff;
+    border-left: 4px solid #0d6efd;
+}
+
+.markdown-body p:has(> strong:first-child:contains('Attention')),
+.markdown-body p:has(> strong:first-child:contains('⚠️')) {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+}
+
+.markdown-body p:has(> strong:first-child:contains('Important')),
+.markdown-body p:has(> strong:first-child:contains('✅')) {
+    background-color: #d1e7dd;
+    border-left: 4px solid #198754;
+}
+
+/* Impression */
+@media print {
+    .sticky-top,
+    .card-header button,
+    #feedbackMessage,
+    .btn-group {
+        display: none !important;
+    }
+    
+    .col-md-9 {
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    .markdown-body {
+        font-size: 11pt;
+    }
+    
+    .markdown-body h1 {
+        page-break-after: avoid;
+    }
+    
+    .markdown-body h2,
+    .markdown-body h3 {
+        page-break-after: avoid;
+        page-break-inside: avoid;
+    }
+    
+    .markdown-body pre {
+        page-break-inside: avoid;
+    }
+}
+</style>
+
+<script>
+// Générer la navigation à partir des titres H2 et H3
+document.addEventListener('DOMContentLoaded', function() {
+    const content = document.getElementById('content');
+    const nav = document.getElementById('docNav');
+    const headings = content.querySelectorAll('h2, h3');
+    
+    headings.forEach((heading, index) => {
+        // Ajouter un ID si absent
+        if (!heading.id) {
+            heading.id = 'section-' + index;
+        }
+        
+        const level = heading.tagName === 'H2' ? '' : 'ps-3';
+        const item = document.createElement('a');
+        item.href = '#' + heading.id;
+        item.className = 'list-group-item list-group-item-action ' + level;
+        item.textContent = heading.textContent;
+        
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            heading.scrollIntoView({ behavior: 'smooth' });
+            
+            // Activer l'élément
+            nav.querySelectorAll('.list-group-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+        });
+        
+        nav.appendChild(item);
+    });
+    
+    // Scroll spy
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                nav.querySelectorAll('.list-group-item').forEach(item => {
+                    item.classList.toggle('active', item.getAttribute('href') === '#' + id);
+                });
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    headings.forEach(h => observer.observe(h));
+});
+
+// Contrôle de la taille de police
+let fontSize = 1;
+document.getElementById('fontIncrease').addEventListener('click', function() {
+    fontSize = Math.min(fontSize + 0.1, 1.5);
+    document.getElementById('content').style.fontSize = fontSize + 'rem';
+});
+
+document.getElementById('fontDecrease').addEventListener('click', function() {
+    fontSize = Math.max(fontSize - 0.1, 0.8);
+    document.getElementById('content').style.fontSize = fontSize + 'rem';
+});
+
+// Feedback
+function sendFeedback(type) {
+    const msg = document.getElementById('feedbackMessage');
+    msg.className = 'mt-2 alert alert-' + (type === 'yes' ? 'success' : 'warning');
+    msg.textContent = type === 'yes' 
+        ? 'Merci pour votre retour positif !' 
+        : 'Merci ! Nous travaillons constamment à améliorer la documentation.';
+    
+    // Envoyer au serveur (optionnel)
+    fetch('/documentation/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            document: '{{ document }}',
+            helpful: type === 'yes'
+        })
+    });
+}
+
+// Copier le code au clic
+document.querySelectorAll('pre code').forEach(block => {
+    block.style.cursor = 'pointer';
+    block.title = 'Cliquer pour copier';
+    
+    block.addEventListener('click', function() {
+        navigator.clipboard.writeText(block.textContent);
+        
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+        toast.textContent = 'Code copié !';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 2000);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,300 @@
+{% extends "layouts/app.twig" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-book"></i> Documentation
+                    </h4>
+                    <div class="input-group" style="max-width: 300px;">
+                        <input type="text" class="form-control form-control-sm" 
+                               id="searchDocs" 
+                               placeholder="Rechercher dans la documentation...">
+                        <button class="btn btn-light btn-sm" type="button">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        {% for doc in documents %}
+                        <div class="col-md-6 col-lg-3">
+                            <div class="card h-100 border-0 shadow-sm hover-shadow">
+                                <div class="card-body text-center">
+                                    <div class="mb-3">
+                                        <i class="bi bi-{{ doc.icon }} text-primary" style="font-size: 3rem;"></i>
+                                    </div>
+                                    <h5 class="card-title">{{ doc.title }}</h5>
+                                    <p class="card-text text-muted small">{{ doc.description }}</p>
+                                    <div class="d-grid gap-2">
+                                        {% if doc.external %}
+                                        <a href="{{ doc.external }}" class="btn btn-primary btn-sm" target="_blank">
+                                            <i class="bi bi-box-arrow-up-right"></i> Ouvrir
+                                        </a>
+                                        {% else %}
+                                        <a href="/documentation/{{ doc.id }}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-eye"></i> Consulter
+                                        </a>
+                                        <a href="/documentation/{{ doc.id }}/pdf" class="btn btn-outline-secondary btn-sm">
+                                            <i class="bi bi-file-pdf"></i> Télécharger PDF
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-5">
+
+                    <!-- Aide rapide -->
+                    <div class="row">
+                        <div class="col-md-8 mx-auto">
+                            <h5 class="mb-4"><i class="bi bi-lightbulb"></i> Aide rapide</h5>
+                            <div class="accordion" id="quickHelp">
+                                <!-- Premiers pas -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#help1">
+                                            Comment commencer ?
+                                        </button>
+                                    </h2>
+                                    <div id="help1" class="accordion-collapse collapse" data-bs-parent="#quickHelp">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Créez votre premier compte bancaire</li>
+                                                <li>Importez ou saisissez vos transactions</li>
+                                                <li>Catégorisez vos dépenses</li>
+                                                <li>Créez des budgets mensuels</li>
+                                                <li>Consultez vos rapports</li>
+                                            </ol>
+                                            <a href="/documentation/guide#premiers-pas" class="btn btn-sm btn-outline-primary">
+                                                Guide complet
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Import -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#help2">
+                                            Comment importer mes transactions bancaires ?
+                                        </button>
+                                    </h2>
+                                    <div id="help2" class="accordion-collapse collapse" data-bs-parent="#quickHelp">
+                                        <div class="accordion-body">
+                                            <p>MonBudget supporte les formats CSV, OFX et QIF :</p>
+                                            <ol>
+                                                <li>Téléchargez le fichier depuis votre banque</li>
+                                                <li>Menu Transactions → Importer</li>
+                                                <li>Sélectionnez le fichier et le compte</li>
+                                                <li>Vérifiez le mapping des colonnes</li>
+                                                <li>Validez l'import</li>
+                                            </ol>
+                                            <a href="/documentation/guide#import-de-transactions" class="btn btn-sm btn-outline-primary">
+                                                Guide d'import détaillé
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Catégorisation -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#help3">
+                                            Comment automatiser la catégorisation ?
+                                        </button>
+                                    </h2>
+                                    <div id="help3" class="accordion-collapse collapse" data-bs-parent="#quickHelp">
+                                        <div class="accordion-body">
+                                            <p>Créez des règles de catégorisation automatique :</p>
+                                            <ul>
+                                                <li>Menu Automatisation → Règles de catégorisation</li>
+                                                <li>Définissez des mots-clés (ex: "CARREFOUR")</li>
+                                                <li>Associez une catégorie</li>
+                                                <li>Les nouvelles transactions seront catégorisées automatiquement</li>
+                                            </ul>
+                                            <a href="/documentation/guide#automatisation" class="btn btn-sm btn-outline-primary">
+                                                Guide d'automatisation
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Budgets -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" 
+                                                data-bs-toggle="collapse" data-bs-target="#help4">
+                                            Comment créer et suivre un budget ?
+                                        </button>
+                                    </h2>
+                                    <div id="help4" class="accordion-collapse collapse" data-bs-parent="#quickHelp">
+                                        <div class="accordion-body">
+                                            <ol>
+                                                <li>Menu Budgets → Nouveau budget</li>
+                                                <li>Sélectionnez une catégorie</li>
+                                                <li>Définissez le montant limite</li>
+                                                <li>Choisissez la période (mensuel, trimestriel, annuel)</li>
+                                                <li>Configurez les alertes de dépassement</li>
+                                            </ol>
+                                            <p class="mb-0">Le tableau de bord affiche l'état de vos budgets en temps réel.</p>
+                                            <a href="/documentation/guide#gestion-des-budgets" class="btn btn-sm btn-outline-primary mt-2">
+                                                Guide des budgets
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <!-- Raccourcis clavier -->
+                    <div class="row">
+                        <div class="col-md-6 mx-auto">
+                            <h5 class="mb-3"><i class="bi bi-keyboard"></i> Raccourcis clavier</h5>
+                            <table class="table table-sm table-hover">
+                                <tbody>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>N</kbd></td>
+                                        <td>Nouvelle transaction</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>I</kbd></td>
+                                        <td>Import de fichier</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>S</kbd></td>
+                                        <td>Enregistrer</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Ctrl</kbd> + <kbd>F</kbd></td>
+                                        <td>Recherche</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>Échap</kbd></td>
+                                        <td>Fermer modal / Annuler</td>
+                                    </tr>
+                                    <tr>
+                                        <td><kbd>?</kbd></td>
+                                        <td>Afficher l'aide contextuelle</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de recherche -->
+<div class="modal fade" id="searchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Résultats de recherche</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="searchResults">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-search" style="font-size: 3rem;"></i>
+                    <p>Recherchez dans la documentation...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-shadow {
+    transition: box-shadow 0.3s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+kbd {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.875rem;
+    color: #212529;
+}
+</style>
+
+<script>
+// Recherche dans la documentation
+document.getElementById('searchDocs').addEventListener('keyup', function(e) {
+    if (e.key === 'Enter') {
+        const query = this.value;
+        if (query.length < 3) {
+            return;
+        }
+
+        fetch(`/documentation/search?q=${encodeURIComponent(query)}`)
+            .then(r => r.json())
+            .then(data => {
+                const modal = new bootstrap.Modal(document.getElementById('searchModal'));
+                const resultsDiv = document.getElementById('searchResults');
+                
+                if (data.count === 0) {
+                    resultsDiv.innerHTML = '<div class="alert alert-info">Aucun résultat trouvé.</div>';
+                } else {
+                    let html = `<p class="text-muted mb-3">${data.count} résultat(s) pour "${data.query}"</p>`;
+                    html += '<div class="list-group">';
+                    
+                    data.results.forEach(result => {
+                        html += `
+                            <a href="${result.url}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">${result.documentTitle}</h6>
+                                    <small class="text-muted">Ligne ${result.line}</small>
+                                </div>
+                                <p class="mb-0 small text-muted">${result.excerpt}</p>
+                            </a>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    resultsDiv.innerHTML = html;
+                }
+                
+                modal.show();
+            });
+    }
+});
+
+// Raccourci clavier ? pour l'aide
+document.addEventListener('keydown', function(e) {
+    if (e.key === '?' && !e.ctrlKey && !e.altKey) {
+        // Détecter le contexte actuel
+        const path = window.location.pathname;
+        let context = 'general';
+        
+        if (path.includes('/comptes')) context = 'comptes';
+        else if (path.includes('/transactions')) context = 'transactions';
+        else if (path.includes('/budgets')) context = 'budgets';
+        else if (path.includes('/rapports')) context = 'rapports';
+        else if (path.includes('/import')) context = 'import';
+        else if (path.includes('/automatisation')) context = 'automatisation';
+        
+        window.location.href = `/documentation/help/${context}`;
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

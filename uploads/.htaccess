@@ -1,0 +1,11 @@
+# Bloquer l'exécution de scripts dans les uploads
+<FilesMatch "\.(php|php3|php4|php5|phtml)$">
+    Require all denied
+</FilesMatch>
+
+# Autoriser les images et documents
+<FilesMatch "\.(jpg|jpeg|png|gif|pdf|csv|xlsx|xls)$">
+    Require all granted
+</FilesMatch>
+
+Options -Indexes

@@ -1,0 +1,18 @@
+# Désactiver l'affichage du contenu des répertoires
+Options -Indexes
+
+# Bloquer l'accès aux fichiers sensibles
+<FilesMatch "^(\.env|\.git|composer\.json|composer\.lock|\.gitignore|README\.md|INSTALL\.md|database\.sql)$">
+    Require all denied
+</FilesMatch>
+
+# Réécriture d'URL
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /monbudgetV2
+    
+    # Rediriger toutes les requêtes vers index.php sauf pour les fichiers/dossiers existants
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>

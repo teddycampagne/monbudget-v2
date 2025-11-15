@@ -1,0 +1,47 @@
+# Dependencies
+/vendor/
+composer.lock
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Storage & Runtime
+/storage/logs/*.log
+/storage/sessions/*
+!/storage/sessions/.gitkeep
+/storage/cache/*
+!/storage/cache/.gitkeep
+/storage/config/*
+!/storage/config/.gitkeep
+
+# Uploads
+/uploads/imports/*
+!/uploads/imports/.gitkeep
+/uploads/logos/*
+!/uploads/logos/.gitkeep
+
+# PHPUnit
+.phpunit.cache/
+/tests/coverage/
+
+# Composer
+composer.phar
+
+# Database dumps with data
+database_sample_data.sql
+
+# Logs
+*.log
