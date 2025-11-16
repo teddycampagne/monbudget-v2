@@ -38,18 +38,50 @@ Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 - ✅ Organisation : `uploads/attachments/{user_id}/{year}/{month}/`
 - ✅ Cleanup automatique sur suppression transaction (CASCADE)
 
+**Corrections post-tests (Session 15)** :
+- ✅ Namespaces : `App\Models` → `MonBudget\Models` (cohérence architecture)
+- ✅ Database API : `getInstance()` → `getConnection()` (méthode correcte)
+- ✅ URLs JavaScript : Ajout `baseUrl` pour sous-dossier `/monbudgetV2`
+- ✅ Chemins fichiers : Correction path absolu → relatif (`attachments/...`)
+- ✅ PHP limits : `upload_max_filesize` 6M dans `.htaccess`
+- ✅ CSS manquant : Création `attachment-uploader.css`
+- ✅ Preview image : Ajout attributs `data-*` + listeners JavaScript
+- ✅ Controller JSON : Ajout champ `path` dans réponse upload
+
+**Tests validés** :
+- ✅ Upload PDF 2MB - OK
+- ✅ Upload JPG - OK
+- ✅ Rejet PDF 6MB - OK (taille)
+- ✅ Rejet .exe - OK (type)
+- ✅ Rejet .php - OK (type)
+- ✅ Aperçu image - OK (modal Bootstrap)
+- ✅ Téléchargement - OK (nom original)
+- ✅ Suppression - OK (confirmation + animation)
+- ✅ Badge compteur - OK (liste transactions)
+
 **Fichiers créés/modifiés** :
 - Créés : `database/migrations/2025_11_16_create_attachments_table.sql`
 - Créés : `app/Models/Attachment.php` (273 lignes)
 - Créés : `app/Services/FileUploadService.php` (276 lignes)
 - Créés : `assets/js/attachment-uploader.js` (338 lignes)
-- Créés : `app/Views/components/attachment-uploader.php` (113 lignes)
-- Modifiés : `app/Controllers/TransactionController.php` (+191 lignes)
+- Créés : `assets/css/attachment-uploader.css` (58 lignes)
+- Créés : `app/Views/components/attachment-uploader.php` (143 lignes)
+- Créés : `tests/fixtures/attachments/README.md` (guide tests)
+- Modifiés : `app/Controllers/TransactionController.php` (+195 lignes)
 - Modifiés : `index.php` (+3 routes)
 - Modifiés : `app/Views/transactions/edit.php` (+4 lignes)
-- Modifiés : `app/Views/transactions/index.php` (+16 lignes)
+- Modifiés : `app/Views/transactions/index.php` (+19 lignes)
+- Modifiés : `.htaccess` (+5 lignes, limites upload)
+- Modifiés : `.gitignore` (+10 lignes, uploads/attachments)
 
-**Total Session 15** : ~1210 lignes de code ajoutées
+**Total Session 15** : ~1,323 lignes de code ajoutées
+
+**Commits Session 15** :
+- `7d310a0` - feat: Pièces jointes transactions - Backend complet
+- `9933cb7` - feat: Pièces jointes transactions - Frontend & docs complets
+- `dad19c5` - docs: Ajout récapitulatif complet Session 15
+- `10ca3e6` - fix: Corrections pièces jointes - Namespaces, URLs et chemins
+- `08c90e0` - chore: Ajouter uploads/attachments et fixtures tests au .gitignore
 
 ---
 
