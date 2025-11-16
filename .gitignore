@@ -34,6 +34,16 @@ desktop.ini
 !/uploads/imports/.gitkeep
 /uploads/logos/*
 !/uploads/logos/.gitkeep
+/uploads/attachments/*
+!/uploads/attachments/.gitkeep
+
+# Test fixtures (binaires)
+/tests/fixtures/attachments/*.pdf
+/tests/fixtures/attachments/*.exe
+/tests/fixtures/attachments/*.php
+/tests/fixtures/attachments/*.jpg
+/tests/fixtures/attachments/*.png
+!/tests/fixtures/attachments/README.md
 
 # PHPUnit
 .phpunit.cache/
