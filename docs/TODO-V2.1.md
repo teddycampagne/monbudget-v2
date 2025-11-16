@@ -3,101 +3,62 @@
 ## 📋 Vue d'ensemble
 Version V2.1 - Améliorations ergonomiques et corrections de bugs
 
-**Statut global** : 3/6 features complétées (50%)
+**Statut global Phase 1** : 6/6 features complétées (100%) ✅
 
 ---
 
-## ✅ COMPLÉTÉ (3/6)
+## ✅ PHASE 1 - COMPLÉTÉE (6/6) - Session 14
 
-### 1. Breadcrumbs globaux
+### 1. Breadcrumbs globaux ✅
 - ✅ Composant breadcrumbs réutilisable (`app/Views/components/breadcrumbs.php`)
 - ✅ Intégration sur toutes les pages principales
 - ✅ Navigation contextuelle avec URL helper
 - ✅ Fichiers modifiés : banques/show, comptes/index, categories/index, transactions/index
 
-### 2. Création rapide Catégorie/Tiers
+### 2. Création rapide Catégorie/Tiers ✅
 - ✅ Modals AJAX dans formulaire Transaction (create/edit)
 - ✅ Endpoints API : `/api/categories-add`, `/api/tiers-add`
 - ✅ Rechargement automatique des select après création
 - ✅ Validation côté serveur et retour JSON
 
-### 3. Drill-down Banque → Comptes
+### 3. Drill-down Banque → Comptes ✅
 - ✅ Vue détail banque (`app/Views/banques/show.php`)
 - ✅ Liste des comptes associés avec bouton "Voir les transactions"
 - ✅ Pré-sélection banque lors de création compte depuis vue banque
 - ✅ Gestion old() retournant chaîne vide (correction bug)
 
----
+### 4. Gestion sous-catégories ✅
+- ✅ Navigation basée sur sessions (retour intelligent après actions)
+- ✅ Formulaires dédiés création/édition sous-catégories
+- ✅ Liste avec drill-down par catégorie parente
+- ✅ Parent fixé et en lecture seule dans formulaires
+- ✅ Breadcrumbs contextuels (Catégories → [Parent] → Sous-catégorie)
 
-## 🚧 EN COURS (1/6)
+### 5. Bouton dupliquer transaction ✅
+- ✅ Bouton "Dupliquer" dans transactions/index.php (icône bi-files)
+- ✅ Bouton dans recherche/index.php
+- ✅ Route GET /comptes/{id}/transactions/{tid}/duplicate
+- ✅ Pré-remplissage formulaire création avec données source
+- ✅ Date réinitialisée à aujourd'hui
+- ✅ Conversion en transaction simple (est_recurrente = 0)
+- ✅ Flag isDuplicate pour message d'information
 
-### 4. Gestion sous-catégories inline
-**Objectif** : Gérer les sous-catégories directement depuis le formulaire d'édition de la catégorie parente
+### 6. Date picker avec raccourcis ✅
+- ✅ Composant JavaScript réutilisable (`assets/js/date-picker-shortcuts.js`)
+- ✅ Raccourcis date : Aujourd'hui, Hier, Il y a 7j, Début/Fin mois
+- ✅ Raccourcis période rapports : Mois actuel, Mois dernier, Année actuelle/dernière
+- ✅ Auto-initialisation via attribut data-shortcuts
+- ✅ Appliqué sur : transactions (create/edit), recherche, récurrences, rapports
+- ✅ Style Bootstrap : btn-sm btn-outline-secondary
 
-**À faire** :
-- [ ] Ajouter section "Sous-catégories" dans `categories/edit.php`
-- [ ] Liste des sous-catégories existantes (tableau éditable)
-- [ ] Bouton "Ajouter une sous-catégorie" (ligne inline)
-- [ ] Endpoints API :
-  - `POST /api/categories/{id}/sous-categories` (créer)
-  - `PUT /api/categories/{id}/sous-categories/{scId}` (modifier nom)
-  - `DELETE /api/categories/{id}/sous-categories/{scId}` (supprimer)
-- [ ] Validation : empêcher suppression si transactions liées
-- [ ] JavaScript pour gestion inline (add/edit/delete)
-
-**Fichiers à modifier** :
-- `app/Views/categories/edit.php`
-- `app/Controllers/CategorieController.php` (ou ApiController)
-- Créer `assets/js/sous-categories-inline.js`
-
-**Note** : Ligne 150 de categories/edit.php partiellement lue lors analyse précédente
-
----
-
-## 📝 À FAIRE (2/6)
-
-### 5. Bouton dupliquer transaction
-**Objectif** : Ajouter un bouton pour dupliquer rapidement une transaction
-
-**À faire** :
-- [ ] Ajouter bouton "Dupliquer" dans :
-  - `transactions/index.php` (colonne Actions)
-  - `comptes/transactions.php` (vue transactions d'un compte)
-  - `recherche/index.php` (résultats recherche)
-- [ ] Endpoint : `GET /comptes/{id}/transactions/{tid}/duplicate`
-- [ ] Pré-remplir formulaire avec données transaction source
-- [ ] Modifier uniquement la date (date du jour par défaut)
-- [ ] Icône Bootstrap : `bi-files` ou `bi-clipboard-plus`
-
-**Fichiers à modifier** :
-- `app/Views/transactions/index.php`
-- `app/Views/comptes/transactions.php`
-- `app/Views/recherche/index.php`
-- `app/Controllers/TransactionController.php`
-- `index.php` (route)
-
-**Specs fonctionnelles** :
-- Dupliquer TOUS les champs sauf : `id`, `created_at`, `updated_at`
-- Date transaction = date du jour
-- Si transaction récurrente : `est_recurrente = 0` (transaction simple)
-- Rediriger vers formulaire création pré-rempli (pas création directe)
+**Bugs corrigés Session 14** :
+- ✅ Rapports : Filtrage par compte ignoré dans toutes les APIs
+- ✅ Transactions : Bouton Annuler avec route 404
+- ✅ Rapports : Fonction chargerSuiviBudgetaire inexistante (→ chargerBudgetaire)
 
 ---
 
-### 6. Date picker avec raccourcis
-**Objectif** : Améliorer les champs date avec des raccourcis rapides
-
-**À faire** :
-- [ ] Créer composant `assets/js/date-picker-shortcuts.js`
-- [ ] Ajouter boutons raccourcis sous champs date :
-  - "Aujourd'hui"
-  - "Hier" 
-  - "Début du mois"
-  - "Fin du mois"
-  - "Il y a 7 jours"
-  - "Il y a 30 jours"
-- [ ] Appliquer sur formulaires :
-  - Transactions (create/edit)
+## 🚀 PHASE 2 - À PLANIFIER
   - Recherche (date_debut/date_fin)
   - Budgets
   - Rapports
