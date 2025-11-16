@@ -34,6 +34,14 @@
     <link rel="stylesheet" href="<?= url('assets/css/app.css') ?>">
     <!-- Dark Mode CSS -->
     <link rel="stylesheet" href="<?= url('assets/css/dark-mode.css') ?>?v=4">
+    
+    <!-- Configuration JavaScript globale -->
+    <script>
+        window.APP_CONFIG = {
+            baseUrl: '<?= rtrim(url(''), '/') ?>',
+            version: '2.2.0'
+        };
+    </script>
 </head>
 <body>
     <!-- Navigation -->

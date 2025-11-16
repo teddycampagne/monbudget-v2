@@ -47,7 +47,7 @@ class HomeController extends BaseController
         $this->requireAuth();
         
         $user = $this->getUser();
-        $userId = $user['id'];
+        $userId = $user['id'] ?? $this->userId;
         
         // Récupérer les statistiques
         $stats = $this->getDashboardStats($userId);
@@ -225,17 +225,16 @@ class HomeController extends BaseController
                 [$userId]
             );
             
-            // Prochaines transactions récurrentes
+            // Prochaines transactions récurrentes (depuis table recurrences)
             $stats['prochaines_recurrentes'] = Database::select(
-                "SELECT t.*, c.nom as compte_nom, cat.nom as categorie_nom
-                 FROM transactions t
-                 INNER JOIN comptes c ON t.compte_id = c.id
-                 LEFT JOIN categories cat ON t.categorie_id = cat.id
-                 WHERE t.user_id = ?
-                 AND t.est_recurrente = 1
-                 AND t.recurrence_active = 1
-                 AND (t.prochaine_execution IS NULL OR t.prochaine_execution >= CURRENT_DATE())
-                 ORDER BY t.prochaine_execution ASC
+                "SELECT r.*, c.nom as compte_nom, cat.nom as categorie_nom
+                 FROM recurrences r
+                 INNER JOIN comptes c ON r.compte_id = c.id
+                 LEFT JOIN categories cat ON r.categorie_id = cat.id
+                 WHERE r.user_id = ?
+                 AND r.recurrence_active = 1
+                 AND (r.prochaine_execution IS NULL OR r.prochaine_execution >= CURRENT_DATE())
+                 ORDER BY r.prochaine_execution ASC
                  LIMIT 5",
                 [$userId]
             );
