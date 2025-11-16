@@ -336,7 +336,7 @@ function chargerTousGraphiques() {
     chargerRepartitionCategories();
     chargerBalances();
     chargerTendanceEpargne();
-    chargerSuiviBudgetaire();
+    chargerBudgetaire();
 }
 
 function reinitialiser() {
@@ -809,8 +809,9 @@ async function chargerTendanceEpargne() {
 }
 
 // Suivi budgétaire
-async function chargerSuiviBudgetaire() {
+async function chargerBudgetaire() {
     let url = `api/rapports/budgetaire?annee=${params.annee}`;
+    if (params.compte_id) url += `&compte_id=${params.compte_id}`;
     if (params.mois) url += `&mois=${params.mois}`;
     
     const response = await fetch(url);
