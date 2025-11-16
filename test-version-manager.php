@@ -77,6 +77,12 @@ if (!isset($_SESSION['user_id'])) {
                             </button>
                         </div>
 
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> Le bouton "Vérifier mises à jour" nécessite d'être connecté à l'application.
+                            Utilisez plutôt le bouton "Afficher modal démo" pour voir la simulation sans authentification.
+                        </div>
+
                         <h5 class="mb-3">📊 Résultats Tests</h5>
                         <div id="test-results" class="border rounded p-3 bg-light" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
                             <p class="text-muted mb-0">Aucun test exécuté pour le moment...</p>
@@ -136,6 +142,7 @@ if (!isset($_SESSION['user_id'])) {
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/monbudgetV2/assets/js/version-manager.js"></script>
     <script>
         // Fonction pour logger dans la zone de résultats
         function log(message, type = 'info') {
@@ -251,12 +258,14 @@ if (!isset($_SESSION['user_id'])) {
         document.getElementById('btn-show-modal-demo').addEventListener('click', function() {
             log('🎭 Affichage modal démo...', 'info');
             
-            // Créer données factices
-            window.versionManager = window.versionManager || {};
-            window.versionManager.updateData = {
-                version: '2.3.0',
-                tag_name: 'v2.3.0',
-                changelog: `## [2.3.0] - 2025-12-01
+            // Attendre que versionManager soit initialisé
+            const tryShowModal = () => {
+                if (window.versionManager) {
+                    // Définir données factices
+                    window.versionManager.updateData = {
+                        version: '2.3.0',
+                        tag_name: 'v2.3.0',
+                        changelog: `## [2.3.0] - 2025-12-01
 
 ### ✨ Ajouté
 - Nouveaux graphiques interactifs
@@ -267,27 +276,21 @@ if (!isset($_SESSION['user_id'])) {
 - Correction calcul soldes
 - Fix export CSV
 - Amélioration performances`,
-                published_at: '2025-12-01T10:00:00Z',
-                html_url: 'https://github.com/teddycampagne/monbudget-v2/releases/tag/v2.3.0',
-                current_version: '2.2.0'
+                        published_at: '2025-12-01T10:00:00Z',
+                        html_url: 'https://github.com/teddycampagne/monbudget-v2/releases/tag/v2.3.0',
+                        current_version: '2.2.0'
+                    };
+                    
+                    // Afficher le modal
+                    window.versionManager.showUpdateModal();
+                    log('✓ Modal affichée (données fictives)', 'success');
+                } else {
+                    log('⏳ Attente initialisation versionManager...', 'warning');
+                    setTimeout(tryShowModal, 500);
+                }
             };
             
-            // Charger le script si pas déjà fait
-            if (!document.querySelector('script[src*="version-manager.js"]')) {
-                const script = document.createElement('script');
-                script.src = '/monbudgetV2/assets/js/version-manager.js';
-                document.body.appendChild(script);
-                
-                setTimeout(() => {
-                    if (window.versionManager && window.versionManager.showUpdateModal) {
-                        window.versionManager.showUpdateModal();
-                        log('✓ Modal affichée (données fictives)', 'success');
-                    }
-                }, 1000);
-            } else if (window.versionManager && window.versionManager.showUpdateModal) {
-                window.versionManager.showUpdateModal();
-                log('✓ Modal affichée (données fictives)', 'success');
-            }
+            tryShowModal();
         });
 
         // Vider cache
