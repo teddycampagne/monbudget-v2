@@ -659,32 +659,15 @@ class TransactionController extends BaseController
             $deleted = Transaction::delete($id);
             
             if ($deleted) {
-                    // Recalculer le solde si des occurrences ont été supprimées
-                    if ($result['occurrences'] > 0) {
-                        Compte::recalculerSolde($compteId);
-                    }
-                    
-                    $message = "Récurrence supprimée avec succès";
-                    if ($result['occurrences'] > 0) {
-                        $message .= " ({$result['occurrences']} occurrence(s) supprimée(s))";
-                    }
-                    flash('success', $message);
-                } else {
-                    flash('error', 'Erreur lors de la suppression');
-                }
+                // Recalculer le solde du compte
+                Compte::recalculerSolde($compteId);
+                flash('success', 'Transaction supprimée avec succès');
             } else {
-                // Supprimer uniquement le modèle
-                $result = Transaction::delete($id);
-                
-                if ($result > 0) {
-                    flash('success', 'Récurrence supprimée (les transactions déjà créées sont conservées)');
-                } else {
-                    flash('error', 'Erreur lors de la suppression');
-                }
+                flash('error', 'Erreur lors de la suppression');
             }
             
-            // Rediriger vers la liste des récurrences
-            $this->redirect("comptes/{$compteId}/transactions/recurrentes");
+            // Rediriger vers la liste des transactions
+            $this->redirect("comptes/{$compteId}/transactions");
         } else {
             // Transaction normale : suppression simple
             $result = Transaction::delete($id);
