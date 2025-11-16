@@ -100,14 +100,13 @@ class RecurrenceService
      */
     private function getPendingRecurrences(): array
     {
-        $sql = "SELECT t.* 
-                FROM transactions t
-                WHERE t.est_recurrente = 1 
-                  AND t.recurrence_active = 1
-                  AND t.prochaine_execution IS NOT NULL
-                  AND t.prochaine_execution <= CURDATE()
-                  AND (t.nb_executions_max IS NULL OR t.nb_executions < t.nb_executions_max)
-                ORDER BY t.prochaine_execution ASC, t.id ASC";
+        $sql = "SELECT r.* 
+                FROM recurrences r
+                WHERE r.recurrence_active = 1
+                  AND r.prochaine_execution IS NOT NULL
+                  AND r.prochaine_execution <= CURDATE()
+                  AND (r.date_fin IS NULL OR r.date_fin >= CURDATE())
+                ORDER BY r.prochaine_execution ASC, r.id ASC";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
@@ -138,7 +137,7 @@ class RecurrenceService
         }
         
         // 2. Appliquer la tolérance des weekends si configurée
-        $dateAjustee = $this->applyWeekendTolerance($dateExecution, $recurrence['tolerance_weekend']);
+        $dateAjustee = $this->applyWeekendTolerance($dateExecution, $recurrence['tolerance_weekend'] ?? 'aucune');
         
         // 3. Créer la transaction
         $transactionData = [
@@ -251,10 +250,10 @@ class RecurrenceService
      */
     private function updateRecurrenceAfterExecution(array $recurrence, string $dateExecuted): void
     {
-        $nbExecutions = ((int) $recurrence['nb_executions']) + 1;
+        $nbExecutions = ((int) ($recurrence['nb_executions'] ?? 0)) + 1;
         $prochaineExecution = $this->calculateNextExecution($recurrence, $dateExecuted);
         
-        // Si nb_executions_max atteint, désactiver la récurrence
+        // Si nb_executions_max atteint, désactiver
         $recurrenceActive = 1;
         if ($recurrence['nb_executions_max'] && $nbExecutions >= $recurrence['nb_executions_max']) {
             $recurrenceActive = 0;
@@ -262,12 +261,12 @@ class RecurrenceService
         }
         
         // Si date_fin dépassée, désactiver
-        if ($recurrence['date_fin'] && strtotime($prochaineExecution) > strtotime($recurrence['date_fin'])) {
+        if ($recurrence['date_fin'] && $prochaineExecution && strtotime($prochaineExecution) > strtotime($recurrence['date_fin'])) {
             $recurrenceActive = 0;
             $prochaineExecution = null;
         }
         
-        $sql = "UPDATE transactions 
+        $sql = "UPDATE recurrences 
                 SET nb_executions = ?,
                     derniere_execution = ?,
                     prochaine_execution = ?,
@@ -294,7 +293,7 @@ class RecurrenceService
     {
         $prochaineExecution = $this->calculateNextExecution($recurrence, $recurrence['prochaine_execution']);
         
-        $sql = "UPDATE transactions 
+        $sql = "UPDATE recurrences 
                 SET prochaine_execution = ?
                 WHERE id = ?";
         
@@ -312,9 +311,9 @@ class RecurrenceService
     private function calculateNextExecution(array $recurrence, string $currentDate): ?string
     {
         $frequence = $recurrence['frequence'];
-        $intervalle = (int) $recurrence['intervalle'] ?: 1;
-        $jourExecution = (int) $recurrence['jour_execution'];
-        $jourSemaine = (int) $recurrence['jour_semaine'];
+        $intervalle = (int) ($recurrence['intervalle'] ?? 1);
+        $jourExecution = (int) ($recurrence['jour_execution'] ?? 0);
+        $jourSemaine = (int) ($recurrence['jour_semaine'] ?? 0);
         
         $date = new \DateTime($currentDate);
         
@@ -338,16 +337,18 @@ class RecurrenceService
                 }
                 break;
                 
-            case 'annuel':
-                $date->modify("+{$intervalle} years");
+            case 'trimestriel':
+                $date->modify("+{$intervalle} months");
+                if ($intervalle == 1) $date->modify("+2 months"); // Si intervalle=1, ajouter 3 mois au total
                 break;
                 
-            case 'jour_semaine':
-                // Exemple : tous les lundis ($jourSemaine = 1)
-                $currentDayOfWeek = (int) $date->format('N');
-                $diff = ($jourSemaine - $currentDayOfWeek + 7) % 7;
-                if ($diff == 0) $diff = 7; // Si c'est le même jour, passer à la semaine suivante
-                $date->modify("+{$diff} days");
+            case 'semestriel':
+                $date->modify("+{$intervalle} months");
+                if ($intervalle == 1) $date->modify("+5 months"); // Si intervalle=1, ajouter 6 mois au total
+                break;
+                
+            case 'annuel':
+                $date->modify("+{$intervalle} years");
                 break;
                 
             default:

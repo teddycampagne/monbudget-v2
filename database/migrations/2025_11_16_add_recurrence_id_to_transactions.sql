@@ -14,11 +14,11 @@ ALTER TABLE transactions
 ADD INDEX idx_recurrence_id (recurrence_id);
 
 -- Ajouter une contrainte de clé étrangère (optionnel mais recommandé)
--- Note: La FK pointe vers la table transactions elle-même car les récurrences sont stockées dedans
+-- Note: La FK pointe vers la table recurrences (table séparée pour les modèles de récurrence)
 ALTER TABLE transactions
 ADD CONSTRAINT fk_transaction_recurrence
     FOREIGN KEY (recurrence_id) 
-    REFERENCES transactions(id) 
+    REFERENCES recurrences(id) 
     ON DELETE SET NULL; -- Si la récurrence est supprimée, les transactions générées restent mais perdent le lien
 
 -- Commentaire
