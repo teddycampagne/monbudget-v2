@@ -297,6 +297,17 @@
                             </div>
                         </div>
 
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-tags-fill text-primary"></i> Tags
+                            </label>
+                            <div id="tagSelectorContainer"></div>
+                            <small class="text-muted">
+                                Ajoutez des étiquettes pour mieux organiser vos transactions
+                            </small>
+                        </div>
+
                         <!-- Boutons -->
                         <div class="d-flex justify-content-between">
                             <a href="<?= url("comptes/{$compte['id']}/transactions") ?>" class="btn btn-secondary">
@@ -619,6 +630,19 @@ document.getElementById('btnSaveTiers').addEventListener('click', async function
     }
 });
 </script>
+</script>
+
+<!-- Tag Selector -->
+<link rel="stylesheet" href="<?= url('assets/css/tag-selector.css') ?>">
+<script src="<?= url('assets/js/tag-selector.js') ?>"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    tagSelector = new TagSelector('tagSelectorContainer', {
+        apiBaseUrl: '<?= url('/api/tags') ?>',
+        maxTags: 10,
+        selectedTags: []
+    });
+});
 </script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

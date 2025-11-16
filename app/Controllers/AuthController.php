@@ -3,6 +3,7 @@
 namespace MonBudget\Controllers;
 
 use MonBudget\Core\Database;
+use MonBudget\Services\RecurrenceService;
 
 /**
  * Contrôleur d'authentification
@@ -10,10 +11,11 @@ use MonBudget\Core\Database;
  * Gère toutes les opérations liées à l'authentification des utilisateurs :
  * connexion, déconnexion, inscription, récupération de mot de passe.
  * Implémente la validation CSRF et la gestion sécurisée des sessions.
+ * Exécute automatiquement les récurrences échues lors du login.
  * 
  * @package MonBudget\Controllers
  * @author MonBudget
- * @version 1.0.0
+ * @version 2.2.0
  */
 class AuthController extends BaseController
 {
@@ -83,6 +85,25 @@ class AuthController extends BaseController
             setcookie('remember_token', $token, time() + (86400 * 30), '/'); // 30 jours
             
             // Stocker le token en BDD (à implémenter)
+        }
+        
+        // ✨ NOUVEAU : Exécuter automatiquement les récurrences échues
+        // Appel silencieux pour tous les utilisateurs (pas seulement le user connecté)
+        // Protection anti-doublons intégrée dans le service
+        try {
+            $recurrenceService = new RecurrenceService();
+            $stats = $recurrenceService->executeAllPendingRecurrences();
+            
+            // Afficher un message uniquement s'il y a des exécutions
+            if ($stats['total_executed'] > 0) {
+                flash('info', sprintf(
+                    '%d récurrence(s) automatique(s) exécutée(s) avec succès',
+                    $stats['total_executed']
+                ));
+            }
+        } catch (\Exception $e) {
+            // Log l'erreur mais ne bloque pas la connexion
+            error_log("Erreur exécution récurrences auto: " . $e->getMessage());
         }
         
         $this->redirect('dashboard');

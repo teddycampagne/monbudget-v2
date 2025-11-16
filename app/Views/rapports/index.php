@@ -178,6 +178,22 @@
             </div>
         </div>
         
+        <!-- Rapport par Tags -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-tags-fill"></i> Analyse par Tags</h5>
+            </div>
+            <div class="card-body">
+                <div id="rapportTags">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Suivi budgétaire -->
         <div class="card mb-4">
             <div class="card-header">
@@ -337,6 +353,7 @@ function chargerTousGraphiques() {
     chargerBalances();
     chargerTendanceEpargne();
     chargerBudgetaire();
+    chargerRapportTags();
 }
 
 function reinitialiser() {
@@ -954,6 +971,94 @@ function getRandomColor() {
         color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
+}
+
+// Rapport par Tags
+async function chargerRapportTags() {
+    if (!params.compte_id) return;
+    
+    const container = document.getElementById('rapportTags');
+    
+    try {
+        let url = `api/rapports/tags?compte_id=${params.compte_id}&annee=${params.annee}`;
+        if (params.mois) url += `&mois=${params.mois}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Erreur serveur');
+        
+        const data = await response.json();
+        
+        if (!data.tags || data.tags.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-4">Aucune transaction taguée sur cette période</p>';
+            return;
+        }
+        
+        // Construire le tableau
+        let html = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tag</th>
+                            <th class="text-center">Transactions</th>
+                            <th class="text-end">Total Débits</th>
+                            <th class="text-end">Total Crédits</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        data.tags.forEach(tag => {
+            const balance = parseFloat(tag.total_credits) - parseFloat(tag.total_debits);
+            const balanceClass = balance >= 0 ? 'text-success' : 'text-danger';
+            
+            html += `
+                <tr>
+                    <td>
+                        <span class="badge bg-${tag.color} me-1">
+                            <i class="bi bi-tag-fill"></i> ${tag.name}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-secondary">${tag.nb_transactions}</span>
+                    </td>
+                    <td class="text-end text-danger">
+                        ${parseFloat(tag.total_debits) > 0 ? '-' + parseFloat(tag.total_debits).toFixed(2) + ' €' : '-'}
+                    </td>
+                    <td class="text-end text-success">
+                        ${parseFloat(tag.total_credits) > 0 ? '+' + parseFloat(tag.total_credits).toFixed(2) + ' €' : '-'}
+                    </td>
+                    <td class="text-end fw-bold ${balanceClass}">
+                        ${balance >= 0 ? '+' : ''}${balance.toFixed(2)} €
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                    <tfoot class="table-light fw-bold">
+                        <tr>
+                            <td>TOTAL</td>
+                            <td class="text-center">${data.total_transactions}</td>
+                            <td class="text-end text-danger">-${parseFloat(data.total_debits).toFixed(2)} €</td>
+                            <td class="text-end text-success">+${parseFloat(data.total_credits).toFixed(2)} €</td>
+                            <td class="text-end ${parseFloat(data.balance) >= 0 ? 'text-success' : 'text-danger'}">
+                                ${parseFloat(data.balance) >= 0 ? '+' : ''}${parseFloat(data.balance).toFixed(2)} €
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+        
+        container.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Erreur chargement rapport tags:', error);
+        container.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du rapport par tags</div>';
+    }
 }
 </script>
 

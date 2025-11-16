@@ -7,6 +7,7 @@ use MonBudget\Models\Transaction;
 use MonBudget\Models\Compte;
 use MonBudget\Models\Categorie;
 use MonBudget\Models\Tiers;
+use MonBudget\Services\RecurrenceService;
 
 /**
  * Contrôleur de gestion des récurrences bancaires
@@ -432,5 +433,69 @@ class RecurrenceController extends BaseController
         
         header('Content-Type: application/json');
         echo json_encode(['count' => $count]);
+    }
+    
+    /**
+     * Afficher les statistiques d'administration des récurrences
+     * 
+     * @return void
+     */
+    public function admin(): void
+    {
+        $this->requireAuth();
+        
+        // Statistiques globales
+        $stats = [
+            'total_recurrences' => Recurrence::countTotal($this->userId),
+            'actives' => Recurrence::countActives($this->userId),
+            'inactives' => Recurrence::countInactives($this->userId),
+            'echues' => Recurrence::countEchues($this->userId),
+            'total_transactions_generees' => Recurrence::countTransactionsGenerees($this->userId)
+        ];
+        
+        // Dernière exécution automatique
+        $service = new RecurrenceService();
+        $lastExecution = $service->getLastExecutionStats();
+        
+        // Prochaines exécutions (7 prochains jours)
+        $prochainesExecutions = Recurrence::getUpcoming($this->userId, 7);
+        
+        // Récurrences les plus actives (par nombre de transactions générées)
+        $topRecurrences = Recurrence::getTopByTransactions($this->userId, 10);
+        
+        // Logs récents (5 dernières lignes)
+        $recentLogs = $this->getRecentLogs(5);
+        
+        $this->view('recurrences.admin', [
+            'stats' => $stats,
+            'lastExecution' => $lastExecution,
+            'prochainesExecutions' => $prochainesExecutions,
+            'topRecurrences' => $topRecurrences,
+            'recentLogs' => $recentLogs,
+            'title' => 'Administration des Récurrences'
+        ]);
+    }
+    
+    /**
+     * Lire les dernières lignes du log de récurrence
+     * 
+     * @param int $lines Nombre de lignes à récupérer
+     * @return array
+     */
+    private function getRecentLogs(int $lines = 5): array
+    {
+        $logFile = BASE_PATH . '/storage/logs/recurrence_auto_' . date('Y-m') . '.log';
+        
+        if (!file_exists($logFile)) {
+            return [];
+        }
+        
+        $allLines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (empty($allLines)) {
+            return [];
+        }
+        
+        // Prendre les N dernières lignes
+        return array_slice($allLines, -$lines);
     }
 }

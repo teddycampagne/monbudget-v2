@@ -120,5 +120,9 @@
         }
     })();
     </script>
+    
+    <!-- PWA Service Worker -->
+    <script src="<?= url('assets/js/pwa-install.js') ?>"></script>
+    
 </body>
 </html>

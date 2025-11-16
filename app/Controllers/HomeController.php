@@ -240,6 +240,27 @@ class HomeController extends BaseController
                 [$userId]
             );
             
+            // Top tags les plus utilisés
+            $stats['top_tags'] = Database::select(
+                "SELECT 
+                    tags.id,
+                    tags.name,
+                    tags.color,
+                    COUNT(DISTINCT tt.transaction_id) as usage_count,
+                    COALESCE(SUM(CASE WHEN t.type_operation = 'debit' THEN t.montant ELSE 0 END), 0) as total_debits,
+                    COALESCE(SUM(CASE WHEN t.type_operation = 'credit' THEN t.montant ELSE 0 END), 0) as total_credits
+                 FROM tags
+                 INNER JOIN transaction_tags tt ON tags.id = tt.tag_id
+                 INNER JOIN transactions t ON tt.transaction_id = t.id
+                 WHERE tags.user_id = ?
+                 AND t.user_id = ?
+                 AND t.date_transaction >= DATE_SUB(CURRENT_DATE(), INTERVAL 3 MONTH)
+                 GROUP BY tags.id, tags.name, tags.color
+                 ORDER BY usage_count DESC
+                 LIMIT 10",
+                [$userId, $userId]
+            );
+            
         } catch (\Exception $e) {
             // En cas d'erreur, logger et retourner des stats vides
             error_log("ERREUR Dashboard Stats: " . $e->getMessage());
@@ -260,6 +281,7 @@ class HomeController extends BaseController
                 'budgets' => [],
                 'dernieres_transactions' => [],
                 'prochaines_recurrentes' => [],
+                'top_tags' => [],
                 'error' => $e->getMessage() // Pour debug
             ];
         }

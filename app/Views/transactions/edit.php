@@ -315,6 +315,24 @@
                     </div>
                 </div>
 
+                <?php 
+                // Inclure la zone d'upload de pièces jointes
+                require __DIR__ . '/../components/attachment-uploader.php'; 
+                ?>
+
+                <!-- Tags -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-tags-fill text-primary"></i> Tags</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="tagSelectorContainer"></div>
+                        <small class="text-muted">
+                            Ajoutez des étiquettes pour mieux organiser vos transactions
+                        </small>
+                    </div>
+                </div>
+
                 <!-- Boutons -->
                 <div class="d-flex gap-2">
                     <a href="<?= url("comptes/{$transaction['compte_id']}/transactions") ?>" class="btn btn-secondary">
@@ -453,7 +471,18 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         document.getElementById('sous_categorie_id').disabled = true;
     }
+    
+    // Initialiser le tag selector avec les tags existants
+    tagSelector = new TagSelector('tagSelectorContainer', {
+        apiBaseUrl: '<?= url('/api/tags') ?>',
+        maxTags: 10,
+        selectedTags: <?= json_encode($selectedTags ?? []) ?>
+    });
 });
 </script>
+
+<!-- Tag Selector -->
+<link rel="stylesheet" href="<?= url('assets/css/tag-selector.css') ?>">
+<script src="<?= url('assets/js/tag-selector.js') ?>"></script>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

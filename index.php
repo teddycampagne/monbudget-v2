@@ -143,9 +143,15 @@ $router->get('/comptes/{compteId}/transactions/{id}/edit', [TransactionControlle
 $router->post('/comptes/{compteId}/transactions/{id}/update', [TransactionController::class, 'update']);
 $router->post('/comptes/{compteId}/transactions/{id}/delete', [TransactionController::class, 'delete']);
 
+// Routes Pièces jointes (Session 15 - v2.1.0 Phase 2)
+$router->post('/comptes/{compteId}/transactions/{transactionId}/attachments/upload', [TransactionController::class, 'uploadAttachment']);
+$router->delete('/comptes/{compteId}/transactions/{transactionId}/attachments/{attachmentId}', [TransactionController::class, 'deleteAttachment']);
+$router->get('/comptes/{compteId}/transactions/{transactionId}/attachments/{attachmentId}/download', [TransactionController::class, 'downloadAttachment']);
+
 // Routes Récurrences (Session 11 - Table séparée)
 use MonBudget\Controllers\RecurrenceController;
 $router->get('/recurrences', [RecurrenceController::class, 'index']); // Toutes les récurrences
+$router->get('/recurrences/admin', [RecurrenceController::class, 'admin']); // Administration (stats)
 $router->get('/comptes/{compteId}/recurrences', [RecurrenceController::class, 'index']); // Récurrences d'un compte
 $router->get('/comptes/{compteId}/transactions/recurrentes', [RecurrenceController::class, 'index']); // Alias pour compatibilité
 $router->get('/comptes/{compteId}/recurrences/create', [RecurrenceController::class, 'create']);
@@ -173,6 +179,20 @@ $router->post('/categories/{id}/delete', [CategorieController::class, 'destroy']
 
 // API - Sous-catégories (pour AJAX)
 $router->get('/api/categories/{id}/sous-categories', [CategorieController::class, 'apiGetSousCategories']);
+
+// Routes Tags
+use MonBudget\Controllers\TagController;
+$router->get('/tags', [TagController::class, 'index']);
+$router->get('/tags/create', [TagController::class, 'create']);
+$router->get('/tags/{id}', [TagController::class, 'show']);
+$router->post('/tags/store', [TagController::class, 'store']);
+$router->get('/tags/{id}/edit', [TagController::class, 'edit']);
+$router->post('/tags/{id}/update', [TagController::class, 'update']);
+$router->post('/tags/{id}/delete', [TagController::class, 'destroy']);
+// API Tags (pour AJAX)
+$router->get('/api/tags/autocomplete', [TagController::class, 'autocomplete']);
+$router->post('/api/tags/quick-create', [TagController::class, 'quickCreate']);
+$router->get('/api/tags/all', [TagController::class, 'getAllTags']);
 
 // Routes Tiers
 use MonBudget\Controllers\TiersController;
@@ -227,6 +247,7 @@ $router->get('/api/rapports/detail-categorie', [RapportController::class, 'apiDe
 $router->get('/api/rapports/balances', [RapportController::class, 'apiBalances']);
 $router->get('/api/rapports/budgetaire', [RapportController::class, 'apiBudgetaire']);
 $router->get('/api/rapports/tendance-epargne', [RapportController::class, 'apiTendanceEpargne']);
+$router->get('/api/rapports/tags', [RapportController::class, 'apiRapportTags']);
 
 // Routes Projections
 use MonBudget\Controllers\ProjectionController;

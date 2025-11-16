@@ -1,0 +1,81 @@
+/**
+ * Styles pour le composant Tag Selector
+ */
+
+.tag-selector {
+    position: relative;
+}
+
+.tag-selected-list {
+    min-height: 35px;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.tag-selected-list:empty::before {
+    content: 'Aucun tag sélectionné';
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.tag-search-input {
+    border-radius: 4px 0 0 4px !important;
+}
+
+.tag-autocomplete-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+    margin-top: 2px;
+}
+
+.tag-autocomplete-list:empty {
+    display: none;
+}
+
+.autocomplete-item {
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover {
+    background-color: #f8f9fa;
+}
+
+.autocomplete-empty {
+    font-style: italic;
+}
+
+/* Badge interactif */
+.tag-selected-list .badge i.bi-x-circle {
+    transition: transform 0.2s;
+}
+
+.tag-selected-list .badge i.bi-x-circle:hover {
+    transform: scale(1.2);
+}
+
+/* Modal création rapide */
+#quickTagColors .btn {
+    margin-bottom: 5px;
+}
+
+#quickTagColors .btn-check:checked + label {
+    border-width: 2px;
+    font-weight: bold;
+}

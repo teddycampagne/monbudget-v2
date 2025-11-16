@@ -8,6 +8,8 @@ use MonBudget\Models\Categorie;
 use MonBudget\Models\Tiers;
 use MonBudget\Models\RegleAutomatisation;
 use MonBudget\Models\Recurrence;
+use MonBudget\Models\Attachment;
+use MonBudget\Services\FileUploadService;
 
 /**
  * Contrôleur de gestion des transactions bancaires
@@ -85,11 +87,16 @@ class TransactionController extends BaseController
         // Récupérer les tiers
         $tiers = Tiers::getAllByUser($this->userId);
         
+        // Récupérer les tags
+        $tagModel = new \MonBudget\Models\Tag();
+        $tags = $tagModel->getAllByUser($this->userId, 'name');
+        
         $this->view('transactions.create', [
             'compte' => $compte,
             'comptes' => $comptes,
             'categories' => $categories,
             'tiers' => $tiers,
+            'tags' => $tags,
             'title' => 'Nouvelle Transaction - ' . $compte['nom']
         ]);
     }
@@ -286,6 +293,12 @@ class TransactionController extends BaseController
                 $id = Transaction::create($data);
                 
                 if ($id) {
+                    // Gestion des tags
+                    if (!empty($_POST['tags']) && is_array($_POST['tags'])) {
+                        $transactionModel = new Transaction();
+                        $transactionModel->syncTags($id, array_map('intval', $_POST['tags']));
+                    }
+                    
                     Compte::recalculerSolde($compteId);
                     flash('success', 'Transaction créée avec succès');
                     $this->redirect("comptes/{$compteId}/transactions");
@@ -408,12 +421,22 @@ class TransactionController extends BaseController
         // Récupérer les tiers
         $tiers = Tiers::getAllByUser($this->userId);
         
+        // Récupérer les tags
+        $tagModel = new \MonBudget\Models\Tag();
+        $tags = $tagModel->getAllByUser($this->userId, 'name');
+        
+        // Récupérer les tags déjà assignés à cette transaction
+        $transactionModel = new Transaction();
+        $selectedTags = $transactionModel->getTagIds($id);
+        
         $this->view('transactions.edit', [
             'compte' => $compte,
             'transaction' => $transaction,
             'comptes' => $comptes,
             'categories' => $categories,
             'tiers' => $tiers,
+            'tags' => $tags,
+            'selectedTags' => $selectedTags,
             'title' => 'Modifier la Transaction'
         ]);
     }
@@ -561,6 +584,16 @@ class TransactionController extends BaseController
         $result = Transaction::update($id, $data);
         
         if ($result >= 0) {
+            // Gestion des tags
+            if (isset($_POST['tags']) && is_array($_POST['tags'])) {
+                $transactionModel = new Transaction();
+                $transactionModel->syncTags($id, array_map('intval', $_POST['tags']));
+            } else {
+                // Si aucun tag sélectionné, supprimer tous les tags
+                $transactionModel = new Transaction();
+                $transactionModel->detachTags($id);
+            }
+            
             // Recalculer le solde du compte
             Compte::recalculerSolde($compteId);
             
@@ -734,5 +767,206 @@ class TransactionController extends BaseController
             flash('error', 'Erreur lors de l\'exécution de la récurrence');
             $this->redirect("comptes/{$compteId}/transactions/recurrentes");
         }
+    }
+
+    /**
+     * Upload d'une pièce jointe pour une transaction
+     * 
+     * Endpoint AJAX pour uploader un fichier et l'attacher à une transaction.
+     * Vérifie l'ownership de la transaction avant autorisation.
+     * 
+     * @param int $compteId ID du compte
+     * @param int $transactionId ID de la transaction
+     * @return void
+     */
+    public function uploadAttachment(int $compteId, int $transactionId): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+        
+        // DEBUG
+        error_log("=== UPLOAD ATTACHMENT DEBUG ===");
+        error_log("CompteId: $compteId, TransactionId: $transactionId");
+        error_log("UserId: " . $this->userId);
+        error_log("FILES: " . print_r($_FILES, true));
+        
+        try {
+            // Vérifier que la transaction existe et appartient à l'utilisateur
+            $transaction = Transaction::find($transactionId);
+            if (!$transaction || $transaction['compte_id'] != $compteId) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Transaction non trouvée']);
+                return;
+            }
+
+            // Vérifier que le compte appartient à l'utilisateur
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Accès refusé']);
+                return;
+            }
+
+            // Vérifier qu'un fichier a été uploadé
+            if (!isset($_FILES['file']) || $_FILES['file']['error'] === UPLOAD_ERR_NO_FILE) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Aucun fichier fourni']);
+                return;
+            }
+
+            // Upload du fichier
+            $uploadService = new FileUploadService();
+            $fileData = $uploadService->uploadFile($_FILES['file'], $this->userId);
+
+            // Créer l'entrée en BDD
+            $attachmentData = array_merge($fileData, [
+                'transaction_id' => $transactionId
+            ]);
+
+            $attachmentId = Attachment::create($attachmentData);
+
+            if (!$attachmentId) {
+                // Supprimer le fichier si échec BDD
+                $uploadService->deleteFile($fileData);
+                http_response_code(500);
+                echo json_encode(['error' => 'Erreur lors de la sauvegarde']);
+                return;
+            }
+
+            // Récupérer l'attachment complet
+            $attachment = Attachment::find($attachmentId);
+
+            echo json_encode([
+                'success' => true,
+                'attachment' => [
+                    'id' => $attachment['id'],
+                    'original_name' => $attachment['original_name'],
+                    'size' => Attachment::formatFileSize($attachment['size']),
+                    'icon' => Attachment::getIcon($attachment['mimetype']),
+                    'is_image' => Attachment::isImage($attachment),
+                    'uploaded_at' => $attachment['uploaded_at'],
+                    'path' => $attachment['path']
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Supprimer une pièce jointe
+     * 
+     * Supprime le fichier physique et l'entrée en BDD.
+     * Vérifie l'ownership de la transaction.
+     * 
+     * @param int $compteId ID du compte
+     * @param int $transactionId ID de la transaction
+     * @param int $attachmentId ID de la pièce jointe
+     * @return void
+     */
+    public function deleteAttachment(int $compteId, int $transactionId, int $attachmentId): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+        
+        try {
+            // Vérifier que la transaction appartient à l'utilisateur
+            $transaction = Transaction::find($transactionId);
+            if (!$transaction || $transaction['compte_id'] != $compteId) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Transaction non trouvée']);
+                return;
+            }
+
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                http_response_code(403);
+                echo json_encode(['error' => 'Accès refusé']);
+                return;
+            }
+
+            // Vérifier que l'attachment existe et appartient à cette transaction
+            $attachment = Attachment::find($attachmentId);
+            if (!$attachment || $attachment['transaction_id'] != $transactionId) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Pièce jointe non trouvée']);
+                return;
+            }
+
+            // Supprimer le fichier physique
+            $uploadService = new FileUploadService();
+            $uploadService->deleteFile($attachment);
+
+            // Supprimer de la BDD
+            $deleted = Attachment::delete($attachmentId);
+
+            if ($deleted) {
+                echo json_encode(['success' => true]);
+            } else {
+                http_response_code(500);
+                echo json_encode(['error' => 'Erreur lors de la suppression']);
+            }
+
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Télécharger une pièce jointe
+     * 
+     * Sert le fichier avec les headers appropriés.
+     * Vérifie l'ownership de la transaction.
+     * 
+     * @param int $compteId ID du compte
+     * @param int $transactionId ID de la transaction
+     * @param int $attachmentId ID de la pièce jointe
+     * @return void
+     */
+    public function downloadAttachment(int $compteId, int $transactionId, int $attachmentId): void
+    {
+        $this->requireAuth();
+        
+        // Vérifier ownership
+        $transaction = Transaction::find($transactionId);
+        if (!$transaction || $transaction['compte_id'] != $compteId) {
+            http_response_code(404);
+            die('Transaction non trouvée');
+        }
+
+        $compte = Compte::find($compteId);
+        if (!$compte || $compte['user_id'] != $this->userId) {
+            http_response_code(403);
+            die('Accès refusé');
+        }
+
+        // Récupérer l'attachment
+        $attachment = Attachment::find($attachmentId);
+        if (!$attachment || $attachment['transaction_id'] != $transactionId) {
+            http_response_code(404);
+            die('Pièce jointe non trouvée');
+        }
+
+        // Récupérer le fichier
+        $filePath = Attachment::getFullPath($attachment);
+        
+        if (!file_exists($filePath)) {
+            http_response_code(404);
+            die('Fichier non trouvé');
+        }
+
+        // Headers pour le téléchargement
+        header('Content-Type: ' . $attachment['mimetype']);
+        header('Content-Length: ' . filesize($filePath));
+        header('Content-Disposition: attachment; filename="' . $attachment['original_name'] . '"');
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Pragma: no-cache');
+
+        // Servir le fichier
+        readfile($filePath);
+        exit;
     }
 }

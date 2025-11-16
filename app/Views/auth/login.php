@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion - MonBudget v2.0</title>
+    <title>Connexion - MonBudget v2.1</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="<?= url('manifest.json') ?>">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="<?= url('favicon.ico?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= url('favicon-16x16.png?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= url('favicon-32x32.png?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="48x48" href="<?= url('favicon-48x48.png?v=2.1') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= url('apple-touch-icon.png?v=2.1') ?>">
     
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">

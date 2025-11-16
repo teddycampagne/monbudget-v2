@@ -1,129 +1,303 @@
 # TODO - MonBudget V2.1
 
 ## 📋 Vue d'ensemble
-Version V2.1 - Améliorations ergonomiques et corrections de bugs
+Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 
-**Statut global** : 3/6 features complétées (50%)
+**Statut global Phase 1** : 6/6 features complétées (100%) ✅  
+**Statut global Phase 2** : 1/1 feature complétée (100%) ✅  
+**Statut global Phase 3** : 1/1 feature complétée (100%) ✅  
+**Statut global Phase 4** : 1/1 feature complétée (100%) ✅ **NOUVEAU**
+
+**Session actuelle** : Session 17 (16 nov 2025)  
+**Dernière mise à jour** : 16 novembre 2025
 
 ---
 
-## ✅ COMPLÉTÉ (3/6)
+## ✅ PHASE 4 - COMPLÉTÉE (1/1) - Session 17
 
-### 1. Breadcrumbs globaux
+### 1. Tags personnalisés ✅
+
+**Backend complet** :
+- ✅ Migration BDD : Tables `tags` + `transaction_tags` (pivot many-to-many)
+- ✅ Model `Tag` : 368 lignes, 16 méthodes (CRUD, validation, search, stats, colors)
+- ✅ Model `Transaction` : 5 méthodes tags (attachTags, detachTags, syncTags, getTagIds, hasTag)
+- ✅ Controller `TagController` : 283 lignes, 10 méthodes (CRUD + show + 3 API)
+- ✅ Routes : 10 routes (6 CRUD + 1 show + 3 API)
+- ✅ Système couleurs : 7 couleurs Bootstrap natives avec labels français
+
+**Frontend complet** :
+- ✅ JavaScript `tag-selector.js` : 400+ lignes (autocomplete, multi-select, quick-create modal)
+- ✅ CSS `tag-selector.css` : Styles composant
+- ✅ Views Tags : index, create, edit, show (4 vues complètes)
+- ✅ Component : Tag selector réutilisable avec badges colorés
+
+**Intégration Transactions** :
+- ✅ Formulaires : Sélecteur tags dans create.php + edit.php
+- ✅ Liste : Colonne tags avec badges colorés dans index.php
+- ✅ Backend : Gestion syncTags() dans store() et update()
+- ✅ Query : LEFT JOIN avec GROUP_CONCAT pour récupération tags
+
+**Dashboard & Rapports** :
+- ✅ Widget nuage de tags : Top 10 des 3 derniers mois avec statistiques
+- ✅ Rapport détaillé : Section analyse par tags dans rapports/index.php
+- ✅ API endpoint : `/api/rapports/tags` avec totaux (débits/crédits/balance)
+- ✅ Page détails tag : Vue complète avec transactions associées et stats
+
+**Recherche avancée** :
+- ✅ Filtre par tags : Select multiple dans page recherche
+- ✅ Support multi-sélection : Ctrl/Cmd pour sélectionner plusieurs tags
+- ✅ Intégration API : Filtre tags dans `/api/recherche`
+
+**Palette couleurs (7 couleurs Bootstrap)** :
+```php
+'primary' => ['label' => 'Bleu', 'hex' => '#0d6efd']
+'secondary' => ['label' => 'Gris', 'hex' => '#6c757d']
+'success' => ['label' => 'Vert', 'hex' => '#198754']
+'danger' => ['label' => 'Rouge', 'hex' => '#dc3545']
+'warning' => ['label' => 'Jaune', 'hex' => '#ffc107']
+'info' => ['label' => 'Cyan', 'hex' => '#0dcaf0']
+'dark' => ['label' => 'Noir', 'hex' => '#212529']
+```
+
+**Bugs corrigés Session 17** :
+- ✅ TagController : Ajout `use MonBudget\Core\Session`
+- ✅ Views tags : Ajout header/footer layouts
+- ✅ Tag colors : Affichage labels français au lieu de hex
+- ✅ syncTags() : Fix erreur "no active transaction"
+- ✅ Dashboard : Correction lien tags (404) → `/tags/{id}`
+- ✅ Index tags : Correction lien usage count → `/tags/{id}`
+- ✅ TagController show() : Ajout `compte_id` dans requête SQL
+
+**Fonctionnalités** :
+- ✅ CRUD complet : Création, modification, suppression tags
+- ✅ Multi-tags : Plusieurs tags par transaction (many-to-many)
+- ✅ Autocomplete : Recherche tags en temps réel (300ms debounce)
+- ✅ Quick-create : Modal AJAX pour créer tags à la volée
+- ✅ Statistiques : Usage count, totaux débits/crédits par tag
+- ✅ Navigation : Drill-down tags → transactions filtrées
+- ✅ Dashboard : Widget nuage de tags cliquable
+- ✅ Rapports : Analyse financière par tag
+- ✅ Recherche : Filtre multi-tags dans recherche avancée
+
+**Fichiers créés** :
+- `database/migrations/2025_11_16_create_tags_tables.sql`
+- `app/Models/Tag.php` (368 lignes)
+- `app/Controllers/TagController.php` (342 lignes)
+- `app/Views/tags/index.php` (214 lignes)
+- `app/Views/tags/create.php` (85 lignes)
+- `app/Views/tags/edit.php` (96 lignes)
+- `app/Views/tags/show.php` (191 lignes)
+- `assets/js/tag-selector.js` (400+ lignes)
+- `assets/css/tag-selector.css` (58 lignes)
+
+**Fichiers modifiés** :
+- `app/Models/Transaction.php` : +5 méthodes tags, modification getByCompte()
+- `app/Controllers/TransactionController.php` : Tags dans create/edit/store/update
+- `app/Controllers/HomeController.php` : Query top_tags pour dashboard
+- `app/Controllers/RapportController.php` : Méthode apiRapportTags()
+- `app/Controllers/RechercheController.php` : Filtre par tags
+- `app/Views/transactions/create.php` : Intégration tag selector
+- `app/Views/transactions/edit.php` : Intégration tag selector
+- `app/Views/transactions/index.php` : Colonne tags
+- `app/Views/home/dashboard.php` : Widget nuage de tags
+- `app/Views/rapports/index.php` : Section tags + JS
+- `app/Views/recherche/index.php` : Select tags
+- `index.php` : +10 routes tags, +1 route rapport
+
+**Total Session 17** : ~2,000 lignes de code
+
+---
+
+## ✅ PHASE 2 - COMPLÉTÉE (1/1) - Session 15
+
+### 1. Pièces jointes transactions ✅
+
+**Backend complet** :
+- ✅ Migration BDD : Table `attachments` avec foreign key `transaction_id`
+- ✅ Model `Attachment` : CRUD, validation MIME, helpers (icon, size format)
+- ✅ Service `FileUploadService` : Upload sécurisé, .htaccess auto, sanitization
+- ✅ Controller : 3 endpoints (upload, delete, download) avec ownership check
+- ✅ Routes : POST upload, DELETE suppression, GET download
+
+**Frontend complet** :
+- ✅ JavaScript `AttachmentUploader` : Drag&drop, AJAX, progress, preview images
+- ✅ Component `attachment-uploader.php` : Zone upload réutilisable
+- ✅ View `transactions/edit.php` : Intégration zone upload
+- ✅ View `transactions/index.php` : Badge compteur (icône trombone + nombre)
+
+**Sécurité** :
+- ✅ Validation MIME réelle (anti-spoofing)
+- ✅ Whitelist extensions : PDF, images, Excel, Word, TXT, CSV
+- ✅ Taille max : 5 Mo par fichier
+- ✅ .htaccess auto-généré (bloque PHP, scripts)
+- ✅ Sanitization noms fichiers (anti-XSS, path traversal)
+- ✅ Génération noms uniques (hash 32 chars)
+- ✅ Ownership check sur tous les endpoints
+
+**Stockage** :
+- ✅ Organisation : `uploads/attachments/{user_id}/{year}/{month}/`
+- ✅ Cleanup automatique sur suppression transaction (CASCADE)
+
+**Corrections post-tests (Session 15)** :
+- ✅ Namespaces : `App\Models` → `MonBudget\Models` (cohérence architecture)
+- ✅ Database API : `getInstance()` → `getConnection()` (méthode correcte)
+- ✅ URLs JavaScript : Ajout `baseUrl` pour sous-dossier `/monbudgetV2`
+- ✅ Chemins fichiers : Correction path absolu → relatif (`attachments/...`)
+- ✅ PHP limits : `upload_max_filesize` 6M dans `.htaccess`
+- ✅ CSS manquant : Création `attachment-uploader.css`
+- ✅ Preview image : Ajout attributs `data-*` + listeners JavaScript
+- ✅ Controller JSON : Ajout champ `path` dans réponse upload
+
+**Tests validés** :
+- ✅ Upload PDF 2MB - OK
+- ✅ Upload JPG - OK
+- ✅ Rejet PDF 6MB - OK (taille)
+- ✅ Rejet .exe - OK (type)
+- ✅ Rejet .php - OK (type)
+- ✅ Aperçu image - OK (modal Bootstrap)
+- ✅ Téléchargement - OK (nom original)
+- ✅ Suppression - OK (confirmation + animation)
+- ✅ Badge compteur - OK (liste transactions)
+
+**Fichiers créés/modifiés** :
+- Créés : `database/migrations/2025_11_16_create_attachments_table.sql`
+- Créés : `app/Models/Attachment.php` (273 lignes)
+- Créés : `app/Services/FileUploadService.php` (276 lignes)
+- Créés : `assets/js/attachment-uploader.js` (338 lignes)
+- Créés : `assets/css/attachment-uploader.css` (58 lignes)
+- Créés : `app/Views/components/attachment-uploader.php` (143 lignes)
+- Créés : `tests/fixtures/attachments/README.md` (guide tests)
+- Modifiés : `app/Controllers/TransactionController.php` (+195 lignes)
+- Modifiés : `index.php` (+3 routes)
+- Modifiés : `app/Views/transactions/edit.php` (+4 lignes)
+- Modifiés : `app/Views/transactions/index.php` (+19 lignes)
+- Modifiés : `.htaccess` (+5 lignes, limites upload)
+- Modifiés : `.gitignore` (+10 lignes, uploads/attachments)
+
+**Total Session 15** : ~1,323 lignes de code ajoutées
+
+**Commits Session 15** :
+- `7d310a0` - feat: Pièces jointes transactions - Backend complet
+- `9933cb7` - feat: Pièces jointes transactions - Frontend & docs complets
+- `dad19c5` - docs: Ajout récapitulatif complet Session 15
+- `10ca3e6` - fix: Corrections pièces jointes - Namespaces, URLs et chemins
+- `08c90e0` - chore: Ajouter uploads/attachments et fixtures tests au .gitignore
+
+---
+
+## ✅ PHASE 1 - COMPLÉTÉE (6/6) - Session 14
+
+### 1. Breadcrumbs globaux ✅
 - ✅ Composant breadcrumbs réutilisable (`app/Views/components/breadcrumbs.php`)
 - ✅ Intégration sur toutes les pages principales
 - ✅ Navigation contextuelle avec URL helper
 - ✅ Fichiers modifiés : banques/show, comptes/index, categories/index, transactions/index
 
-### 2. Création rapide Catégorie/Tiers
+### 2. Création rapide Catégorie/Tiers ✅
 - ✅ Modals AJAX dans formulaire Transaction (create/edit)
 - ✅ Endpoints API : `/api/categories-add`, `/api/tiers-add`
 - ✅ Rechargement automatique des select après création
 - ✅ Validation côté serveur et retour JSON
 
-### 3. Drill-down Banque → Comptes
+### 3. Drill-down Banque → Comptes ✅
 - ✅ Vue détail banque (`app/Views/banques/show.php`)
 - ✅ Liste des comptes associés avec bouton "Voir les transactions"
 - ✅ Pré-sélection banque lors de création compte depuis vue banque
 - ✅ Gestion old() retournant chaîne vide (correction bug)
 
----
+### 4. Gestion sous-catégories ✅
+- ✅ Navigation basée sur sessions (retour intelligent après actions)
+- ✅ Formulaires dédiés création/édition sous-catégories
+- ✅ Liste avec drill-down par catégorie parente
+- ✅ Parent fixé et en lecture seule dans formulaires
+- ✅ Breadcrumbs contextuels (Catégories → [Parent] → Sous-catégorie)
 
-## 🚧 EN COURS (1/6)
+### 5. Bouton dupliquer transaction ✅
+- ✅ Bouton "Dupliquer" dans transactions/index.php (icône bi-files)
+- ✅ Bouton dans recherche/index.php
+- ✅ Route GET /comptes/{id}/transactions/{tid}/duplicate
+- ✅ Pré-remplissage formulaire création avec données source
+- ✅ Date réinitialisée à aujourd'hui
+- ✅ Conversion en transaction simple (est_recurrente = 0)
+- ✅ Flag isDuplicate pour message d'information
 
-### 4. Gestion sous-catégories inline
-**Objectif** : Gérer les sous-catégories directement depuis le formulaire d'édition de la catégorie parente
+### 6. Date picker avec raccourcis ✅
+- ✅ Composant JavaScript réutilisable (`assets/js/date-picker-shortcuts.js`)
+- ✅ Raccourcis date : Aujourd'hui, Hier, Il y a 7j, Début/Fin mois
+- ✅ Raccourcis période rapports : Mois actuel, Mois dernier, Année actuelle/dernière
+- ✅ Auto-initialisation via attribut data-shortcuts
+- ✅ Appliqué sur : transactions (create/edit), recherche, récurrences, rapports
+- ✅ Style Bootstrap : btn-sm btn-outline-secondary
 
-**À faire** :
-- [ ] Ajouter section "Sous-catégories" dans `categories/edit.php`
-- [ ] Liste des sous-catégories existantes (tableau éditable)
-- [ ] Bouton "Ajouter une sous-catégorie" (ligne inline)
-- [ ] Endpoints API :
-  - `POST /api/categories/{id}/sous-categories` (créer)
-  - `PUT /api/categories/{id}/sous-categories/{scId}` (modifier nom)
-  - `DELETE /api/categories/{id}/sous-categories/{scId}` (supprimer)
-- [ ] Validation : empêcher suppression si transactions liées
-- [ ] JavaScript pour gestion inline (add/edit/delete)
-
-**Fichiers à modifier** :
-- `app/Views/categories/edit.php`
-- `app/Controllers/CategorieController.php` (ou ApiController)
-- Créer `assets/js/sous-categories-inline.js`
-
-**Note** : Ligne 150 de categories/edit.php partiellement lue lors analyse précédente
-
----
-
-## 📝 À FAIRE (2/6)
-
-### 5. Bouton dupliquer transaction
-**Objectif** : Ajouter un bouton pour dupliquer rapidement une transaction
-
-**À faire** :
-- [ ] Ajouter bouton "Dupliquer" dans :
-  - `transactions/index.php` (colonne Actions)
-  - `comptes/transactions.php` (vue transactions d'un compte)
-  - `recherche/index.php` (résultats recherche)
-- [ ] Endpoint : `GET /comptes/{id}/transactions/{tid}/duplicate`
-- [ ] Pré-remplir formulaire avec données transaction source
-- [ ] Modifier uniquement la date (date du jour par défaut)
-- [ ] Icône Bootstrap : `bi-files` ou `bi-clipboard-plus`
-
-**Fichiers à modifier** :
-- `app/Views/transactions/index.php`
-- `app/Views/comptes/transactions.php`
-- `app/Views/recherche/index.php`
-- `app/Controllers/TransactionController.php`
-- `index.php` (route)
-
-**Specs fonctionnelles** :
-- Dupliquer TOUS les champs sauf : `id`, `created_at`, `updated_at`
-- Date transaction = date du jour
-- Si transaction récurrente : `est_recurrente = 0` (transaction simple)
-- Rediriger vers formulaire création pré-rempli (pas création directe)
+**Bugs corrigés Session 14** :
+- ✅ Rapports : Filtrage par compte ignoré dans toutes les APIs
+- ✅ Transactions : Bouton Annuler avec route 404
+- ✅ Rapports : Fonction chargerSuiviBudgetaire inexistante (→ chargerBudgetaire)
 
 ---
 
-### 6. Date picker avec raccourcis
-**Objectif** : Améliorer les champs date avec des raccourcis rapides
+## ✅ PHASE 3 - COMPLÉTÉE (1/1) - Session PWA (16 nov 2025)
 
-**À faire** :
-- [ ] Créer composant `assets/js/date-picker-shortcuts.js`
-- [ ] Ajouter boutons raccourcis sous champs date :
-  - "Aujourd'hui"
-  - "Hier" 
-  - "Début du mois"
-  - "Fin du mois"
-  - "Il y a 7 jours"
-  - "Il y a 30 jours"
-- [ ] Appliquer sur formulaires :
-  - Transactions (create/edit)
-  - Recherche (date_debut/date_fin)
-  - Budgets
-  - Rapports
-- [ ] Style Bootstrap : boutons `btn-sm btn-outline-secondary`
-- [ ] Layout : groupe de boutons horizontaux ou dropdown
+### 1. Progressive Web App (PWA) ✅
 
-**Fichiers à modifier** :
-- Créer `assets/js/date-picker-shortcuts.js`
-- `app/Views/transactions/create.php`
-- `app/Views/transactions/edit.php`
-- `app/Views/recherche/index.php`
-- `app/Views/budgets/create.php`
-- `app/Views/rapports/index.php`
+**Configuration PWA** :
+- ✅ `manifest.json` : Configuration app installable (standalone, shortcuts, screenshots)
+- ✅ `service-worker.js` : Cache Network First + fallback offline (v2.1.0)
+- ✅ `offline.html` : Page hors ligne avec auto-reconnect (5s polling)
+- ✅ `pwa-install.js` : Enregistrement SW + prompt installation + toasts
 
-**HTML exemple** :
-```html
-<div class="mb-3">
-    <label for="date" class="form-label">Date</label>
-    <input type="date" class="form-control" id="date" name="date">
-    <div class="btn-group btn-group-sm mt-1" role="group">
-        <button type="button" class="btn btn-outline-secondary" data-shortcut="today">Aujourd'hui</button>
-        <button type="button" class="btn btn-outline-secondary" data-shortcut="yesterday">Hier</button>
-        <button type="button" class="btn btn-outline-secondary" data-shortcut="month-start">Début mois</button>
-    </div>
-</div>
-```
+**Icônes et Favicons** :
+- ✅ 8 icônes PWA (72px à 512px) - Dégradé violet + symbole €
+- ✅ 2 icônes maskable Android (192px, 512px)
+- ✅ 4 favicons (16x16, 32x32, 48x48 PNG + ICO multi-résolution)
+- ✅ 1 icône Apple Touch (180px)
+- ✅ Script générateur Python (`setup/generate-pwa-icons.py`)
+
+**Intégration** :
+- ✅ Header : PWA meta tags + favicons + manifest (v2.1)
+- ✅ Footer : Script PWA installation
+- ✅ Login : Favicons + manifest pour cohérence
+- ✅ `.htaccess` : Règles de réécriture pour fichiers PWA
+
+**Fonctionnalités** :
+- ✅ Installation desktop/mobile via bouton ou menu navigateur
+- ✅ Mode hors ligne fonctionnel avec cache intelligent
+- ✅ Détection connexion online/offline avec toasts
+- ✅ Badge "App" en mode standalone
+- ✅ Modal instructions navigateur (Edge/Chrome/Opera) si prompt indisponible
+- ✅ Page diagnostic (`pwa-diagnostic.html`) pour troubleshooting
+
+**Outils de développement** :
+- ✅ `setup/generate-pwa-icons.py` : Régénération automatique icônes
+- ✅ `setup/README.md` : Documentation script
+- ✅ `pwa-diagnostic.html` : Checks PWA complets (SW, manifest, beforeinstallprompt)
+
+**Fichiers créés** :
+- `public/manifest.json` (104 lignes)
+- `public/service-worker.js` (121 lignes)
+- `public/offline.html` (98 lignes)
+- `assets/js/pwa-install.js` (203 lignes)
+- `pwa-diagnostic.html` (263 lignes)
+- `setup/generate-pwa-icons.py` (286 lignes)
+- `setup/README.md`
+- 15 fichiers d'icônes (assets/icons/ + public/)
+- Copies à la racine : manifest.json, service-worker.js, offline.html, favicons
+
+**Fichiers modifiés** :
+- `app/Views/layouts/header.php` : PWA meta tags + favicons v2.1
+- `app/Views/layouts/footer.php` : Script pwa-install.js
+- `app/Views/auth/login.php` : Favicons + manifest + v2.1
+- `.htaccess` : Revert règles (fichiers PWA à la racine)
+- `database.sql` : Ajout table attachments
+
+**Total Session PWA** : ~1,900 lignes de code
+
+**Commits Session PWA** :
+- `8ea27c2` - feat: Implémentation PWA complète avec icônes et favicon (24 fichiers)
+- `f87bb1c` - fix: Correction PWA - Installation fonctionnelle (5 fichiers)
+- `3348b3e` - fix: Ajout favicons à la racine et paramètre de version (6 fichiers)
+- `53bc8e9` - fix: Ajout favicons et manifest sur page login
+- `fbfd7e5` - chore: Ajout table attachments dans database.sql
 
 ---
 
@@ -187,28 +361,52 @@ Version V2.1 - Améliorations ergonomiques et corrections de bugs
 
 ---
 
-## 🎯 Priorités
+## 🎯 Priorités V2.2+
 
 ### Urgent
 - Aucun bug bloquant identifié
 
 ### Haute
-1. **Gestion sous-catégories inline** (améliore UX catégories)
-2. **Bouton dupliquer transaction** (gain de temps utilisateur)
+1. ~~**🏷️ Tags personnalisés**~~ ✅ **COMPLÉTÉ Session 17**
+2. **🔔 Système d'alertes** - Notifications dépassements budgets par email
+3. **🌍 Multi-devises** - Support EUR/USD/GBP avec taux de change
 
 ### Moyenne  
-3. **Date picker avec raccourcis** (confort, mais fonctionnalité existante)
+4. **🔍 Recherche full-text** - Indexation MySQL + opérateurs avancés
+5. **⌨️ Raccourcis clavier** - Ctrl+N, Ctrl+K, actions bulk
+6. **📊 Monitoring** - Logs structurés + métriques + APM
+
+### Basse
+7. **🔐 API REST** - Endpoints v1 + JWT + OpenAPI/Swagger
+8. **2FA** - TOTP Google Authenticator pour admins
 
 ---
 
 ## 📈 Statistiques V2.1
 
-- **Commit principal** : `3f47d6f` (16 nov 2025)
-- **Fichiers modifiés** : 26 fichiers
-- **Lignes ajoutées** : 973
-- **Lignes supprimées** : 495
-- **Nouveaux fichiers** : 3 (ApiController, banques/show, breadcrumbs)
-- **Fichiers supprimés** : 1 (ui-helpers.php)
+**Phase 1 (Session 14)** :
+- Commit : `3f47d6f` (16 nov 2025)
+- Fichiers modifiés : 26
+- Lignes : +973 / -495
+
+**Phase 2 (Session 15 - Attachments)** :
+- Commits : 5 commits
+- Fichiers créés : 7
+- Lignes : +1,323
+
+**Phase 3 (Session 16 - PWA)** :
+- Commits : 5 commits  
+- Fichiers créés : 22
+- Lignes : +1,900
+
+**Phase 4 (Session 17 - Tags)** :
+- Fichiers créés : 9
+- Fichiers modifiés : 12
+- Lignes : +2,000
+
+**Total V2.1** : ~6,200 lignes ajoutées sur 4 sessions
+
+**Total V2.1** : ~4,200 lignes ajoutées sur 3 sessions
 
 ---
 
@@ -245,7 +443,7 @@ function showErrorModal(titre, message) {
 
 ---
 
-## 🚀 SESSION 14+ - FONCTIONNALITÉS FUTURES
+## 🚀 FONCTIONNALITÉS FUTURES (V2.2+)
 
 ### 💡 Nouvelles fonctionnalités potentielles
 
@@ -255,14 +453,6 @@ function showErrorModal(titre, message) {
 - [ ] **Récapitulatif mensuel automatique** : Email synthétisant le mois
 - [ ] **Configuration SMTP** : Interface admin pour paramétrer serveur email
 - [ ] **Templates personnalisables** : Emails HTML avec logo et couleurs
-
-#### 📱 Progressive Web App (PWA)
-- [ ] **Manifest.json** : Configuration app installable
-- [ ] **Service Worker** : Cache assets + API calls pour offline
-- [ ] **Mode offline** : Consultation données en cache
-- [ ] **Sync background** : Synchronisation automatique à reconnexion
-- [ ] **Push notifications** : Notifications natives navigateur/mobile
-- [ ] **Installation prompt** : Bouton "Installer l'application"
 
 #### 🔐 API REST sécurisée
 - [ ] **Endpoints REST** : `/api/v1/{resource}` avec authentification JWT
@@ -277,12 +467,6 @@ function showErrorModal(titre, message) {
 - [ ] **Conversion automatique** : Affichage montants dans devise préférée
 - [ ] **Historique taux** : Graphique évolution EUR/USD sur 12 mois
 - [ ] **Comptes multi-devises** : Solde par devise + équivalent total
-
-#### 📎 Pièces jointes transactions (NOUVEAU V2.2)
-- [ ] **Table attachments** : `id, transaction_id, filename, path, mimetype, size, uploaded_at`
-- [ ] **Upload multi-fichiers** : Formulaire transaction (images/PDF/Excel max 5MB par fichier)
-- [ ] **Storage sécurisé** : Fichiers dans `uploads/attachments/{user_id}/{year}/{month}/`
-- [ ] **Vignettes** : Prévisualisation images (JPG/PNG) avec lightbox
 - [ ] **Validation MIME** : Whitelist types autorisés (PDF, images, XLS, DOCX)
 - [ ] **Compteur** : Badge nombre pièces jointes dans liste transactions
 - [ ] **Recherche** : Filtre "Avec/Sans pièces jointes" dans recherche avancée
