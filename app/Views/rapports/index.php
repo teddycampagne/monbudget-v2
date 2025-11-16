@@ -268,7 +268,6 @@ document.getElementById('formSelectionRapport').addEventListener('submit', funct
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('nb_mois_evolution').addEventListener('change', function() {
         if (params.compte_id) {
-            console.log('Changement nb_mois_evolution, rechargement évolution solde');
             chargerEvolutionSolde();
         }
     });
@@ -276,22 +275,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Rafraîchir automatiquement si déjà affiché
     ['compte_selection', 'mois_selection', 'annee_selection'].forEach(function(id) {
         document.getElementById(id).addEventListener('change', function() {
-            console.log(`Changement détecté sur ${id}:`, this.value);
-            
             // Si les résultats sont déjà affichés, les rafraîchir
             if (document.getElementById('resultats').style.display === 'block') {
                 const compteId = document.getElementById('compte_selection').value;
                 const mois = document.getElementById('mois_selection').value;
                 const annee = document.getElementById('annee_selection').value;
                 
-                console.log('Résultats déjà affichés - Rafraîchissement avec:', { compteId, mois, annee });
-                
                 if (compteId && annee) {
                     params.compte_id = parseInt(compteId);
                     params.annee = parseInt(annee);
                     params.mois = mois ? parseInt(mois) : null;
                     
-                    console.log('Nouveaux params:', params);
                     afficherResultats();
                 }
             }
@@ -368,12 +362,8 @@ async function chargerEvolutionSolde() {
     const nbMois = document.getElementById('nb_mois_evolution').value;
     const url = `api/rapports/evolution-solde?compte_id=${params.compte_id}&nb_mois=${nbMois}`;
     
-    console.log('Chargement évolution solde avec URL:', url);
-    
     const response = await fetch(url);
     const data = await response.json();
-    
-    console.log('Données reçues pour évolution solde:', data);
     
     const ctx = document.getElementById('chartEvolutionSolde').getContext('2d');
     
@@ -457,12 +447,8 @@ async function chargerRepartition(type, canvasId, chartVar) {
     if (params.compte_id) url += `&compte_id=${params.compte_id}`;
     if (params.mois) url += `&mois=${params.mois}`;
     
-    console.log(`Chargement répartition ${type} avec URL:`, url);
-    
     const response = await fetch(url);
     const data = await response.json();
-    
-    console.log(`Données reçues pour répartition ${type}:`, data);
     
     const ctx = document.getElementById(canvasId).getContext('2d');
     
@@ -521,12 +507,8 @@ async function chargerBalances() {
     let url = `api/rapports/balances?annee=${params.annee}`;
     if (params.compte_id) url += `&compte_id=${params.compte_id}`;
     
-    console.log('Chargement balances avec URL:', url);
-    
     const response = await fetch(url);
     const data = await response.json();
-    
-    console.log('Données reçues pour balances:', data);
     
     const ctx = document.getElementById('chartBalances').getContext('2d');
     
