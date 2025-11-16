@@ -165,7 +165,7 @@ class Configuration extends BaseModel
      * 
      * Configurations par défaut :
      * - app_name : 'MonBudget v2.0'
-     * - app_version : '2.0.0'
+     * - app_version : '2.2.0'
      * - currency : 'EUR'
      * - currency_symbol : '€'
      * - date_format : 'd/m/Y'
@@ -186,7 +186,7 @@ class Configuration extends BaseModel
     {
         $defaults = [
             'app_name' => 'MonBudget v2.0',
-            'app_version' => '2.0.0',
+            'app_version' => '2.2.0',
             'currency' => 'EUR',
             'currency_symbol' => '€',
             'date_format' => 'd/m/Y',

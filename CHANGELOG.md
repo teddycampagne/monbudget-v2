@@ -7,7 +7,136 @@ et ce projet adhère au [Versioning Sémantique](https://semver.org/lang/fr/).
 
 ---
 
-## [2.1.0] - En cours (branche develop)
+## [2.2.0] - 16 novembre 2025 (branche develop)
+
+### 🎯 Version mineure - Automation & Database Optimization
+
+#### ✨ Ajouté
+
+**Session 17.5 - Système d'exécution automatique des récurrences**
+- Service RecurrenceService (445 lignes)
+  - Exécution automatique au login pour tous les utilisateurs
+  - Protection anti-doublons robuste (recurrence_id + date_transaction)
+  - Gestion intelligente des weekends (3 modes : aucune, jour_ouvré_suivant, jour_ouvré_précédent)
+  - Calcul automatique prochaine exécution (quotidien, hebdomadaire, mensuel, trimestriel, semestriel, annuel)
+  - Désactivation automatique si limite atteinte ou date_fin dépassée
+  - Logs mensuels détaillés (storage/logs/recurrence_auto_YYYY-MM.log)
+  - Statistiques complètes (vérifiées, exécutées, ignorées, erreurs)
+- Script CLI execute_recurrences.php (120 lignes)
+  - Affichage Unicode avec box drawing
+  - Support cron pour automatisation serveur
+  - Sortie formatée avec statistiques
+- Migration BDD recurrence_id
+  - Colonne recurrence_id dans transactions (FK vers recurrences.id)
+  - Index idx_recurrence_id pour performances
+  - Contrainte ON DELETE SET NULL (préserve transactions si récurrence supprimée)
+- Hook AuthController::login()
+  - Exécution automatique silencieuse
+  - Message flash si transactions générées
+- Documentation complète RECURRENCES-AUTO.md (363 lignes)
+  - Guide d'utilisation
+  - Architecture détaillée
+  - Algorithme anti-doublons
+  - Scénarios de test
+
+**Session 17.5 Part 3 - Dashboard admin récurrences**
+- Page d'administration complète /recurrences/admin
+  - Statistiques globales (5 métriques) : total, actives, inactives, échues, transactions générées
+  - Dernière exécution auto : timestamp, récurrences vérifiées/exécutées/ignorées, erreurs
+  - Prochaines exécutions (7 jours) avec badges colorés (aujourd'hui=rouge, demain=jaune)
+  - Top 10 récurrences : classement par nombre de transactions avec icônes trophées
+  - Logs récents : affichage terminal-style des 5 dernières lignes
+- Modèle Recurrence : 7 nouvelles méthodes statistiques
+  - countTotal(), countActives(), countInactives()
+  - countEchues(), countTransactionsGenerees()
+  - getUpcoming($days), getTopByTransactions($limit)
+- Interface responsive Bootstrap 5
+  - Grille 2 colonnes (col-lg-6)
+  - Cards avec icônes et couleurs
+  - Tables hover avec détails complets
+  - Badges contextuels (success/warning/danger)
+- Navigation intégrée
+  - Lien menu "Récurrences" dans header
+  - Bouton "Administration" dans liste récurrences
+
+**Session 17 - Tags personnalisés (Phase 4)**
+- Système complet de tags multi-transactions
+  - Tables tags + transaction_tags (many-to-many)
+  - Model Tag (368 lignes) : CRUD, validation, search, stats, colors
+  - TagController (342 lignes) : 10 méthodes + 3 API
+  - 7 couleurs Bootstrap natives avec labels français
+- Frontend JavaScript tag-selector.js (400+ lignes)
+  - Autocomplete avec debounce 300ms
+  - Multi-select avec badges colorés
+  - Quick-create modal AJAX
+  - Component réutilisable
+- Intégration complète
+  - Formulaires transactions (create/edit)
+  - Liste transactions avec badges colorés
+  - Dashboard : Widget nuage de tags top 10
+  - Rapports : Analyse par tags avec totaux
+  - Recherche avancée : Filtre multi-tags
+  - Page détails tag : Transactions associées + stats
+
+#### 🗑️ Supprimé
+
+**Session 17.5 Part 2 - Optimisation BDD**
+- 14 champs obsolètes dans table transactions
+  - est_recurrente, frequence, intervalle, jour_execution, jour_semaine
+  - date_debut, date_fin, prochaine_execution, derniere_execution
+  - nb_executions, nb_executions_max, auto_validation
+  - tolerance_weekend, recurrence_active
+  - Raison : Récurrences maintenant dans table séparée `recurrences`
+- Table beneficiaires (0 lignes, duplicate avec tiers)
+- Migration 2025_11_16_cleanup_obsolete_fields.sql
+- Fichiers obsolètes projet
+  - database.sql.backup (57KB)
+  - pwa-diagnostic.html (15KB)
+  - docs/SESSION-15-RECAP.md
+  - docs/SESSION-17.5-RECURRENCES-AUTO.md (doublon)
+
+#### 🐛 Corrigé
+
+**Bugs Session 17.5**
+- RecurrenceService : Requête sur table transactions au lieu de recurrences
+- Nom champs : actif → recurrence_active (monbudget_v2)
+- Champs manquants : Restauration user_id, tiers_id, moyen_paiement, etc.
+- Fréquences enum : mensuelle → mensuel (sans 'e')
+- Admin dashboard : c.solde → c.solde_actuel (nom colonne correct)
+- Admin dashboard : Fond/texte logs illisibles (bg-dark + text-dark)
+
+**Bugs Session 17**
+- TagController : Ajout use MonBudget\Core\Session
+- Views tags : Ajout header/footer layouts
+- Tag colors : Affichage labels français au lieu de hex
+- syncTags() : Fix "no active transaction"
+- Dashboard : Correction lien tags 404 → /tags/{id}
+- Index tags : Correction lien usage count → /tags/{id}
+- TagController show() : Ajout compte_id dans requête SQL
+
+#### 📊 Statistiques
+
+**Commits Session 17.5** :
+- faafc0d : feat(recurrence): Système exécution auto avec anti-doublons
+- 3e43ec0 : refactor(database): Nettoyage champs obsolètes + regeneration
+- 8bfc29e : feat(recurrence): Page admin avec statistiques et monitoring
+- 5fdab6c : chore: Nettoyage fichiers obsolètes
+
+**Lignes de code Session 17.5** :
+- RecurrenceService.php : 445 lignes
+- execute_recurrences.php : 120 lignes
+- RecurrenceController : +85 lignes (admin)
+- Recurrence model : +115 lignes (7 méthodes stats)
+- admin.php view : 375 lignes
+- RECURRENCES-AUTO.md : 363 lignes
+- Total : ~1,500+ lignes
+
+**Commits Session 17** :
+- 22 fichiers, +2,710 lignes
+
+---
+
+## [2.1.0] - 15 novembre 2025
 
 ### 🎯 Version mineure - UX Improvements & Attachments
 

@@ -47,7 +47,7 @@ class Installer
         $config = [
             'installed' => true,
             'installed_at' => date('Y-m-d H:i:s'),
-            'version' => '2.0.0'
+            'version' => '2.2.0'
         ];
         
         return file_put_contents($configFile, json_encode($config, JSON_PRETTY_PRINT)) !== false;
