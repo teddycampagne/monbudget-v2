@@ -296,7 +296,7 @@
 
                         <!-- Boutons -->
                         <div class="d-flex justify-content-between">
-                            <a href="<?= url('transactions') ?>" class="btn btn-secondary">
+                            <a href="<?= url("comptes/{$compte['id']}/transactions") ?>" class="btn btn-secondary">
                                 <i class="bi bi-arrow-left"></i> Annuler
                             </a>
                             <button type="submit" class="btn btn-primary">
