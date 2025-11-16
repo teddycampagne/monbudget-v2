@@ -648,16 +648,17 @@ class TransactionController extends BaseController
             return;
         }
         
-        // Vérifier si c'est un modèle de récurrence
-        if ($transaction['est_recurrente'] == 1) {
-            // Mode de suppression : 'modele' (défaut) ou 'tout'
-            $mode = $_POST['mode_suppression'] ?? 'modele';
+        // Vérifier si c'est une transaction issue d'une récurrence
+        // Note: Maintenant les récurrences sont dans une table séparée
+        // On vérifie si cette transaction a un recurrence_id
+        if (!empty($transaction['recurrence_id'])) {
+            // Cette transaction est liée à une récurrence
+            // Pour supprimer la récurrence elle-même, utiliser /recurrences/{id}/delete
+            flash('warning', 'Cette transaction est issue d\'une récurrence. Pour modifier ou supprimer la récurrence, utilisez le menu Récurrences.');
+            // Supprimer uniquement cette occurrence
+            $deleted = Transaction::delete($id);
             
-            if ($mode === 'tout') {
-                // Supprimer le modèle + toutes les occurrences
-                $result = Transaction::deleteRecurrenceWithOccurrences($id);
-                
-                if ($result['modele'] > 0) {
+            if ($deleted) {
                     // Recalculer le solde si des occurrences ont été supprimées
                     if ($result['occurrences'] > 0) {
                         Compte::recalculerSolde($compteId);

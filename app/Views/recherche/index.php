@@ -747,8 +747,7 @@ async function sauvegarderTransaction() {
     if (sousCategorieId) formData.append('sous_categorie_id', sousCategorieId);
     if (tiersId) formData.append('tiers_id', tiersId);
     
-    // Champs requis pour la validation mais non utilisés dans ce contexte
-    formData.append('est_recurrente', 0);
+    // Note: est_recurrente supprimé - les récurrences sont maintenant dans une table séparée
     
     try {
         const response = await fetch(`<?= url('comptes') ?>/${compteId}/transactions/${transactionId}/update`, {

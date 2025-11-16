@@ -627,13 +627,13 @@ class RapportController extends BaseController
     {
         // Récupérer les transactions récurrentes actives de ce compte
         $sql = "
-            SELECT *
-            FROM transactions
-            WHERE compte_id = ?
-            AND est_recurrente = 1
-            AND recurrence_active = 1
-            AND (date_fin IS NULL OR date_fin >= CURDATE())
-            ORDER BY prochaine_execution ASC
+            SELECT r.*, c.nom as compte_nom
+            FROM recurrences r
+            INNER JOIN comptes c ON r.compte_id = c.id
+            WHERE r.compte_id = ?
+            AND r.recurrence_active = 1
+            AND (r.date_fin IS NULL OR r.date_fin >= CURDATE())
+            ORDER BY r.prochaine_execution ASC
         ";
         
         $recurrences = Database::select($sql, [$compteId]);

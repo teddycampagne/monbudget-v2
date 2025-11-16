@@ -197,20 +197,22 @@
 
                         <!-- Section Récurrence -->
                         <div class="card bg-light mb-3">
-                            <div class="card-header">
+                            <div class="card-header bg-light">
                                 <div class="form-check">
                                     <input class="form-check-input" 
                                            type="checkbox" 
                                            id="est_recurrente" 
                                            name="est_recurrente" 
                                            value="1"
-                                           <?= old('est_recurrente') ? 'checked' : '' ?>>
-                                    <label class="form-check-label" for="est_recurrente">
+                                           disabled
+                                           title="Utilisez le menu Récurrences pour créer des transactions récurrentes">
+                                    <label class="form-check-label text-muted" for="est_recurrente">
                                         <i class="bi bi-arrow-repeat"></i> <strong>Transaction récurrente</strong>
+                                        <small class="d-block">Utilisez le menu <a href="<?= url('recurrences') ?>">Récurrences</a> pour créer des transactions récurrentes</small>
                                     </label>
                                 </div>
                             </div>
-                            <div class="card-body" id="recurrence_section" style="display: <?= old('est_recurrente') ? 'block' : 'none' ?>;">
+                            <div class="card-body d-none" id="recurrence_section">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="frequence" class="form-label">Fréquence</label>

@@ -15,7 +15,7 @@
         <div>
             <h1 class="h3 mb-0"><i class="bi bi-pencil"></i> Modifier la Transaction</h1>
             <p class="text-muted mb-0">
-                <?= $transaction['est_recurrente'] ? 'Transaction récurrente' : 'Transaction simple' ?>
+                <?= !empty($transaction['recurrence_id']) ? 'Transaction récurrente' : 'Transaction simple' ?>
             </p>
         </div>
         <a href="<?= url("comptes/{$compte['id']}/transactions") ?>" class="btn btn-secondary">
@@ -189,8 +189,8 @@
                 </div>
 
                 <!-- Récurrence -->
-                <div class="card mb-4 border-<?= $transaction['est_recurrente'] ? 'warning' : 'info' ?>">
-                    <div class="card-header bg-<?= $transaction['est_recurrente'] ? 'warning' : 'info' ?>">
+                <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
+                    <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
                         <div class="form-check mb-0">
                             <input class="form-check-input" 
                                    type="checkbox" 
@@ -207,7 +207,7 @@
                             </small>
                         </div>
                     </div>
-                    <div class="card-body" id="recurrence_fields" style="display: <?= $transaction['est_recurrente'] ? 'block' : 'none' ?>;">
+                    <div class="card-body" id="recurrence_fields" style="display: <?= !empty($transaction['recurrence_id']) ? 'block' : 'none' ?>;">
                         <div class="form-check mb-3">
                             <input class="form-check-input" 
                                    type="checkbox" 
@@ -359,7 +359,7 @@
                         <li><strong>Virement :</strong> transfert entre comptes</li>
                     </ul>
 
-                    <?php if ($transaction['est_recurrente']): ?>
+                    <?php if (!empty($transaction['recurrence_id'])): ?>
                     <hr>
                     <h6>Gestion de la récurrence</h6>
                     <p class="small">
