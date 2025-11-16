@@ -42,6 +42,10 @@ spl_autoload_register(function ($class) {
 require_once BASE_PATH . '/app/Core/helpers.php';
 require_once BASE_PATH . '/app/Core/ui_helpers.php';
 
+// Charger les variables d'environnement depuis .env
+use MonBudget\Core\Environment;
+Environment::loadEnv();
+
 // Gestion des erreurs
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -49,7 +53,6 @@ ini_set('display_errors', 1);
 use MonBudget\Core\Router;
 use MonBudget\Core\Installer;
 use MonBudget\Core\Database;
-use MonBudget\Core\Environment;
 use MonBudget\Controllers\SetupController;
 use MonBudget\Controllers\AuthController;
 use MonBudget\Controllers\HomeController;

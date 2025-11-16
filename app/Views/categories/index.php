@@ -103,7 +103,14 @@
                             <?php endif; ?>
 
                             <?php if (!empty($categorie['sous_categories'])): ?>
-                                <h6 class="text-muted small mb-2">Sous-catégories (<?= count($categorie['sous_categories']) ?>)</h6>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="text-muted small mb-0">Sous-catégories (<?= count($categorie['sous_categories']) ?>)</h6>
+                                    <a href="<?= url('categories/create?parent_id=' . $categorie['id']) ?>" 
+                                       class="btn btn-sm btn-outline-secondary" 
+                                       title="Ajouter une sous-catégorie">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </a>
+                                </div>
                                 <div class="list-group list-group-flush">
                                     <?php foreach ($categorie['sous_categories'] as $sous): ?>
                                         <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
@@ -130,9 +137,16 @@
                                     <?php endforeach; ?>
                                 </div>
                             <?php else: ?>
-                                <p class="text-muted mb-0">
-                                    <small><i class="bi bi-info-circle"></i> Aucune sous-catégorie</small>
-                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <p class="text-muted mb-0">
+                                        <small><i class="bi bi-info-circle"></i> Aucune sous-catégorie</small>
+                                    </p>
+                                    <a href="<?= url('categories/create?parent_id=' . $categorie['id']) ?>" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="Ajouter une sous-catégorie">
+                                        <i class="bi bi-plus-lg"></i> Ajouter
+                                    </a>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>

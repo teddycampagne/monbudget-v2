@@ -11,6 +11,60 @@ class Environment
 {
     private static ?string $environment = null;
     private static array $config = [];
+    private static bool $envLoaded = false;
+    
+    /**
+     * Charger le fichier .env
+     */
+    public static function loadEnv(?string $path = null): void
+    {
+        if (self::$envLoaded) {
+            return;
+        }
+        
+        if ($path === null) {
+            $path = dirname(__DIR__, 2) . '/.env';
+        }
+        
+        if (!file_exists($path)) {
+            // Essayer .env.testing pour les tests
+            $testPath = dirname(__DIR__, 2) . '/.env.testing';
+            if (file_exists($testPath)) {
+                $path = $testPath;
+            } else {
+                return; // Pas de fichier .env trouvé
+            }
+        }
+        
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        
+        foreach ($lines as $line) {
+            // Ignorer les commentaires
+            if (strpos(trim($line), '#') === 0) {
+                continue;
+            }
+            
+            // Parser la ligne KEY=VALUE
+            if (strpos($line, '=') !== false) {
+                list($key, $value) = explode('=', $line, 2);
+                $key = trim($key);
+                $value = trim($value);
+                
+                // Enlever les guillemets si présents
+                if (preg_match('/^(["\'])(.*)\\1$/', $value, $matches)) {
+                    $value = $matches[2];
+                }
+                
+                // Définir la variable d'environnement
+                if (!array_key_exists($key, $_ENV)) {
+                    $_ENV[$key] = $value;
+                    putenv("$key=$value");
+                }
+            }
+        }
+        
+        self::$envLoaded = true;
+    }
     
     /**
      * Détecter l'environnement actuel

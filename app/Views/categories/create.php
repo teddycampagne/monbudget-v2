@@ -5,7 +5,17 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-0"><i class="bi bi-plus-lg"></i> Nouvelle Catégorie</h1>
-            <p class="text-muted mb-0">Créer une catégorie de <?= $type === 'revenu' ? 'revenu' : 'dépense' ?></p>
+            <?php if (isset($parentCategorie)): ?>
+                <p class="text-muted mb-0">
+                    Créer une sous-catégorie de 
+                    <span class="badge" style="background-color: <?= htmlspecialchars($parentCategorie['couleur']) ?>">
+                        <i class="<?= htmlspecialchars($parentCategorie['icone']) ?>"></i>
+                        <?= htmlspecialchars($parentCategorie['nom']) ?>
+                    </span>
+                </p>
+            <?php else: ?>
+                <p class="text-muted mb-0">Créer une catégorie de <?= $type === 'revenu' ? 'revenu' : 'dépense' ?></p>
+            <?php endif; ?>
         </div>
         <a href="<?= url('categories') ?>" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> Retour
@@ -91,10 +101,10 @@
                             <?php
                             $parentOptions = ['' => 'Catégorie principale'];
                             foreach ($categoriesPrincipales as $cat) {
-                                // Ne plus filtrer par type car on peut créer une sous-catégorie mixte sous une catégorie dépense
                                 $parentOptions[$cat['id']] = htmlspecialchars($cat['nom']);
                             }
-                            echo formSelect('parent_id', 'Catégorie parente (optionnel)', $parentOptions, '', false, '');
+                            $selectedParent = $parentId ?? '';
+                            echo formSelect('parent_id', 'Catégorie parente (optionnel)', $parentOptions, $selectedParent, false, '');
                             ?>
                             <small class="text-muted">
                                 Laissez vide pour créer une catégorie principale, ou sélectionnez un parent pour créer une sous-catégorie

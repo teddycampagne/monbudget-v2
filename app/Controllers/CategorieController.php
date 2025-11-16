@@ -67,10 +67,22 @@ class CategorieController extends BaseController
         $this->requireAuth();
         
         $type = $_GET['type'] ?? 'depense';
+        $parentId = isset($_GET['parent_id']) ? (int)$_GET['parent_id'] : null;
         $categoriesPrincipales = Categorie::getCategoriesPrincipales($this->userId);
+        
+        // Si parent_id fourni, récupérer la catégorie parente pour hériter du type
+        $parentCategorie = null;
+        if ($parentId) {
+            $parentCategorie = Categorie::find($parentId);
+            if ($parentCategorie) {
+                $type = $parentCategorie['type']; // Hériter du type du parent
+            }
+        }
         
         $this->view('categories/create', [
             'type' => $type,
+            'parentId' => $parentId,
+            'parentCategorie' => $parentCategorie,
             'categoriesPrincipales' => $categoriesPrincipales,
             'isAdmin' => $this->isAdmin()
         ]);
