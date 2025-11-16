@@ -11,6 +11,14 @@
             </ol>
         </nav>
         <h1 class="h3 mb-0"><i class="bi bi-plus-circle"></i> Nouvelle Transaction - <?= htmlspecialchars($compte['nom']) ?></h1>
+        
+        <?php if (isset($isDuplicate) && $isDuplicate): ?>
+            <div class="alert alert-info mt-3" role="alert">
+                <i class="bi bi-files"></i> <strong>Mode duplication :</strong> 
+                Les informations de la transaction d'origine ont été pré-remplies. 
+                La date a été définie à aujourd'hui.
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="row">
@@ -45,7 +53,7 @@
                                        class="form-control" 
                                        id="date_transaction" 
                                        name="date_transaction" 
-                                       value="<?= old('date_transaction', date('Y-m-d')) ?>"
+                                       value="<?= old('date_transaction', $transaction['date_transaction'] ?? date('Y-m-d')) ?>"
                                        required>
                             </div>
                         </div>
@@ -57,9 +65,10 @@
                                 </label>
                                 <select class="form-select" id="type_operation" name="type_operation" required>
                                     <option value="">Sélectionnez un type</option>
-                                    <option value="credit" <?= old('type_operation') == 'credit' ? 'selected' : '' ?>>Crédit (Entrée d'argent)</option>
-                                    <option value="debit" <?= old('type_operation') == 'debit' ? 'selected' : '' ?>>Débit (Sortie d'argent)</option>
-                                    <option value="virement" <?= old('type_operation') == 'virement' ? 'selected' : '' ?>>Virement interne</option>
+                                    <?php $selectedType = old('type_operation', $transaction['type_operation'] ?? ''); ?>
+                                    <option value="credit" <?= $selectedType == 'credit' ? 'selected' : '' ?>>Crédit (Entrée d'argent)</option>
+                                    <option value="debit" <?= $selectedType == 'debit' ? 'selected' : '' ?>>Débit (Sortie d'argent)</option>
+                                    <option value="virement" <?= $selectedType == 'virement' ? 'selected' : '' ?>>Virement interne</option>
                                 </select>
                             </div>
                             
@@ -69,9 +78,10 @@
                                 </label>
                                 <select class="form-select" id="compte_destination_id" name="compte_destination_id">
                                     <option value="">Sélectionnez un compte</option>
+                                    <?php $selectedDest = old('compte_destination_id', $transaction['compte_destination_id'] ?? ''); ?>
                                     <?php foreach ($comptes as $c): ?>
                                         <?php if ($c['id'] != $compte['id']): ?>
-                                            <option value="<?= $c['id'] ?>" <?= old('compte_destination_id') == $c['id'] ? 'selected' : '' ?>>
+                                            <option value="<?= $c['id'] ?>" <?= $selectedDest == $c['id'] ? 'selected' : '' ?>>
                                                 <?= htmlspecialchars($c['nom']) ?> - <?= htmlspecialchars($c['banque_nom']) ?>
                                             </option>
                                         <?php endif; ?>
@@ -91,7 +101,7 @@
                                            class="form-control" 
                                            id="montant" 
                                            name="montant" 
-                                           value="<?= old('montant') ?>"
+                                           value="<?= old('montant', $transaction['montant'] ?? '') ?>"
                                            step="0.01"
                                            min="0"
                                            required>
@@ -108,7 +118,7 @@
                                    class="form-control" 
                                    id="libelle" 
                                    name="libelle" 
-                                   value="<?= old('libelle') ?>"
+                                   value="<?= old('libelle', $transaction['libelle'] ?? '') ?>"
                                    placeholder="Ex: Salaire, Courses, Loyer..."
                                    required 
                                    maxlength="255">
@@ -120,7 +130,7 @@
                                       id="description" 
                                       name="description" 
                                       rows="3"
-                                      placeholder="Informations complémentaires..."><?= old('description') ?></textarea>
+                                      placeholder="Informations complémentaires..."><?= old('description', $transaction['description'] ?? '') ?></textarea>
                         </div>
 
                         <div class="row">
@@ -142,8 +152,9 @@
                                 <div class="input-group">
                                     <select class="form-select" id="categorie_id" name="categorie_id">
                                         <option value="">-- Détection automatique --</option>
+                                        <?php $selectedCategorie = old('categorie_id', $transaction['categorie_id'] ?? ''); ?>
                                         <?php foreach ($categories as $cat): ?>
-                                            <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nom']) ?></option>
+                                            <option value="<?= $cat['id'] ?>" <?= $selectedCategorie == $cat['id'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['nom']) ?></option>
                                         <?php endforeach; ?>
                                     </select>
                                     <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modalCreateCategorie" title="Créer une catégorie">
@@ -154,7 +165,7 @@
                             
                             <div class="col-md-6 mb-3">
                                 <label for="sous_categorie_id" class="form-label">Sous-catégorie</label>
-                                <select class="form-select" id="sous_categorie_id" name="sous_categorie_id">
+                                <select class="form-select" id="sous_categorie_id" name="sous_categorie_id" data-selected="<?= old('sous_categorie_id', $transaction['sous_categorie_id'] ?? '') ?>">
                                     <option value="">-- Détection automatique --</option>
                                 </select>
                                 <small class="text-muted">Sélectionnez d'abord une catégorie</small>
@@ -166,8 +177,9 @@
                             <div class="input-group">
                                 <select class="form-select" id="tiers_id" name="tiers_id">
                                     <option value="">-- Détection automatique --</option>
+                                    <?php $selectedTiers = old('tiers_id', $transaction['tiers_id'] ?? ''); ?>
                                     <?php foreach ($tiers as $t): ?>
-                                        <option value="<?= $t['id'] ?>">
+                                        <option value="<?= $t['id'] ?>" <?= $selectedTiers == $t['id'] ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($t['nom']) ?>
                                             <?php if ($t['groupe']): ?>
                                                 (<?= htmlspecialchars($t['groupe']) ?>)
@@ -383,6 +395,13 @@ document.getElementById('categorie_id').addEventListener('change', function() {
                     const option = document.createElement('option');
                     option.value = sc.id;
                     option.textContent = sc.nom;
+                    
+                    // Pré-sélectionner la sous-catégorie si data-selected est défini
+                    const selectedId = sousCategorieSelect.dataset.selected;
+                    if (selectedId && sc.id == selectedId) {
+                        option.selected = true;
+                    }
+                    
                     sousCategorieSelect.appendChild(option);
                 });
             } else {
@@ -393,6 +412,21 @@ document.getElementById('categorie_id').addEventListener('change', function() {
             console.error('Erreur lors du chargement des sous-catégories:', error);
             sousCategorieSelect.disabled = true;
         });
+});
+
+// Initialiser les sous-catégories au chargement si une catégorie est pré-sélectionnée (duplication)
+document.addEventListener('DOMContentLoaded', function() {
+    const categorieSelect = document.getElementById('categorie_id');
+    if (categorieSelect.value) {
+        // Déclencher le chargement des sous-catégories
+        categorieSelect.dispatchEvent(new Event('change'));
+    }
+    
+    // Afficher le bloc compte destination si virement est sélectionné
+    const typeOperationSelect = document.getElementById('type_operation');
+    if (typeOperationSelect.value === 'virement') {
+        document.getElementById('compte_destination_block').style.display = 'block';
+    }
 });
 
 // Initialiser l'état du select des sous-catégories

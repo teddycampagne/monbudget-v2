@@ -507,9 +507,16 @@ function afficherResultats(data) {
                 ${t.est_valide ? '<i class="bi bi-check-circle-fill text-success" title="Validé"></i>' : '<i class="bi bi-circle text-muted" title="Non validé"></i>'}
             </td>
             <td class="text-center">
-                <button class="btn btn-sm btn-outline-primary" onclick="editerTransaction(${t.id})" title="Modifier">
-                    <i class="bi bi-pencil"></i>
-                </button>
+                <div class="btn-group btn-group-sm">
+                    <a href="${escapeHtml(window.location.origin)}/comptes/${t.compte_id}/transactions/${t.id}/duplicate" 
+                       class="btn btn-outline-secondary" 
+                       title="Dupliquer">
+                        <i class="bi bi-files"></i>
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="editerTransaction(${t.id})" title="Modifier">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
             </td>
         `;
         

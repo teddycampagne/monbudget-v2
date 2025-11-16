@@ -237,6 +237,11 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
+                                            <a href="<?= url("comptes/{$compte['id']}/transactions/{$transaction['id']}/duplicate") ?>" 
+                                               class="btn btn-outline-secondary" 
+                                               title="Dupliquer">
+                                                <i class="bi bi-files"></i>
+                                            </a>
                                             <a href="<?= url("comptes/{$compte['id']}/transactions/{$transaction['id']}/edit") ?>" 
                                                class="btn btn-outline-primary" 
                                                title="Modifier">

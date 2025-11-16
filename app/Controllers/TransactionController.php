@@ -298,6 +298,78 @@ class TransactionController extends BaseController
     }
     
     /**
+     * Dupliquer une transaction existante
+     * 
+     * Charge les données de la transaction source et redirige vers le formulaire
+     * de création pré-rempli avec date=aujourd'hui et est_recurrente=0.
+     * 
+     * @param int $compteId ID du compte
+     * @param int $id ID de la transaction à dupliquer
+     * @return void
+     */
+    public function duplicate(int $compteId, int $id): void
+    {
+        $this->requireAuth();
+        
+        // Vérifier que le compte existe et appartient à l'utilisateur
+        $compte = Compte::findWithBanque($compteId);
+        if (!$compte || $compte['user_id'] != $this->userId) {
+            flash('error', 'Compte non trouvé');
+            $this->redirect('comptes');
+            return;
+        }
+        
+        // Récupérer la transaction source
+        $transactionSource = Transaction::find($id);
+        
+        if (!$transactionSource || $transactionSource['compte_id'] != $compteId) {
+            flash('error', 'Transaction introuvable');
+            $this->redirect("comptes/{$compteId}/transactions");
+            return;
+        }
+        
+        // Récupérer les comptes actifs de l'utilisateur
+        $comptes = Compte::getActifs();
+        
+        // Récupérer les catégories principales
+        $categories = Categorie::getCategoriesPrincipales($this->userId);
+        
+        // Récupérer les tiers
+        $tiers = Tiers::getAllByUser($this->userId);
+        
+        // Préparer les données pour le formulaire de création
+        // Dupliquer TOUS les champs sauf id, created_at, updated_at
+        $transactionDupliquee = [
+            'compte_id' => $transactionSource['compte_id'],
+            'compte_destination_id' => $transactionSource['compte_destination_id'],
+            'categorie_id' => $transactionSource['categorie_id'],
+            'sous_categorie_id' => $transactionSource['sous_categorie_id'],
+            'tiers_id' => $transactionSource['tiers_id'],
+            'date_transaction' => date('Y-m-d'), // Date du jour
+            'montant' => abs($transactionSource['montant']), // Montant absolu
+            'libelle' => $transactionSource['libelle'],
+            'description' => $transactionSource['description'],
+            'type_operation' => $transactionSource['type_operation'],
+            'moyen_paiement' => $transactionSource['moyen_paiement'],
+            'beneficiaire' => $transactionSource['beneficiaire'],
+            'validee' => $transactionSource['validee'],
+            'est_recurrente' => 0, // TOUJOURS 0 (transaction simple)
+            'recurrence_id' => null // Pas de lien vers récurrence
+        ];
+        
+        // Afficher le formulaire de création pré-rempli
+        $this->view('transactions.create', [
+            'compte' => $compte,
+            'comptes' => $comptes,
+            'categories' => $categories,
+            'tiers' => $tiers,
+            'transaction' => $transactionDupliquee, // Données pré-remplies
+            'isDuplicate' => true, // Flag pour afficher un message
+            'title' => 'Dupliquer Transaction - ' . $compte['nom']
+        ]);
+    }
+    
+    /**
      * Afficher le formulaire d'édition d'une transaction
      * 
      * Charge la transaction, le compte, les catégories et tiers pour le formulaire.

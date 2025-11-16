@@ -138,6 +138,7 @@ $router->get('/comptes/{compteId}/transactions', [CompteController::class, 'tran
 use MonBudget\Controllers\TransactionController;
 $router->get('/comptes/{compteId}/transactions/create', [TransactionController::class, 'create']);
 $router->post('/comptes/{compteId}/transactions/store', [TransactionController::class, 'store']);
+$router->get('/comptes/{compteId}/transactions/{id}/duplicate', [TransactionController::class, 'duplicate']);
 $router->get('/comptes/{compteId}/transactions/{id}/edit', [TransactionController::class, 'edit']);
 $router->post('/comptes/{compteId}/transactions/{id}/update', [TransactionController::class, 'update']);
 $router->post('/comptes/{compteId}/transactions/{id}/delete', [TransactionController::class, 'delete']);
