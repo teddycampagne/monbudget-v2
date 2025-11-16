@@ -1,9 +1,55 @@
 # TODO - MonBudget V2.1
 
 ## 📋 Vue d'ensemble
-Version V2.1 - Améliorations ergonomiques et corrections de bugs
+Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 
-**Statut global Phase 1** : 6/6 features complétées (100%) ✅
+**Statut global Phase 1** : 6/6 features complétées (100%) ✅  
+**Statut global Phase 2** : 1/1 feature complétée (100%) ✅
+
+---
+
+## ✅ PHASE 2 - COMPLÉTÉE (1/1) - Session 15
+
+### 1. Pièces jointes transactions ✅
+
+**Backend complet** :
+- ✅ Migration BDD : Table `attachments` avec foreign key `transaction_id`
+- ✅ Model `Attachment` : CRUD, validation MIME, helpers (icon, size format)
+- ✅ Service `FileUploadService` : Upload sécurisé, .htaccess auto, sanitization
+- ✅ Controller : 3 endpoints (upload, delete, download) avec ownership check
+- ✅ Routes : POST upload, DELETE suppression, GET download
+
+**Frontend complet** :
+- ✅ JavaScript `AttachmentUploader` : Drag&drop, AJAX, progress, preview images
+- ✅ Component `attachment-uploader.php` : Zone upload réutilisable
+- ✅ View `transactions/edit.php` : Intégration zone upload
+- ✅ View `transactions/index.php` : Badge compteur (icône trombone + nombre)
+
+**Sécurité** :
+- ✅ Validation MIME réelle (anti-spoofing)
+- ✅ Whitelist extensions : PDF, images, Excel, Word, TXT, CSV
+- ✅ Taille max : 5 Mo par fichier
+- ✅ .htaccess auto-généré (bloque PHP, scripts)
+- ✅ Sanitization noms fichiers (anti-XSS, path traversal)
+- ✅ Génération noms uniques (hash 32 chars)
+- ✅ Ownership check sur tous les endpoints
+
+**Stockage** :
+- ✅ Organisation : `uploads/attachments/{user_id}/{year}/{month}/`
+- ✅ Cleanup automatique sur suppression transaction (CASCADE)
+
+**Fichiers créés/modifiés** :
+- Créés : `database/migrations/2025_11_16_create_attachments_table.sql`
+- Créés : `app/Models/Attachment.php` (273 lignes)
+- Créés : `app/Services/FileUploadService.php` (276 lignes)
+- Créés : `assets/js/attachment-uploader.js` (338 lignes)
+- Créés : `app/Views/components/attachment-uploader.php` (113 lignes)
+- Modifiés : `app/Controllers/TransactionController.php` (+191 lignes)
+- Modifiés : `index.php` (+3 routes)
+- Modifiés : `app/Views/transactions/edit.php` (+4 lignes)
+- Modifiés : `app/Views/transactions/index.php` (+16 lignes)
+
+**Total Session 15** : ~1210 lignes de code ajoutées
 
 ---
 

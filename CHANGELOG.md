@@ -9,11 +9,37 @@ et ce projet adhère au [Versioning Sémantique](https://semver.org/lang/fr/).
 
 ## [2.1.0] - En cours (branche develop)
 
-### 🎯 Version mineure - UX Improvements (Phase 1)
+### 🎯 Version mineure - UX Improvements & Attachments
 
 #### ✨ Ajouté
 
-**Session 14 - Améliorations UX/UI**
+**Session 15 - Pièces jointes transactions (Phase 2)**
+- Système complet de gestion de pièces jointes
+  - Upload drag & drop multi-fichiers (max 5 Mo par fichier)
+  - Support PDF, images (JPG, PNG, GIF, WebP), Excel, Word, TXT, CSV
+  - Stockage organisé : `uploads/attachments/{user_id}/{year}/{month}/`
+  - Validation MIME réelle (sécurité contre spoofing)
+  - Preview images avec lightbox Bootstrap
+  - Téléchargement sécurisé avec ownership check
+  - Suppression avec confirmation
+  - Badge compteur dans liste transactions (icône trombone)
+  - Component réutilisable `attachment-uploader.php`
+- Sécurité fichiers
+  - .htaccess auto-généré (bloque PHP, scripts)
+  - Sanitization noms de fichiers
+  - Whitelist extensions + types MIME
+  - Génération noms uniques (hash 32 chars)
+- API endpoints sécurisés
+  - POST `/comptes/{id}/transactions/{id}/attachments/upload`
+  - DELETE `/comptes/{id}/transactions/{id}/attachments/{id}`
+  - GET `/comptes/{id}/transactions/{id}/attachments/{id}/download`
+- JavaScript moderne
+  - Classe AttachmentUploader (OOP)
+  - Progress bars upload
+  - Toasts Bootstrap pour feedback
+  - Gestion erreurs AJAX
+
+**Session 14 - Améliorations UX/UI (Phase 1)**
 - Breadcrumbs de navigation globaux avec fil d'Ariane
   - Affichage hiérarchique (Banque → Compte → Transaction)
   - Navigation drill-down facilitée

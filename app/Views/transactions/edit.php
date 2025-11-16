@@ -315,6 +315,11 @@
                     </div>
                 </div>
 
+                <?php 
+                // Inclure la zone d'upload de pièces jointes
+                require __DIR__ . '/../components/attachment-uploader.php'; 
+                ?>
+
                 <!-- Boutons -->
                 <div class="d-flex gap-2">
                     <a href="<?= url("comptes/{$transaction['compte_id']}/transactions") ?>" class="btn btn-secondary">

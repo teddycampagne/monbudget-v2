@@ -143,6 +143,11 @@ $router->get('/comptes/{compteId}/transactions/{id}/edit', [TransactionControlle
 $router->post('/comptes/{compteId}/transactions/{id}/update', [TransactionController::class, 'update']);
 $router->post('/comptes/{compteId}/transactions/{id}/delete', [TransactionController::class, 'delete']);
 
+// Routes Pièces jointes (Session 15 - v2.1.0 Phase 2)
+$router->post('/comptes/{compteId}/transactions/{transactionId}/attachments/upload', [TransactionController::class, 'uploadAttachment']);
+$router->delete('/comptes/{compteId}/transactions/{transactionId}/attachments/{attachmentId}', [TransactionController::class, 'deleteAttachment']);
+$router->get('/comptes/{compteId}/transactions/{transactionId}/attachments/{attachmentId}/download', [TransactionController::class, 'downloadAttachment']);
+
 // Routes Récurrences (Session 11 - Table séparée)
 use MonBudget\Controllers\RecurrenceController;
 $router->get('/recurrences', [RecurrenceController::class, 'index']); // Toutes les récurrences

@@ -1,5 +1,8 @@
-<?php require_once __DIR__ . '/../layouts/header.php'; ?>
-<?php require_once __DIR__ . '/../components/breadcrumbs.php'; ?>
+<?php 
+use App\Models\Attachment;
+require_once __DIR__ . '/../layouts/header.php'; 
+require_once __DIR__ . '/../components/breadcrumbs.php'; 
+?>
 
 <div class="container-fluid px-4 py-4">
     <!-- Breadcrumb -->
@@ -155,6 +158,7 @@
                                 <th>Type</th>
                                 <th class="text-end">Montant</th>
                                 <th>Statut</th>
+                                <th class="text-center">PJ</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -234,6 +238,18 @@
                                     </td>
                                     <td>
                                         <?= statusBadge($transaction['validee'], 'Validée', 'En attente') ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?php
+                                        $attachmentCount = Attachment::countByTransaction($transaction['id']);
+                                        if ($attachmentCount > 0):
+                                        ?>
+                                            <span class="badge bg-info" title="<?= $attachmentCount ?> pièce(s) jointe(s)">
+                                                <i class="bi bi-paperclip"></i> <?= $attachmentCount ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
