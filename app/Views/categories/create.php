@@ -97,19 +97,27 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <?php
-                            $parentOptions = ['' => 'Catégorie principale'];
-                            foreach ($categoriesPrincipales as $cat) {
-                                $parentOptions[$cat['id']] = htmlspecialchars($cat['nom']);
-                            }
-                            $selectedParent = $parentId ?? '';
-                            echo formSelect('parent_id', 'Catégorie parente (optionnel)', $parentOptions, $selectedParent, false, '');
-                            ?>
-                            <small class="text-muted">
-                                Laissez vide pour créer une catégorie principale, ou sélectionnez un parent pour créer une sous-catégorie
-                            </small>
-                        </div>
+                        <?php if (isset($parentCategorie)): ?>
+                            <!-- Parent fixé (sous-catégorie) -->
+                            <div class="mb-3">
+                                <label class="form-label">Catégorie parente</label>
+                                <div class="card border-primary">
+                                    <div class="card-body bg-primary bg-opacity-10">
+                                        <i class="bi bi-info-circle text-primary"></i>
+                                        Cette sous-catégorie sera rattachée à :
+                                        <strong>
+                                            <i class="<?= htmlspecialchars($parentCategorie['icone']) ?>" 
+                                               style="color: <?= htmlspecialchars($parentCategorie['couleur']) ?>;"></i>
+                                            <?= htmlspecialchars($parentCategorie['nom']) ?>
+                                        </strong>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="parent_id" value="<?= $parentCategorie['id'] ?>">
+                            </div>
+                        <?php else: ?>
+                            <!-- Aucun parent = catégorie principale -->
+                            <input type="hidden" name="parent_id" value="">
+                        <?php endif; ?>
                     </div>
                 </div>
 
