@@ -54,6 +54,7 @@
                                        id="date_transaction" 
                                        name="date_transaction" 
                                        value="<?= old('date_transaction', $transaction['date_transaction'] ?? date('Y-m-d')) ?>"
+                                       data-shortcuts="today,yesterday,week-ago,month-start"
                                        required>
                             </div>
                         </div>
@@ -242,7 +243,8 @@
                                                class="form-control" 
                                                id="date_debut" 
                                                name="date_debut" 
-                                               value="<?= old('date_debut', date('Y-m-d')) ?>">
+                                               value="<?= old('date_debut', date('Y-m-d')) ?>"
+                                               data-shortcuts="today,month-start,month-end">
                                     </div>
                                     
                                     <div class="col-md-6 mb-3">
@@ -251,7 +253,8 @@
                                                class="form-control" 
                                                id="date_fin" 
                                                name="date_fin" 
-                                               value="<?= old('date_fin') ?>">
+                                               value="<?= old('date_fin') ?>"
+                                               data-shortcuts="month-end,year-end">
                                         <div class="form-text">Laisser vide pour une récurrence illimitée</div>
                                     </div>
                                 </div>

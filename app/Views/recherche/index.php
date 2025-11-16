@@ -46,12 +46,20 @@
                     <!-- Période de/à -->
                     <div class="col-md-4 mb-3">
                         <label for="date_debut" class="form-label">Date de début</label>
-                        <input type="date" class="form-control" id="date_debut" name="date_debut">
+                        <input type="date" 
+                               class="form-control" 
+                               id="date_debut" 
+                               name="date_debut"
+                               data-shortcuts="today,month-start,year-start,month-ago">
                     </div>
                     
                     <div class="col-md-4 mb-3">
                         <label for="date_fin" class="form-label">Date de fin</label>
-                        <input type="date" class="form-control" id="date_fin" name="date_fin">
+                        <input type="date" 
+                               class="form-control" 
+                               id="date_fin" 
+                               name="date_fin"
+                               data-shortcuts="today,month-end,year-end">
                     </div>
                     
                     <!-- Catégorie -->
@@ -256,7 +264,11 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="edit_date" class="form-label">Date *</label>
-                            <input type="date" class="form-control" id="edit_date" required>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="edit_date" 
+                                   data-shortcuts="today,yesterday,week-ago"
+                                   required>
                         </div>
                         
                         <div class="col-md-6 mb-3">

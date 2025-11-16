@@ -51,7 +51,8 @@
                                        class="form-control" 
                                        id="date_transaction" 
                                        name="date_transaction" 
-                                       value="<?= htmlspecialchars($transaction['date_transaction']) ?>" 
+                                       value="<?= htmlspecialchars($transaction['date_transaction']) ?>"
+                                       data-shortcuts="today,yesterday,week-ago,month-start"
                                        required>
                             </div>
                         </div>
@@ -248,7 +249,8 @@
                                    class="form-control" 
                                    id="date_debut" 
                                    name="date_debut" 
-                                   value="<?= !empty($transaction['date_debut']) && $transaction['date_debut'] !== '0000-00-00' ? htmlspecialchars($transaction['date_debut']) : '' ?>">
+                                   value="<?= !empty($transaction['date_debut']) && $transaction['date_debut'] !== '0000-00-00' ? htmlspecialchars($transaction['date_debut']) : '' ?>"
+                                   data-shortcuts="today,month-start,month-end">
                         </div>
                         <div class="col-md-6">
                             <label for="date_fin" class="form-label">Date de fin</label>
@@ -256,7 +258,8 @@
                                    class="form-control" 
                                    id="date_fin" 
                                    name="date_fin" 
-                                   value="<?= !empty($transaction['date_fin']) && $transaction['date_fin'] !== '0000-00-00' ? htmlspecialchars($transaction['date_fin']) : '' ?>">
+                                   value="<?= !empty($transaction['date_fin']) && $transaction['date_fin'] !== '0000-00-00' ? htmlspecialchars($transaction['date_fin']) : '' ?>"
+                                   data-shortcuts="month-end,year-end">
                                 <small class="text-muted">Laisser vide pour récurrence illimitée</small>
                             </div>
                         </div>                        <div class="row mb-3">

@@ -185,6 +185,7 @@
                                        id="date_debut" 
                                        name="date_debut" 
                                        value="<?= date('Y-m-d') ?>"
+                                       data-shortcuts="today,month-start,month-end"
                                        required>
                             </div>
                             
@@ -193,7 +194,8 @@
                                 <input type="date" 
                                        class="form-control" 
                                        id="date_fin" 
-                                       name="date_fin">
+                                       name="date_fin"
+                                       data-shortcuts="month-end,year-end">
                                 <small class="text-muted">Laisser vide pour récurrence illimitée</small>
                             </div>
                         </div>

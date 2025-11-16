@@ -187,6 +187,7 @@
                                        id="date_debut" 
                                        name="date_debut" 
                                        value="<?= $recurrence['date_debut'] ?>"
+                                       data-shortcuts="today,month-start,month-end"
                                        required>
                             </div>
                             
@@ -196,7 +197,8 @@
                                        class="form-control" 
                                        id="date_fin" 
                                        name="date_fin" 
-                                       value="<?= $recurrence['date_fin'] ?? '' ?>">
+                                       value="<?= $recurrence['date_fin'] ?? '' ?>"
+                                       data-shortcuts="month-end,year-end">
                             </div>
                         </div>
 
