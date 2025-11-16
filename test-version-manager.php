@@ -284,6 +284,34 @@ if (!isset($_SESSION['user_id'])) {
                     // Afficher le modal
                     window.versionManager.showUpdateModal();
                     log('✓ Modal affichée (données fictives)', 'success');
+                    
+                    // Désactiver le bouton de déploiement en mode démo
+                    setTimeout(() => {
+                        const deployBtn = document.getElementById('btn-deploy');
+                        if (deployBtn) {
+                            const originalDeployUpdate = window.versionManager.deployUpdate.bind(window.versionManager);
+                            window.versionManager.deployUpdate = function() {
+                                log('⚠️ Déploiement désactivé en mode démo', 'warning');
+                                log('ℹ️ Cette fonctionnalité est réservée à la production', 'info');
+                                
+                                const outputDiv = document.getElementById('deployment-output');
+                                const logPre = document.getElementById('deployment-log');
+                                outputDiv.style.display = 'block';
+                                logPre.textContent = '⚠️ MODE DÉMO\n\n';
+                                logPre.textContent += '❌ Le déploiement est désactivé sur cette page de test.\n\n';
+                                logPre.textContent += 'En production, cette fonctionnalité :\n';
+                                logPre.textContent += '  1. Vérifie les permissions admin\n';
+                                logPre.textContent += '  2. Exécute git fetch origin --tags\n';
+                                logPre.textContent += '  3. Effectue git checkout v2.3.0\n';
+                                logPre.textContent += '  4. Vide le cache\n';
+                                logPre.textContent += '  5. Recharge l\'application\n';
+                                
+                                deployBtn.disabled = true;
+                                deployBtn.className = 'btn btn-warning';
+                                deployBtn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> Désactivé (mode démo)';
+                            };
+                        }
+                    }, 100);
                 } else {
                     log('⏳ Attente initialisation versionManager...', 'warning');
                     setTimeout(tryShowModal, 500);
