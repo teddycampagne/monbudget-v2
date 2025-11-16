@@ -29,6 +29,9 @@ desktop.ini
 /storage/config/*
 !/storage/config/.gitkeep
 
+# Installation flag (specific to each instance)
+/config/installed.json
+
 # Uploads
 /uploads/imports/*
 !/uploads/imports/.gitkeep

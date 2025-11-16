@@ -24,6 +24,23 @@ class Installer
         $configFile = dirname(__DIR__, 2) . '/config/installed.json';
         
         if (!file_exists($configFile)) {
+            // Créer le fichier depuis l'exemple si disponible
+            $exampleFile = $configFile . '.example';
+            if (file_exists($exampleFile)) {
+                copy($exampleFile, $configFile);
+            } else {
+                // Créer un fichier vide par défaut
+                $configDir = dirname($configFile);
+                if (!file_exists($configDir)) {
+                    mkdir($configDir, 0755, true);
+                }
+                file_put_contents($configFile, json_encode([
+                    'installed' => false,
+                    'installation_date' => null,
+                    'version' => null,
+                    'database_initialized' => false
+                ], JSON_PRETTY_PRINT));
+            }
             return false;
         }
         

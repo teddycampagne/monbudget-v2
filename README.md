@@ -89,8 +89,11 @@ tests/
 
 ```bash
 # Cloner le projet
-git clone https://github.com/[username]/monbudget-v2.git
+git clone https://github.com/teddycampagne/monbudget-v2.git
 cd monbudget-v2
+
+# Créer fichier d'installation (important!)
+cp config/installed.json.example config/installed.json
 
 # Installer dépendances
 composer install

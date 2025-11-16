@@ -27,11 +27,23 @@
 ### Étape 1 : Téléchargement
 
 ```bash
-git clone https://github.com/votre-repo/monbudget-v2.git
+git clone https://github.com/teddycampagne/monbudget-v2.git
 cd monbudget-v2
 ```
 
-Ou téléchargez et extrayez l'archive ZIP.
+Ou téléchargez et extrayez l'archive ZIP depuis GitHub Releases.
+
+**Important** : Après le clone, copiez le fichier de configuration d'installation :
+
+```bash
+# Linux/Mac
+cp config/installed.json.example config/installed.json
+
+# Windows PowerShell
+Copy-Item config/installed.json.example config/installed.json
+```
+
+Ce fichier indique si l'application est installée. Il est ignoré par Git car spécifique à chaque instance.
 
 ### Étape 2 : Configuration serveur
 
