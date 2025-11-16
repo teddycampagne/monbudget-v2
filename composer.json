@@ -1,7 +1,7 @@
 {
     "name": "monbudget/v2",
-    "description": "MonBudget v2.0 - Gestionnaire Financier Moderne avec Architecture MVC",
-    "version": "2.0.0",
+    "description": "MonBudget v2.1 - Gestionnaire Financier Moderne avec Architecture MVC",
+    "version": "2.1.0-dev",
     "type": "project",
     "license": "MIT",
     "authors": [

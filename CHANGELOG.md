@@ -1,9 +1,90 @@
-# Changelog - MonBudget v2.0
+# Changelog - MonBudget
 
 Toutes les modifications notables de ce projet seront documentées dans ce fichier.
 
 Le format est basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/),
 et ce projet adhère au [Versioning Sémantique](https://semver.org/lang/fr/).
+
+---
+
+## [2.1.0] - En cours (branche develop)
+
+### 🎯 Version mineure - UX Improvements (Phase 1)
+
+#### ✨ Ajouté
+
+**Session 14 - Améliorations UX/UI**
+- Breadcrumbs de navigation globaux avec fil d'Ariane
+  - Affichage hiérarchique (Banque → Compte → Transaction)
+  - Navigation drill-down facilitée
+  - Indicateur visuel de la position dans l'arborescence
+- Création rapide depuis les listes avec modal
+  - Catégories : Ajout rapide sans quitter la page
+  - Tiers : Création inline dans les formulaires
+  - Soumission AJAX avec actualisation automatique
+- Gestion des sous-catégories améliorée
+  - Navigation basée sur sessions (retour intelligent)
+  - Formulaires dédiés création/édition
+  - Liste avec drill-down par catégorie parente
+- Bouton de duplication de transaction
+  - Pré-remplissage automatique du formulaire
+  - Date réinitialisée à aujourd'hui
+  - Conversion en transaction simple (est_recurrente = 0)
+  - Icône bi-files dans les listes de transactions
+- Date picker avec raccourcis intelligents
+  - Raccourcis date : Aujourd'hui, Hier, Il y a 7j, Début/Fin mois
+  - Raccourcis période : Mois actuel, Mois dernier, Année actuelle, Année dernière
+  - Auto-initialisation via attribut data-shortcuts
+  - Composant JavaScript réutilisable (date-picker-shortcuts.js)
+  - Appliqué aux transactions, recherche, récurrences, et rapports
+
+#### 🐛 Corrigé
+
+**Bugs Session 14**
+- Rapports : Filtrage par compte ignoré dans les APIs
+  - apiRepartitionCategories : Ajout filtrage compte_id + vérification propriété
+  - apiDetailCategorie : Ajout filtrage compte_id + vérification propriété
+  - apiBalances : Ajout filtrage compte_id + vérification propriété
+  - apiTendanceEpargne : Ajout filtrage compte_id + vérification propriété
+  - apiBudgetaire : Ajout compte_id dans réquisitions + vérification propriété
+  - Avant : Affichait données de TOUS les comptes de l'utilisateur
+  - Après : Filtrage correct par compte sélectionné
+- Transactions : Bouton Annuler avec route 404
+  - Correction redirection vers comptes/{id}/transactions
+- Rapports : Fonction JavaScript chargerSuiviBudgetaire inexistante
+  - Renommage vers chargerBudgetaire (nom correct)
+
+#### 🔧 Modifié
+
+**Architecture**
+- `index.php` : Route GET /comptes/{id}/transactions/{id}/duplicate
+- `app/Controllers/TransactionController.php` : Nouvelle méthode duplicate()
+- `app/Views/transactions/create.php` : Support pré-remplissage + isDuplicate flag
+- `app/Views/transactions/index.php` : Bouton dupliquer + correction annuler
+- `app/Views/recherche/index.php` : Bouton dupliquer dans résultats recherche
+- `assets/js/date-picker-shortcuts.js` : Nouveau composant (230 lignes)
+- `app/Views/layouts/footer.php` : Chargement date-picker-shortcuts.js
+
+**Rapports sécurisés**
+- Vérification propriété compte avant filtrage (protection 403)
+- Tous les graphiques se mettent à jour au changement de compte
+- Cache navigateur/serveur nécessaire pour affichage correct
+
+#### 📊 Statistiques
+
+**Commits Session 14** : 6 commits
+- `57fe677` : feat: Todo #5 - Bouton dupliquer transaction
+- `cfeeb16` : fix: Correction route bouton Annuler
+- `c99969f` : feat: Todo #6 - Date picker avec raccourcis
+- `f9d4b5a` : feat: Raccourcis mois/année rapports
+- `ceaab14` : chore: Retrait logs debug (confirmation fonctionnement)
+- `e4dd350` : fix: Correction bug filtrage compte dans rapports
+- `d4afdc3` : fix: Correction complète + nettoyage debug
+
+**Lignes de code** :
+- JavaScript : ~230 lignes (date-picker-shortcuts.js)
+- PHP : ~150 lignes (TransactionController::duplicate + corrections)
+- Vues : ~80 lignes (modifications formulaires)
 
 ---
 
