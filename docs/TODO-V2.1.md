@@ -4,7 +4,11 @@
 Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 
 **Statut global Phase 1** : 6/6 features complétées (100%) ✅  
-**Statut global Phase 2** : 1/1 feature complétée (100%) ✅
+**Statut global Phase 2** : 1/1 feature complétée (100%) ✅  
+**Statut global Phase 3** : 1/1 feature complétée (100%) ✅
+
+**Session actuelle** : Session 16 (16 nov 2025)  
+**Dernière mise à jour** : 16 novembre 2025
 
 ---
 
@@ -136,33 +140,68 @@ Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 
 ---
 
-## 🚀 PHASE 2 - À PLANIFIER
-  - Recherche (date_debut/date_fin)
-  - Budgets
-  - Rapports
-- [ ] Style Bootstrap : boutons `btn-sm btn-outline-secondary`
-- [ ] Layout : groupe de boutons horizontaux ou dropdown
+## ✅ PHASE 3 - COMPLÉTÉE (1/1) - Session PWA (16 nov 2025)
 
-**Fichiers à modifier** :
-- Créer `assets/js/date-picker-shortcuts.js`
-- `app/Views/transactions/create.php`
-- `app/Views/transactions/edit.php`
-- `app/Views/recherche/index.php`
-- `app/Views/budgets/create.php`
-- `app/Views/rapports/index.php`
+### 1. Progressive Web App (PWA) ✅
 
-**HTML exemple** :
-```html
-<div class="mb-3">
-    <label for="date" class="form-label">Date</label>
-    <input type="date" class="form-control" id="date" name="date">
-    <div class="btn-group btn-group-sm mt-1" role="group">
-        <button type="button" class="btn btn-outline-secondary" data-shortcut="today">Aujourd'hui</button>
-        <button type="button" class="btn btn-outline-secondary" data-shortcut="yesterday">Hier</button>
-        <button type="button" class="btn btn-outline-secondary" data-shortcut="month-start">Début mois</button>
-    </div>
-</div>
-```
+**Configuration PWA** :
+- ✅ `manifest.json` : Configuration app installable (standalone, shortcuts, screenshots)
+- ✅ `service-worker.js` : Cache Network First + fallback offline (v2.1.0)
+- ✅ `offline.html` : Page hors ligne avec auto-reconnect (5s polling)
+- ✅ `pwa-install.js` : Enregistrement SW + prompt installation + toasts
+
+**Icônes et Favicons** :
+- ✅ 8 icônes PWA (72px à 512px) - Dégradé violet + symbole €
+- ✅ 2 icônes maskable Android (192px, 512px)
+- ✅ 4 favicons (16x16, 32x32, 48x48 PNG + ICO multi-résolution)
+- ✅ 1 icône Apple Touch (180px)
+- ✅ Script générateur Python (`setup/generate-pwa-icons.py`)
+
+**Intégration** :
+- ✅ Header : PWA meta tags + favicons + manifest (v2.1)
+- ✅ Footer : Script PWA installation
+- ✅ Login : Favicons + manifest pour cohérence
+- ✅ `.htaccess` : Règles de réécriture pour fichiers PWA
+
+**Fonctionnalités** :
+- ✅ Installation desktop/mobile via bouton ou menu navigateur
+- ✅ Mode hors ligne fonctionnel avec cache intelligent
+- ✅ Détection connexion online/offline avec toasts
+- ✅ Badge "App" en mode standalone
+- ✅ Modal instructions navigateur (Edge/Chrome/Opera) si prompt indisponible
+- ✅ Page diagnostic (`pwa-diagnostic.html`) pour troubleshooting
+
+**Outils de développement** :
+- ✅ `setup/generate-pwa-icons.py` : Régénération automatique icônes
+- ✅ `setup/README.md` : Documentation script
+- ✅ `pwa-diagnostic.html` : Checks PWA complets (SW, manifest, beforeinstallprompt)
+
+**Fichiers créés** :
+- `public/manifest.json` (104 lignes)
+- `public/service-worker.js` (121 lignes)
+- `public/offline.html` (98 lignes)
+- `assets/js/pwa-install.js` (203 lignes)
+- `pwa-diagnostic.html` (263 lignes)
+- `setup/generate-pwa-icons.py` (286 lignes)
+- `setup/README.md`
+- 15 fichiers d'icônes (assets/icons/ + public/)
+- Copies à la racine : manifest.json, service-worker.js, offline.html, favicons
+
+**Fichiers modifiés** :
+- `app/Views/layouts/header.php` : PWA meta tags + favicons v2.1
+- `app/Views/layouts/footer.php` : Script pwa-install.js
+- `app/Views/auth/login.php` : Favicons + manifest + v2.1
+- `.htaccess` : Revert règles (fichiers PWA à la racine)
+- `database.sql` : Ajout table attachments
+
+**Total Session PWA** : ~1,900 lignes de code
+
+**Commits Session PWA** :
+- `8ea27c2` - feat: Implémentation PWA complète avec icônes et favicon (24 fichiers)
+- `f87bb1c` - fix: Correction PWA - Installation fonctionnelle (5 fichiers)
+- `3348b3e` - fix: Ajout favicons à la racine et paramètre de version (6 fichiers)
+- `53bc8e9` - fix: Ajout favicons et manifest sur page login
+- `fbfd7e5` - chore: Ajout table attachments dans database.sql
 
 ---
 
@@ -226,28 +265,45 @@ Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 
 ---
 
-## 🎯 Priorités
+## 🎯 Priorités V2.2+
 
 ### Urgent
 - Aucun bug bloquant identifié
 
 ### Haute
-1. **Gestion sous-catégories inline** (améliore UX catégories)
-2. **Bouton dupliquer transaction** (gain de temps utilisateur)
+1. **🏷️ Tags personnalisés** - Étiquettes libres + multi-tags + filtres
+2. **🔔 Système d'alertes** - Notifications dépassements budgets par email
+3. **🌍 Multi-devises** - Support EUR/USD/GBP avec taux de change
 
 ### Moyenne  
-3. **Date picker avec raccourcis** (confort, mais fonctionnalité existante)
+4. **🔍 Recherche full-text** - Indexation MySQL + opérateurs avancés
+5. **⌨️ Raccourcis clavier** - Ctrl+N, Ctrl+K, actions bulk
+6. **📊 Monitoring** - Logs structurés + métriques + APM
+
+### Basse
+7. **🔐 API REST** - Endpoints v1 + JWT + OpenAPI/Swagger
+8. **2FA** - TOTP Google Authenticator pour admins
 
 ---
 
 ## 📈 Statistiques V2.1
 
-- **Commit principal** : `3f47d6f` (16 nov 2025)
-- **Fichiers modifiés** : 26 fichiers
-- **Lignes ajoutées** : 973
-- **Lignes supprimées** : 495
-- **Nouveaux fichiers** : 3 (ApiController, banques/show, breadcrumbs)
-- **Fichiers supprimés** : 1 (ui-helpers.php)
+**Phase 1 (Session 14)** :
+- Commit : `3f47d6f` (16 nov 2025)
+- Fichiers modifiés : 26
+- Lignes : +973 / -495
+
+**Phase 2 (Session 15 - Attachments)** :
+- Commits : 5 commits
+- Fichiers créés : 7
+- Lignes : +1,323
+
+**Phase 3 (Session 16 - PWA)** :
+- Commits : 5 commits  
+- Fichiers créés : 22
+- Lignes : +1,900
+
+**Total V2.1** : ~4,200 lignes ajoutées sur 3 sessions
 
 ---
 
@@ -284,7 +340,7 @@ function showErrorModal(titre, message) {
 
 ---
 
-## 🚀 SESSION 14+ - FONCTIONNALITÉS FUTURES
+## 🚀 FONCTIONNALITÉS FUTURES (V2.2+)
 
 ### 💡 Nouvelles fonctionnalités potentielles
 
@@ -294,14 +350,6 @@ function showErrorModal(titre, message) {
 - [ ] **Récapitulatif mensuel automatique** : Email synthétisant le mois
 - [ ] **Configuration SMTP** : Interface admin pour paramétrer serveur email
 - [ ] **Templates personnalisables** : Emails HTML avec logo et couleurs
-
-#### 📱 Progressive Web App (PWA)
-- [ ] **Manifest.json** : Configuration app installable
-- [ ] **Service Worker** : Cache assets + API calls pour offline
-- [ ] **Mode offline** : Consultation données en cache
-- [ ] **Sync background** : Synchronisation automatique à reconnexion
-- [ ] **Push notifications** : Notifications natives navigateur/mobile
-- [ ] **Installation prompt** : Bouton "Installer l'application"
 
 #### 🔐 API REST sécurisée
 - [ ] **Endpoints REST** : `/api/v1/{resource}` avec authentification JWT
@@ -316,12 +364,6 @@ function showErrorModal(titre, message) {
 - [ ] **Conversion automatique** : Affichage montants dans devise préférée
 - [ ] **Historique taux** : Graphique évolution EUR/USD sur 12 mois
 - [ ] **Comptes multi-devises** : Solde par devise + équivalent total
-
-#### 📎 Pièces jointes transactions (NOUVEAU V2.2)
-- [ ] **Table attachments** : `id, transaction_id, filename, path, mimetype, size, uploaded_at`
-- [ ] **Upload multi-fichiers** : Formulaire transaction (images/PDF/Excel max 5MB par fichier)
-- [ ] **Storage sécurisé** : Fichiers dans `uploads/attachments/{user_id}/{year}/{month}/`
-- [ ] **Vignettes** : Prévisualisation images (JPG/PNG) avec lightbox
 - [ ] **Validation MIME** : Whitelist types autorisés (PDF, images, XLS, DOCX)
 - [ ] **Compteur** : Badge nombre pièces jointes dans liste transactions
 - [ ] **Recherche** : Filtre "Avec/Sans pièces jointes" dans recherche avancée
