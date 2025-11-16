@@ -151,6 +151,7 @@ $router->get('/comptes/{compteId}/transactions/{transactionId}/attachments/{atta
 // Routes Récurrences (Session 11 - Table séparée)
 use MonBudget\Controllers\RecurrenceController;
 $router->get('/recurrences', [RecurrenceController::class, 'index']); // Toutes les récurrences
+$router->get('/recurrences/admin', [RecurrenceController::class, 'admin']); // Administration (stats)
 $router->get('/comptes/{compteId}/recurrences', [RecurrenceController::class, 'index']); // Récurrences d'un compte
 $router->get('/comptes/{compteId}/transactions/recurrentes', [RecurrenceController::class, 'index']); // Alias pour compatibilité
 $router->get('/comptes/{compteId}/recurrences/create', [RecurrenceController::class, 'create']);

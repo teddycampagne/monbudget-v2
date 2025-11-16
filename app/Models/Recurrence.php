@@ -405,4 +405,123 @@ class Recurrence extends BaseModel
         // La FK ON DELETE SET NULL mettra automatiquement recurrence_id = NULL sur les occurrences
         return static::delete($recurrenceId);
     }
+    
+    /**
+     * Compter le nombre total de récurrences pour un utilisateur
+     * 
+     * @param int $userId
+     * @return int
+     */
+    public static function countTotal(int $userId): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM recurrences WHERE user_id = ?";
+        $result = Database::selectOne($sql, [$userId]);
+        return (int) ($result['count'] ?? 0);
+    }
+    
+    /**
+     * Compter le nombre de récurrences actives
+     * 
+     * @param int $userId
+     * @return int
+     */
+    public static function countActives(int $userId): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM recurrences WHERE user_id = ? AND recurrence_active = 1";
+        $result = Database::selectOne($sql, [$userId]);
+        return (int) ($result['count'] ?? 0);
+    }
+    
+    /**
+     * Compter le nombre de récurrences inactives
+     * 
+     * @param int $userId
+     * @return int
+     */
+    public static function countInactives(int $userId): int
+    {
+        $sql = "SELECT COUNT(*) as count FROM recurrences WHERE user_id = ? AND recurrence_active = 0";
+        $result = Database::selectOne($sql, [$userId]);
+        return (int) ($result['count'] ?? 0);
+    }
+    
+    /**
+     * Compter le nombre de récurrences échues (à exécuter)
+     * 
+     * @param int $userId
+     * @return int
+     */
+    public static function countEchues(int $userId): int
+    {
+        $sql = "SELECT COUNT(*) as count 
+                FROM recurrences 
+                WHERE user_id = ? 
+                  AND recurrence_active = 1
+                  AND prochaine_execution IS NOT NULL
+                  AND prochaine_execution <= CURDATE()";
+        $result = Database::selectOne($sql, [$userId]);
+        return (int) ($result['count'] ?? 0);
+    }
+    
+    /**
+     * Compter le nombre total de transactions générées par des récurrences
+     * 
+     * @param int $userId
+     * @return int
+     */
+    public static function countTransactionsGenerees(int $userId): int
+    {
+        $sql = "SELECT COUNT(*) as count 
+                FROM transactions t
+                INNER JOIN recurrences r ON t.recurrence_id = r.id
+                WHERE r.user_id = ?";
+        $result = Database::selectOne($sql, [$userId]);
+        return (int) ($result['count'] ?? 0);
+    }
+    
+    /**
+     * Récupérer les prochaines exécutions (N prochains jours)
+     * 
+     * @param int $userId
+     * @param int $days Nombre de jours à venir
+     * @return array
+     */
+    public static function getUpcoming(int $userId, int $days = 7): array
+    {
+        $sql = "SELECT r.*, c.nom as compte_nom, c.solde_actuel as compte_solde
+                FROM recurrences r
+                INNER JOIN comptes c ON r.compte_id = c.id
+                WHERE r.user_id = ?
+                  AND r.recurrence_active = 1
+                  AND r.prochaine_execution IS NOT NULL
+                  AND r.prochaine_execution BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL ? DAY)
+                ORDER BY r.prochaine_execution ASC, r.id ASC
+                LIMIT 20";
+        
+        return Database::select($sql, [$userId, $days]);
+    }
+    
+    /**
+     * Récupérer les récurrences les plus actives (par nombre de transactions générées)
+     * 
+     * @param int $userId
+     * @param int $limit
+     * @return array
+     */
+    public static function getTopByTransactions(int $userId, int $limit = 10): array
+    {
+        $sql = "SELECT r.*, c.nom as compte_nom,
+                       COUNT(t.id) as nb_transactions,
+                       SUM(t.montant) as total_montant
+                FROM recurrences r
+                INNER JOIN comptes c ON r.compte_id = c.id
+                LEFT JOIN transactions t ON t.recurrence_id = r.id
+                WHERE r.user_id = ?
+                GROUP BY r.id
+                HAVING nb_transactions > 0
+                ORDER BY nb_transactions DESC
+                LIMIT ?";
+        
+        return Database::select($sql, [$userId, $limit]);
+    }
 }

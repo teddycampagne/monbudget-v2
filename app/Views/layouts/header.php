@@ -98,6 +98,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="<?= url('recurrences') ?>">
+                            <i class="bi bi-arrow-repeat"></i> Récurrences
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="<?= url('rapports') ?>">
                             <i class="bi bi-graph-up"></i> Rapports
                         </a>
