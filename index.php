@@ -312,6 +312,13 @@ $router->post('/api/categories', [ApiController::class, 'createCategorie']);
 $router->post('/api/tiers', [ApiController::class, 'createTiers']);
 $router->get('/api/bootstrap-icons', [ApiController::class, 'getBootstrapIcons']);
 
+// Routes Version Manager
+use MonBudget\Controllers\VersionController;
+$router->get('/version/check-update', [VersionController::class, 'checkUpdate']);
+$router->post('/version/deploy', [VersionController::class, 'deploy']);
+$router->post('/version/rollback', [VersionController::class, 'rollback']);
+$router->get('/version/info', [VersionController::class, 'info']);
+
 // Routes Documentation
 use MonBudget\Controllers\DocumentationController;
 $router->get('/documentation', [DocumentationController::class, 'index']);
