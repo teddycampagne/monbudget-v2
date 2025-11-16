@@ -107,6 +107,22 @@
                         </select>
                     </div>
                     
+                    <!-- Tags -->
+                    <div class="col-md-4 mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <select class="form-select" id="tags" name="tags[]" multiple size="3">
+                            <option value="">Tous les tags</option>
+                            <?php if (!empty($tags)): ?>
+                                <?php foreach ($tags as $tag): ?>
+                                    <option value="<?= $tag['id'] ?>" style="background-color: var(--bs-<?= $tag['color'] ?>);">
+                                        🏷️ <?= htmlspecialchars($tag['name']) ?> (<?= $tag['usage_count'] ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <small class="text-muted">Maintenez Ctrl/Cmd pour sélectionner plusieurs tags</small>
+                    </div>
+                    
                     <!-- Montant min/max -->
                     <div class="col-md-4 mb-3">
                         <label for="montant_min" class="form-label">Montant minimum (€)</label>

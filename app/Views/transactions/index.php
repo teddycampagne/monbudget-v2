@@ -155,6 +155,7 @@ require_once __DIR__ . '/../components/breadcrumbs.php';
                                 <th>Compte</th>
                                 <th>Catégorie</th>
                                 <th>Tiers</th>
+                                <th>Tags</th>
                                 <th>Type</th>
                                 <th class="text-end">Montant</th>
                                 <th>Statut</th>
@@ -214,6 +215,17 @@ require_once __DIR__ . '/../components/breadcrumbs.php';
                                                 <i class="bi bi-person"></i>
                                                 <?= htmlspecialchars($transaction['tiers_nom']) ?>
                                             </span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if (!empty($transaction['tags'])): ?>
+                                            <?php foreach ($transaction['tags'] as $tag): ?>
+                                                <span class="badge bg-<?= htmlspecialchars($tag['color']) ?> me-1 mb-1" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-tag-fill"></i> <?= htmlspecialchars($tag['name']) ?>
+                                                </span>
+                                            <?php endforeach; ?>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>

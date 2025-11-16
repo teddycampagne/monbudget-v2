@@ -87,11 +87,16 @@ class TransactionController extends BaseController
         // Récupérer les tiers
         $tiers = Tiers::getAllByUser($this->userId);
         
+        // Récupérer les tags
+        $tagModel = new \MonBudget\Models\Tag();
+        $tags = $tagModel->getAllByUser($this->userId, 'name');
+        
         $this->view('transactions.create', [
             'compte' => $compte,
             'comptes' => $comptes,
             'categories' => $categories,
             'tiers' => $tiers,
+            'tags' => $tags,
             'title' => 'Nouvelle Transaction - ' . $compte['nom']
         ]);
     }
@@ -288,6 +293,12 @@ class TransactionController extends BaseController
                 $id = Transaction::create($data);
                 
                 if ($id) {
+                    // Gestion des tags
+                    if (!empty($_POST['tags']) && is_array($_POST['tags'])) {
+                        $transactionModel = new Transaction();
+                        $transactionModel->syncTags($id, array_map('intval', $_POST['tags']));
+                    }
+                    
                     Compte::recalculerSolde($compteId);
                     flash('success', 'Transaction créée avec succès');
                     $this->redirect("comptes/{$compteId}/transactions");
@@ -410,12 +421,22 @@ class TransactionController extends BaseController
         // Récupérer les tiers
         $tiers = Tiers::getAllByUser($this->userId);
         
+        // Récupérer les tags
+        $tagModel = new \MonBudget\Models\Tag();
+        $tags = $tagModel->getAllByUser($this->userId, 'name');
+        
+        // Récupérer les tags déjà assignés à cette transaction
+        $transactionModel = new Transaction();
+        $selectedTags = $transactionModel->getTagIds($id);
+        
         $this->view('transactions.edit', [
             'compte' => $compte,
             'transaction' => $transaction,
             'comptes' => $comptes,
             'categories' => $categories,
             'tiers' => $tiers,
+            'tags' => $tags,
+            'selectedTags' => $selectedTags,
             'title' => 'Modifier la Transaction'
         ]);
     }
@@ -563,6 +584,16 @@ class TransactionController extends BaseController
         $result = Transaction::update($id, $data);
         
         if ($result >= 0) {
+            // Gestion des tags
+            if (isset($_POST['tags']) && is_array($_POST['tags'])) {
+                $transactionModel = new Transaction();
+                $transactionModel->syncTags($id, array_map('intval', $_POST['tags']));
+            } else {
+                // Si aucun tag sélectionné, supprimer tous les tags
+                $transactionModel = new Transaction();
+                $transactionModel->detachTags($id);
+            }
+            
             // Recalculer le solde du compte
             Compte::recalculerSolde($compteId);
             

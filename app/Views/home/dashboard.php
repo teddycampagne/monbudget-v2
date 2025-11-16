@@ -158,6 +158,61 @@ $mois_actuel = $mois_fr[date('n')] . ' ' . date('Y');
         </div>
     </div>
 
+    <!-- Widget Nuage de Tags -->
+    <?php if (!empty($stats['top_tags'])): ?>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-2 px-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-bold">
+                            <i class="bi bi-tags-fill text-primary"></i> Tags les plus utilisés
+                        </h6>
+                        <small class="text-muted">3 derniers mois</small>
+                    </div>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-flex flex-wrap gap-2">
+                        <?php foreach ($stats['top_tags'] as $tag): ?>
+                            <?php 
+                            $usage = (int)$tag['usage_count'];
+                            $debits = (float)$tag['total_debits'];
+                            $credits = (float)$tag['total_credits'];
+                            $balance = $credits - $debits;
+                            
+                            // Taille du badge basée sur l'utilisation (min: 0.85rem, max: 1.3rem)
+                            $fontSize = 0.85 + (min($usage, 20) / 20) * 0.45;
+                            ?>
+                            <a href="<?= url('tags/' . $tag['id']) ?>" 
+                               class="text-decoration-none"
+                               title="<?= $usage ?> transaction(s) - Débits: <?= number_format($debits, 2, ',', ' ') ?> € - Crédits: <?= number_format($credits, 2, ',', ' ') ?> € - Balance: <?= number_format($balance, 2, ',', ' ') ?> €">
+                                <span class="badge bg-<?= htmlspecialchars($tag['color']) ?> position-relative" 
+                                      style="font-size: <?= $fontSize ?>rem; padding: 0.4em 0.7em;">
+                                    <i class="bi bi-tag-fill"></i> <?= htmlspecialchars($tag['name']) ?>
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" 
+                                          style="font-size: 0.65rem; padding: 0.25em 0.4em;">
+                                        <?= $usage ?>
+                                    </span>
+                                </span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="mt-3 pt-2 border-top">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> Cliquez sur un tag pour voir ses détails et transactions
+                            </small>
+                            <a href="<?= url('tags') ?>" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">
+                                Gérer les tags
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="row g-3 mb-4">
         <!-- Top catégories -->
         <div class="col-lg-6">

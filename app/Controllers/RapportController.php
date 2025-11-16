@@ -728,4 +728,80 @@ class RapportController extends BaseController
         
         return $projection;
     }
+    
+    /**
+     * API - Rapport par tags
+     * 
+     * @return void
+     */
+    public function apiRapportTags(): void
+    {
+        $this->requireAuth();
+        header('Content-Type: application/json');
+        
+        $compteId = (int)($_GET['compte_id'] ?? 0);
+        $annee = (int)($_GET['annee'] ?? date('Y'));
+        $mois = isset($_GET['mois']) ? (int)$_GET['mois'] : null;
+        
+        if (!$compteId) {
+            echo json_encode(['error' => 'Compte requis']);
+            return;
+        }
+        
+        $db = Database::getConnection();
+        
+        // Construire la requête SQL
+        $sql = "SELECT 
+                    tags.id,
+                    tags.name,
+                    tags.color,
+                    COUNT(DISTINCT t.id) as nb_transactions,
+                    COALESCE(SUM(CASE WHEN t.type_operation = 'debit' THEN t.montant ELSE 0 END), 0) as total_debits,
+                    COALESCE(SUM(CASE WHEN t.type_operation = 'credit' THEN t.montant ELSE 0 END), 0) as total_credits
+                FROM tags
+                INNER JOIN transaction_tags tt ON tags.id = tt.tag_id
+                INNER JOIN transactions t ON tt.transaction_id = t.id
+                WHERE t.user_id = ? 
+                AND t.compte_id = ?
+                AND YEAR(t.date_transaction) = ?";
+        
+        $params = [$this->userId, $compteId, $annee];
+        
+        if ($mois) {
+            $sql .= " AND MONTH(t.date_transaction) = ?";
+            $params[] = $mois;
+        }
+        
+        $sql .= " GROUP BY tags.id, tags.name, tags.color
+                  ORDER BY total_debits DESC, total_credits DESC";
+        
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $tags = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        // Calculer les totaux
+        $totalDebits = 0;
+        $totalCredits = 0;
+        $totalTransactions = 0;
+        
+        foreach ($tags as &$tag) {
+            $totalDebits += (float)$tag['total_debits'];
+            $totalCredits += (float)$tag['total_credits'];
+            $totalTransactions += (int)$tag['nb_transactions'];
+            
+            // Formater les montants
+            $tag['total_debits'] = number_format((float)$tag['total_debits'], 2, '.', '');
+            $tag['total_credits'] = number_format((float)$tag['total_credits'], 2, '.', '');
+        }
+        
+        $balance = $totalCredits - $totalDebits;
+        
+        echo json_encode([
+            'tags' => $tags,
+            'total_transactions' => $totalTransactions,
+            'total_debits' => number_format($totalDebits, 2, '.', ''),
+            'total_credits' => number_format($totalCredits, 2, '.', ''),
+            'balance' => number_format($balance, 2, '.', '')
+        ]);
+    }
 }

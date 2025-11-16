@@ -168,20 +168,47 @@ class Transaction extends BaseModel
                 cat.icone as categorie_icone,
                 sous_cat.nom as sous_categorie_nom,
                 tier.nom as tiers_nom,
-                tier.type as tiers_type
+                tier.type as tiers_type,
+                GROUP_CONCAT(DISTINCT CONCAT(tags.id, ':', tags.name, ':', tags.color) SEPARATOR '|') as tags_data
                 FROM " . static::$table . " t
                 LEFT JOIN comptes c ON t.compte_id = c.id
                 LEFT JOIN comptes cd ON t.compte_destination_id = cd.id
                 LEFT JOIN banques b ON c.banque_id = b.id
                 LEFT JOIN categories cat ON t.categorie_id = cat.id
-            LEFT JOIN categories sous_cat ON t.sous_categorie_id = sous_cat.id
-            LEFT JOIN tiers tier ON t.tiers_id = tier.id
-            WHERE t.user_id = ? AND t.compte_id = ?
-            ORDER BY t.date_transaction DESC, t.created_at DESC";        if ($limit) {
+                LEFT JOIN categories sous_cat ON t.sous_categorie_id = sous_cat.id
+                LEFT JOIN tiers tier ON t.tiers_id = tier.id
+                LEFT JOIN transaction_tags tt ON t.id = tt.transaction_id
+                LEFT JOIN tags ON tt.tag_id = tags.id
+                WHERE t.user_id = ? AND t.compte_id = ?
+                GROUP BY t.id
+                ORDER BY t.date_transaction DESC, t.created_at DESC";
+        
+        if ($limit) {
             $sql .= " LIMIT " . intval($limit);
         }
         
-        return Database::select($sql, [$userId, $compteId]);
+        $transactions = Database::select($sql, [$userId, $compteId]);
+        
+        // Parser les tags pour chaque transaction
+        foreach ($transactions as &$transaction) {
+            $transaction['tags'] = [];
+            if (!empty($transaction['tags_data'])) {
+                $tagsArray = explode('|', $transaction['tags_data']);
+                foreach ($tagsArray as $tagData) {
+                    $parts = explode(':', $tagData);
+                    if (count($parts) === 3) {
+                        $transaction['tags'][] = [
+                            'id' => (int)$parts[0],
+                            'name' => $parts[1],
+                            'color' => $parts[2]
+                        ];
+                    }
+                }
+            }
+            unset($transaction['tags_data']);
+        }
+        
+        return $transactions;
     }
     
     /**
@@ -713,4 +740,154 @@ class Transaction extends BaseModel
         
         return (int) ($result['count'] ?? 0);
     }
+
+    /**
+     * Attacher des tags à une transaction
+     * 
+     * @param int $transactionId
+     * @param array $tagIds Tableau d'IDs de tags
+     * @return bool
+     */
+    public function attachTags(int $transactionId, array $tagIds): bool
+    {
+        if (empty($tagIds)) {
+            return true;
+        }
+
+        $db = Database::getConnection();
+        
+        try {
+            $db->beginTransaction();
+
+            // Préparer l'insertion multiple
+            $placeholders = implode(',', array_fill(0, count($tagIds), '(?, ?, NOW())'));
+            $sql = "INSERT IGNORE INTO transaction_tags (transaction_id, tag_id, created_at) 
+                    VALUES {$placeholders}";
+
+            $params = [];
+            foreach ($tagIds as $tagId) {
+                $params[] = $transactionId;
+                $params[] = (int) $tagId;
+            }
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+
+            $db->commit();
+            return true;
+        } catch (\Exception $e) {
+            $db->rollBack();
+            return false;
+        }
+    }
+
+    /**
+     * Détacher des tags d'une transaction
+     * 
+     * @param int $transactionId
+     * @param array $tagIds Tableau d'IDs de tags à détacher (vide = tous)
+     * @return bool
+     */
+    public function detachTags(int $transactionId, array $tagIds = []): bool
+    {
+        $db = Database::getConnection();
+        
+        if (empty($tagIds)) {
+            // Détacher tous les tags
+            $sql = "DELETE FROM transaction_tags WHERE transaction_id = ?";
+            $params = [$transactionId];
+        } else {
+            // Détacher des tags spécifiques
+            $placeholders = implode(',', array_fill(0, count($tagIds), '?'));
+            $sql = "DELETE FROM transaction_tags 
+                    WHERE transaction_id = ? AND tag_id IN ({$placeholders})";
+            $params = array_merge([$transactionId], $tagIds);
+        }
+
+        $stmt = $db->prepare($sql);
+        return $stmt->execute($params);
+    }
+
+    /**
+     * Synchroniser les tags d'une transaction (remplace tous les tags)
+     * 
+     * @param int $transactionId
+     * @param array $tagIds Tableau d'IDs de tags
+     * @return bool
+     */
+    public function syncTags(int $transactionId, array $tagIds): bool
+    {
+        $db = Database::getConnection();
+        
+        try {
+            $db->beginTransaction();
+
+            // 1. Supprimer tous les tags existants
+            $sqlDelete = "DELETE FROM transaction_tags WHERE transaction_id = ?";
+            $stmtDelete = $db->prepare($sqlDelete);
+            $stmtDelete->execute([$transactionId]);
+
+            // 2. Ajouter les nouveaux tags
+            if (!empty($tagIds)) {
+                $placeholders = str_repeat('(?, ?),', count($tagIds));
+                $placeholders = rtrim($placeholders, ',');
+                
+                $sqlInsert = "INSERT IGNORE INTO transaction_tags (transaction_id, tag_id) VALUES $placeholders";
+                $stmtInsert = $db->prepare($sqlInsert);
+                
+                $params = [];
+                foreach ($tagIds as $tagId) {
+                    $params[] = $transactionId;
+                    $params[] = (int)$tagId;
+                }
+                
+                $stmtInsert->execute($params);
+            }
+
+            $db->commit();
+            return true;
+        } catch (\Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Récupérer les IDs des tags d'une transaction
+     * 
+     * @param int $transactionId
+     * @return array Tableau d'IDs
+     */
+    public function getTagIds(int $transactionId): array
+    {
+        $sql = "SELECT tag_id FROM transaction_tags WHERE transaction_id = ?";
+        
+        $db = Database::getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$transactionId]);
+        
+        return array_column($stmt->fetchAll(\PDO::FETCH_ASSOC), 'tag_id');
+    }
+
+    /**
+     * Vérifier si une transaction a un tag spécifique
+     * 
+     * @param int $transactionId
+     * @param int $tagId
+     * @return bool
+     */
+    public function hasTag(int $transactionId, int $tagId): bool
+    {
+        $sql = "SELECT COUNT(*) FROM transaction_tags 
+                WHERE transaction_id = ? AND tag_id = ?";
+        
+        $db = Database::getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$transactionId, $tagId]);
+        
+        return $stmt->fetchColumn() > 0;
+    }
 }
+

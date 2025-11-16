@@ -5,10 +5,106 @@ Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 
 **Statut global Phase 1** : 6/6 features complétées (100%) ✅  
 **Statut global Phase 2** : 1/1 feature complétée (100%) ✅  
-**Statut global Phase 3** : 1/1 feature complétée (100%) ✅
+**Statut global Phase 3** : 1/1 feature complétée (100%) ✅  
+**Statut global Phase 4** : 1/1 feature complétée (100%) ✅ **NOUVEAU**
 
-**Session actuelle** : Session 16 (16 nov 2025)  
+**Session actuelle** : Session 17 (16 nov 2025)  
 **Dernière mise à jour** : 16 novembre 2025
+
+---
+
+## ✅ PHASE 4 - COMPLÉTÉE (1/1) - Session 17
+
+### 1. Tags personnalisés ✅
+
+**Backend complet** :
+- ✅ Migration BDD : Tables `tags` + `transaction_tags` (pivot many-to-many)
+- ✅ Model `Tag` : 368 lignes, 16 méthodes (CRUD, validation, search, stats, colors)
+- ✅ Model `Transaction` : 5 méthodes tags (attachTags, detachTags, syncTags, getTagIds, hasTag)
+- ✅ Controller `TagController` : 283 lignes, 10 méthodes (CRUD + show + 3 API)
+- ✅ Routes : 10 routes (6 CRUD + 1 show + 3 API)
+- ✅ Système couleurs : 7 couleurs Bootstrap natives avec labels français
+
+**Frontend complet** :
+- ✅ JavaScript `tag-selector.js` : 400+ lignes (autocomplete, multi-select, quick-create modal)
+- ✅ CSS `tag-selector.css` : Styles composant
+- ✅ Views Tags : index, create, edit, show (4 vues complètes)
+- ✅ Component : Tag selector réutilisable avec badges colorés
+
+**Intégration Transactions** :
+- ✅ Formulaires : Sélecteur tags dans create.php + edit.php
+- ✅ Liste : Colonne tags avec badges colorés dans index.php
+- ✅ Backend : Gestion syncTags() dans store() et update()
+- ✅ Query : LEFT JOIN avec GROUP_CONCAT pour récupération tags
+
+**Dashboard & Rapports** :
+- ✅ Widget nuage de tags : Top 10 des 3 derniers mois avec statistiques
+- ✅ Rapport détaillé : Section analyse par tags dans rapports/index.php
+- ✅ API endpoint : `/api/rapports/tags` avec totaux (débits/crédits/balance)
+- ✅ Page détails tag : Vue complète avec transactions associées et stats
+
+**Recherche avancée** :
+- ✅ Filtre par tags : Select multiple dans page recherche
+- ✅ Support multi-sélection : Ctrl/Cmd pour sélectionner plusieurs tags
+- ✅ Intégration API : Filtre tags dans `/api/recherche`
+
+**Palette couleurs (7 couleurs Bootstrap)** :
+```php
+'primary' => ['label' => 'Bleu', 'hex' => '#0d6efd']
+'secondary' => ['label' => 'Gris', 'hex' => '#6c757d']
+'success' => ['label' => 'Vert', 'hex' => '#198754']
+'danger' => ['label' => 'Rouge', 'hex' => '#dc3545']
+'warning' => ['label' => 'Jaune', 'hex' => '#ffc107']
+'info' => ['label' => 'Cyan', 'hex' => '#0dcaf0']
+'dark' => ['label' => 'Noir', 'hex' => '#212529']
+```
+
+**Bugs corrigés Session 17** :
+- ✅ TagController : Ajout `use MonBudget\Core\Session`
+- ✅ Views tags : Ajout header/footer layouts
+- ✅ Tag colors : Affichage labels français au lieu de hex
+- ✅ syncTags() : Fix erreur "no active transaction"
+- ✅ Dashboard : Correction lien tags (404) → `/tags/{id}`
+- ✅ Index tags : Correction lien usage count → `/tags/{id}`
+- ✅ TagController show() : Ajout `compte_id` dans requête SQL
+
+**Fonctionnalités** :
+- ✅ CRUD complet : Création, modification, suppression tags
+- ✅ Multi-tags : Plusieurs tags par transaction (many-to-many)
+- ✅ Autocomplete : Recherche tags en temps réel (300ms debounce)
+- ✅ Quick-create : Modal AJAX pour créer tags à la volée
+- ✅ Statistiques : Usage count, totaux débits/crédits par tag
+- ✅ Navigation : Drill-down tags → transactions filtrées
+- ✅ Dashboard : Widget nuage de tags cliquable
+- ✅ Rapports : Analyse financière par tag
+- ✅ Recherche : Filtre multi-tags dans recherche avancée
+
+**Fichiers créés** :
+- `database/migrations/2025_11_16_create_tags_tables.sql`
+- `app/Models/Tag.php` (368 lignes)
+- `app/Controllers/TagController.php` (342 lignes)
+- `app/Views/tags/index.php` (214 lignes)
+- `app/Views/tags/create.php` (85 lignes)
+- `app/Views/tags/edit.php` (96 lignes)
+- `app/Views/tags/show.php` (191 lignes)
+- `assets/js/tag-selector.js` (400+ lignes)
+- `assets/css/tag-selector.css` (58 lignes)
+
+**Fichiers modifiés** :
+- `app/Models/Transaction.php` : +5 méthodes tags, modification getByCompte()
+- `app/Controllers/TransactionController.php` : Tags dans create/edit/store/update
+- `app/Controllers/HomeController.php` : Query top_tags pour dashboard
+- `app/Controllers/RapportController.php` : Méthode apiRapportTags()
+- `app/Controllers/RechercheController.php` : Filtre par tags
+- `app/Views/transactions/create.php` : Intégration tag selector
+- `app/Views/transactions/edit.php` : Intégration tag selector
+- `app/Views/transactions/index.php` : Colonne tags
+- `app/Views/home/dashboard.php` : Widget nuage de tags
+- `app/Views/rapports/index.php` : Section tags + JS
+- `app/Views/recherche/index.php` : Select tags
+- `index.php` : +10 routes tags, +1 route rapport
+
+**Total Session 17** : ~2,000 lignes de code
 
 ---
 
@@ -271,7 +367,7 @@ Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 - Aucun bug bloquant identifié
 
 ### Haute
-1. **🏷️ Tags personnalisés** - Étiquettes libres + multi-tags + filtres
+1. ~~**🏷️ Tags personnalisés**~~ ✅ **COMPLÉTÉ Session 17**
 2. **🔔 Système d'alertes** - Notifications dépassements budgets par email
 3. **🌍 Multi-devises** - Support EUR/USD/GBP avec taux de change
 
@@ -302,6 +398,13 @@ Version V2.1 - Améliorations ergonomiques et nouvelles fonctionnalités
 - Commits : 5 commits  
 - Fichiers créés : 22
 - Lignes : +1,900
+
+**Phase 4 (Session 17 - Tags)** :
+- Fichiers créés : 9
+- Fichiers modifiés : 12
+- Lignes : +2,000
+
+**Total V2.1** : ~6,200 lignes ajoutées sur 4 sessions
 
 **Total V2.1** : ~4,200 lignes ajoutées sur 3 sessions
 

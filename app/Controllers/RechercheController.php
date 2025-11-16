@@ -6,6 +6,7 @@ use MonBudget\Core\Database;
 use MonBudget\Models\Compte;
 use MonBudget\Models\Categorie;
 use MonBudget\Models\Tiers;
+use MonBudget\Models\Tag;
 
 /**
  * Contrôleur de recherche globale
@@ -34,6 +35,10 @@ class RechercheController extends BaseController
         $categories = Categorie::getCategoriesPrincipales($this->userId);
         $tiers = Tiers::getAllByUser($this->userId);
         
+        // Récupérer les tags
+        $tagModel = new Tag();
+        $tags = $tagModel->getAllByUser($this->userId, 'name');
+        
         // Organiser les catégories par type
         $categoriesDepenses = [];
         $categoriesRevenus = [];
@@ -52,7 +57,8 @@ class RechercheController extends BaseController
             'comptes' => $comptes,
             'categoriesDepenses' => $categoriesDepenses,
             'categoriesRevenus' => $categoriesRevenus,
-            'tiers' => $tiers
+            'tiers' => $tiers,
+            'tags' => $tags
         ]);
     }
     
@@ -131,6 +137,19 @@ class RechercheController extends BaseController
             } else {
                 $sql .= " AND t.tiers_id = ?";
                 $params[] = $tiersId;
+            }
+        }
+        
+        // Filtre par tags (peut être multiple)
+        if (!empty($_GET['tags']) && is_array($_GET['tags'])) {
+            $tagIds = array_filter(array_map('intval', $_GET['tags']));
+            if (!empty($tagIds)) {
+                $placeholders = implode(',', array_fill(0, count($tagIds), '?'));
+                $sql .= " AND t.id IN (
+                    SELECT transaction_id FROM transaction_tags 
+                    WHERE tag_id IN ($placeholders)
+                )";
+                $params = array_merge($params, $tagIds);
             }
         }
         

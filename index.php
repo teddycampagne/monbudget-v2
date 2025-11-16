@@ -179,6 +179,20 @@ $router->post('/categories/{id}/delete', [CategorieController::class, 'destroy']
 // API - Sous-catégories (pour AJAX)
 $router->get('/api/categories/{id}/sous-categories', [CategorieController::class, 'apiGetSousCategories']);
 
+// Routes Tags
+use MonBudget\Controllers\TagController;
+$router->get('/tags', [TagController::class, 'index']);
+$router->get('/tags/create', [TagController::class, 'create']);
+$router->get('/tags/{id}', [TagController::class, 'show']);
+$router->post('/tags/store', [TagController::class, 'store']);
+$router->get('/tags/{id}/edit', [TagController::class, 'edit']);
+$router->post('/tags/{id}/update', [TagController::class, 'update']);
+$router->post('/tags/{id}/delete', [TagController::class, 'destroy']);
+// API Tags (pour AJAX)
+$router->get('/api/tags/autocomplete', [TagController::class, 'autocomplete']);
+$router->post('/api/tags/quick-create', [TagController::class, 'quickCreate']);
+$router->get('/api/tags/all', [TagController::class, 'getAllTags']);
+
 // Routes Tiers
 use MonBudget\Controllers\TiersController;
 $router->get('/tiers', [TiersController::class, 'index']);
@@ -232,6 +246,7 @@ $router->get('/api/rapports/detail-categorie', [RapportController::class, 'apiDe
 $router->get('/api/rapports/balances', [RapportController::class, 'apiBalances']);
 $router->get('/api/rapports/budgetaire', [RapportController::class, 'apiBudgetaire']);
 $router->get('/api/rapports/tendance-epargne', [RapportController::class, 'apiTendanceEpargne']);
+$router->get('/api/rapports/tags', [RapportController::class, 'apiRapportTags']);
 
 // Routes Projections
 use MonBudget\Controllers\ProjectionController;
