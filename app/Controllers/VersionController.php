@@ -2,7 +2,6 @@
 
 namespace MonBudget\Controllers;
 
-use MonBudget\Core\Controller;
 use MonBudget\Services\VersionChecker;
 
 /**
@@ -10,7 +9,7 @@ use MonBudget\Services\VersionChecker;
  * 
  * @version 2.2.0
  */
-class VersionController extends Controller
+class VersionController extends BaseController
 {
     private VersionChecker $versionChecker;
     
@@ -24,7 +23,7 @@ class VersionController extends Controller
     /**
      * Vérifier si l'utilisateur est authentifié
      */
-    private function requireAuth(): void
+    protected function requireAuth(): void
     {
         if (!isset($_SESSION['user_id'])) {
             http_response_code(401);
@@ -185,7 +184,7 @@ class VersionController extends Controller
     /**
      * Vérifier si l'utilisateur est admin
      */
-    private function isAdmin(): bool
+    protected function isAdmin(): bool
     {
         // Pour l'instant, on vérifie juste si l'utilisateur est connecté
         return isset($_SESSION['user_id']);
