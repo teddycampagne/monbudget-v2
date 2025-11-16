@@ -32,8 +32,8 @@
                 </p>
             <?php endif; ?>
         </div>
-        <?php if (isset($compte)): ?>
-            <div class="btn-group">
+        <div class="btn-group">
+            <?php if (isset($compte)): ?>
                 <a href="<?= url("comptes/{$compte['id']}/recurrences/create") ?>" class="btn btn-primary">
                     <i class="bi bi-plus-lg"></i> Nouvelle Récurrence
                 </a>
@@ -43,8 +43,15 @@
                 <a href="<?= url("comptes/{$compte['id']}/transactions") ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Retour
                 </a>
-            </div>
-        <?php endif; ?>
+            <?php else: ?>
+                <a href="<?= url('recurrences/admin') ?>" class="btn btn-primary">
+                    <i class="bi bi-graph-up"></i> Administration
+                </a>
+                <a href="<?= url('comptes') ?>" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour aux comptes
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <?php if (empty($recurrences)): ?>
