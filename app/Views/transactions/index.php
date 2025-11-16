@@ -275,7 +275,7 @@ require_once __DIR__ . '/../components/breadcrumbs.php';
                                                title="Modifier">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
-                                            <?php if ($transaction['est_recurrente']): ?>
+                                            <?php if (!empty($transaction['recurrence_id'])): ?>
                                                 <button type="button"
                                                         class="btn btn-outline-danger" 
                                                         title="Supprimer récurrence"
