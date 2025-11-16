@@ -94,6 +94,15 @@ class RapportController extends BaseController
         $mois = isset($_GET['mois']) && $_GET['mois'] !== '' ? (int) $_GET['mois'] : null;
         $type = $_GET['type'] ?? 'debit'; // debit ou credit
         
+        // Si un compte est spécifié, vérifier qu'il appartient à l'utilisateur
+        if ($compteId) {
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                $this->json(['error' => 'Accès refusé'], 403);
+                return;
+            }
+        }
+        
         $sql = "
             SELECT 
                 c.id,
@@ -149,6 +158,15 @@ class RapportController extends BaseController
         $compteId = isset($_GET['compte_id']) ? (int) $_GET['compte_id'] : null;
         $annee = (int) ($_GET['annee'] ?? date('Y'));
         $mois = isset($_GET['mois']) && $_GET['mois'] !== '' ? (int) $_GET['mois'] : null;
+        
+        // Si un compte est spécifié, vérifier qu'il appartient à l'utilisateur
+        if ($compteId) {
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                $this->json(['error' => 'Accès refusé'], 403);
+                return;
+            }
+        }
         
         // Gérer le cas des transactions non catégorisées
         if ($categorieId === 0) {
@@ -227,6 +245,15 @@ class RapportController extends BaseController
         $compteId = isset($_GET['compte_id']) ? (int) $_GET['compte_id'] : null;
         $annee = (int) ($_GET['annee'] ?? date('Y'));
         
+        // Si un compte est spécifié, vérifier qu'il appartient à l'utilisateur
+        if ($compteId) {
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                $this->json(['error' => 'Accès refusé'], 403);
+                return;
+            }
+        }
+        
         $sql = "
             SELECT 
                 MONTH(date_transaction) as mois,
@@ -292,6 +319,16 @@ class RapportController extends BaseController
     {
         $annee = (int) ($_GET['annee'] ?? date('Y'));
         $mois = isset($_GET['mois']) && $_GET['mois'] !== '' ? (int) $_GET['mois'] : null;
+        $compteId = isset($_GET['compte_id']) ? (int) $_GET['compte_id'] : null;
+        
+        // Si un compte est spécifié, vérifier qu'il appartient à l'utilisateur
+        if ($compteId) {
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                $this->json(['error' => 'Accès refusé'], 403);
+                return;
+            }
+        }
         
         // Récupérer les budgets
         $sql = "
@@ -331,6 +368,11 @@ class RapportController extends BaseController
         
         $paramsRealise = [$this->userId, $annee];
         
+        if ($compteId) {
+            $sqlRealise .= " AND compte_id = ?";
+            $paramsRealise[] = $compteId;
+        }
+        
         if ($mois !== null) {
             $sqlRealise .= " AND MONTH(date_transaction) = ?";
             $paramsRealise[] = $mois;
@@ -367,6 +409,15 @@ class RapportController extends BaseController
     {
         $annee = (int) ($_GET['annee'] ?? date('Y'));
         $compteId = isset($_GET['compte_id']) ? (int) $_GET['compte_id'] : null;
+        
+        // Si un compte est spécifié, vérifier qu'il appartient à l'utilisateur
+        if ($compteId) {
+            $compte = Compte::find($compteId);
+            if (!$compte || $compte['user_id'] != $this->userId) {
+                $this->json(['error' => 'Accès refusé'], 403);
+                return;
+            }
+        }
         
         $sql = "
             SELECT 
