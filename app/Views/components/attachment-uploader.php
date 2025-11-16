@@ -11,7 +11,7 @@
  * @version 2.1.0-dev
  */
 
-use App\Models\Attachment;
+use MonBudget\Models\Attachment;
 
 // Récupérer les pièces jointes existantes si la transaction existe
 $attachments = [];
@@ -37,6 +37,7 @@ if (isset($transaction['id']) && $transaction['id']) {
                  class="border border-2 border-dashed rounded p-4 text-center mb-3"
                  data-transaction-id="<?= $transaction['id'] ?>"
                  data-compte-id="<?= $compte['id'] ?>"
+                 data-base-url="<?= defined('BASE_URL') ? BASE_URL : '' ?>"
                  style="cursor: pointer; transition: all 0.3s;">
                 <i class="bi bi-cloud-upload fs-1 text-muted"></i>
                 <p class="mb-1"><strong>Cliquez ou glissez-déposez vos fichiers ici</strong></p>
@@ -53,7 +54,11 @@ if (isset($transaction['id']) && $transaction['id']) {
             <!-- Liste des fichiers -->
             <div id="attachment-file-list">
                 <?php foreach ($attachments as $attachment): ?>
-                    <div class="attachment-item mb-2 p-2 border rounded" data-id="<?= $attachment['id'] ?>">
+                    <div class="attachment-item mb-2 p-2 border rounded" 
+                         data-id="<?= $attachment['id'] ?>"
+                         data-path="<?= htmlspecialchars($attachment['path']) ?>"
+                         data-original-name="<?= htmlspecialchars($attachment['original_name']) ?>"
+                         data-is-image="<?= Attachment::isImage($attachment) ? '1' : '0' ?>">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center flex-grow-1">
                                 <i class="bi <?= Attachment::getIcon($attachment['mimetype']) ?> fs-4 text-primary me-2"></i>
@@ -105,6 +110,34 @@ if (isset($transaction['id']) && $transaction['id']) {
 <?php if (isset($transaction['id']) && $transaction['id']): ?>
     <link rel="stylesheet" href="<?= url('assets/css/attachment-uploader.css') ?>">
     <script src="<?= url('assets/js/attachment-uploader.js') ?>"></script>
+    <script>
+        // Initialiser l'uploader
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploader = new AttachmentUploader(<?= $transaction['id'] ?>, <?= $compte['id'] ?>);
+            
+            // Attacher les listeners aux pièces jointes existantes
+            document.querySelectorAll('.attachment-item .btn-preview').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const item = this.closest('.attachment-item');
+                    const attachment = {
+                        id: item.dataset.id,
+                        path: item.dataset.path,
+                        original_name: item.dataset.originalName,
+                        is_image: item.dataset.isImage === '1'
+                    };
+                    uploader.previewImage(attachment);
+                });
+            });
+            
+            // Attacher les listeners de suppression aux pièces jointes existantes
+            document.querySelectorAll('.attachment-item .btn-delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const item = this.closest('.attachment-item');
+                    uploader.deleteFile(item.dataset.id, item);
+                });
+            });
+        });
+    </script>
     <style>
         #attachment-dropzone:hover {
             background-color: #f8f9fa;

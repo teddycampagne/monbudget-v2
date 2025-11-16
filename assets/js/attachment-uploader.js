@@ -14,6 +14,7 @@ class AttachmentUploader {
         this.dropZone = document.getElementById('attachment-dropzone');
         this.fileInput = document.getElementById('attachment-file-input');
         this.fileList = document.getElementById('attachment-file-list');
+        this.baseUrl = this.dropZone?.dataset.baseUrl || '';
         
         this.init();
     }
@@ -96,7 +97,7 @@ class AttachmentUploader {
         formData.append('file', file);
 
         try {
-            const response = await fetch(`/comptes/${this.compteId}/transactions/${this.transactionId}/attachments/upload`, {
+            const response = await fetch(`${this.baseUrl}/comptes/${this.compteId}/transactions/${this.transactionId}/attachments/upload`, {
                 method: 'POST',
                 body: formData
             });
@@ -153,7 +154,7 @@ class AttachmentUploader {
                     ${isImage ? `<button type="button" class="btn btn-outline-primary btn-preview" title="Aperçu">
                         <i class="bi bi-eye"></i>
                     </button>` : ''}
-                    <a href="/comptes/${this.compteId}/transactions/${this.transactionId}/attachments/${attachment.id}/download" 
+                    <a href="${this.baseUrl}/comptes/${this.compteId}/transactions/${this.transactionId}/attachments/${attachment.id}/download" 
                        class="btn btn-outline-secondary" 
                        title="Télécharger">
                         <i class="bi bi-download"></i>
@@ -182,7 +183,7 @@ class AttachmentUploader {
         }
 
         try {
-            const response = await fetch(`/comptes/${this.compteId}/transactions/${this.transactionId}/attachments/${attachmentId}`, {
+            const response = await fetch(`${this.baseUrl}/comptes/${this.compteId}/transactions/${this.transactionId}/attachments/${attachmentId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -217,7 +218,7 @@ class AttachmentUploader {
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body text-center">
-                            <img src="/uploads/attachments/${attachment.path}" 
+                            <img src="${this.baseUrl}/uploads/${attachment.path}" 
                                  class="img-fluid" 
                                  alt="${this.escapeHtml(attachment.original_name)}">
                         </div>

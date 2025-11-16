@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace MonBudget\Services;
 
-use App\Models\Attachment;
+use MonBudget\Models\Attachment;
 use Exception;
 
 /**
@@ -60,8 +60,11 @@ class FileUploadService
             throw new Exception("Type de fichier non autorisé (détecté: {$realMimeType})");
         }
 
-        // Chemin relatif depuis uploads/
-        $relativePath = str_replace('uploads/', '', $storagePath) . '/' . $filename;
+        // Chemin relatif depuis uploads/ (sans le chemin absolu du projet)
+        $baseDir = dirname(__DIR__, 2); // Racine du projet
+        $relativePath = str_replace($baseDir . '/', '', $storagePath) . '/' . $filename;
+        // Supprimer "uploads/" du début pour avoir : attachments/2/2025/11/xxx.jpg
+        $relativePath = str_replace('uploads/', '', $relativePath);
 
         return [
             'filename' => $filename,

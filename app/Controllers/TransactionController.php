@@ -8,8 +8,8 @@ use MonBudget\Models\Categorie;
 use MonBudget\Models\Tiers;
 use MonBudget\Models\RegleAutomatisation;
 use MonBudget\Models\Recurrence;
-use App\Models\Attachment;
-use App\Services\FileUploadService;
+use MonBudget\Models\Attachment;
+use MonBudget\Services\FileUploadService;
 
 /**
  * Contrôleur de gestion des transactions bancaires
@@ -753,6 +753,12 @@ class TransactionController extends BaseController
         $this->requireAuth();
         header('Content-Type: application/json');
         
+        // DEBUG
+        error_log("=== UPLOAD ATTACHMENT DEBUG ===");
+        error_log("CompteId: $compteId, TransactionId: $transactionId");
+        error_log("UserId: " . $this->userId);
+        error_log("FILES: " . print_r($_FILES, true));
+        
         try {
             // Vérifier que la transaction existe et appartient à l'utilisateur
             $transaction = Transaction::find($transactionId);
@@ -807,7 +813,8 @@ class TransactionController extends BaseController
                     'size' => Attachment::formatFileSize($attachment['size']),
                     'icon' => Attachment::getIcon($attachment['mimetype']),
                     'is_image' => Attachment::isImage($attachment),
-                    'uploaded_at' => $attachment['uploaded_at']
+                    'uploaded_at' => $attachment['uploaded_at'],
+                    'path' => $attachment['path']
                 ]
             ]);
 

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Models;
+namespace MonBudget\Models;
 
-use App\Core\Database;
+use MonBudget\Core\Database;
 use PDO;
 
 /**
@@ -64,7 +64,7 @@ class Attachment
      */
     public static function find(int $id): ?array
     {
-        $db = Database::getInstance();
+        $db = Database::getConnection();
         $stmt = $db->prepare("
             SELECT * FROM attachments 
             WHERE id = ?
@@ -83,7 +83,7 @@ class Attachment
      */
     public static function findByTransaction(int $transactionId): array
     {
-        $db = Database::getInstance();
+        $db = Database::getConnection();
         $stmt = $db->prepare("
             SELECT * FROM attachments 
             WHERE transaction_id = ?
@@ -102,7 +102,7 @@ class Attachment
      */
     public static function countByTransaction(int $transactionId): int
     {
-        $db = Database::getInstance();
+        $db = Database::getConnection();
         $stmt = $db->prepare("
             SELECT COUNT(*) FROM attachments 
             WHERE transaction_id = ?
@@ -120,7 +120,7 @@ class Attachment
      */
     public static function create(array $data): int|false
     {
-        $db = Database::getInstance();
+        $db = Database::getConnection();
         
         $stmt = $db->prepare("
             INSERT INTO attachments (
@@ -153,7 +153,7 @@ class Attachment
      */
     public static function delete(int $id): bool
     {
-        $db = Database::getInstance();
+        $db = Database::getConnection();
         $stmt = $db->prepare("DELETE FROM attachments WHERE id = ?");
         
         return $stmt->execute([$id]);
@@ -167,7 +167,7 @@ class Attachment
      */
     public static function deleteByTransaction(int $transactionId): bool
     {
-        $db = Database::getInstance();
+        $db = Database::getConnection();
         $stmt = $db->prepare("DELETE FROM attachments WHERE transaction_id = ?");
         
         return $stmt->execute([$transactionId]);
