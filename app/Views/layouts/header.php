@@ -16,15 +16,15 @@
     <link rel="manifest" href="<?= url('manifest.json') ?>">
     
     <!-- Favicons -->
-    <link rel="icon" type="image/x-icon" href="<?= url('favicon.ico') ?>">
-    <link rel="icon" type="image/png" sizes="16x16" href="<?= url('favicon-16x16.png') ?>">
-    <link rel="icon" type="image/png" sizes="32x32" href="<?= url('favicon-32x32.png') ?>">
-    <link rel="icon" type="image/png" sizes="48x48" href="<?= url('favicon-48x48.png') ?>">
+    <link rel="icon" type="image/x-icon" href="<?= url('favicon.ico?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= url('favicon-16x16.png?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= url('favicon-32x32.png?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="48x48" href="<?= url('favicon-48x48.png?v=2.1') ?>">
     
     <!-- PWA Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="<?= url('assets/icons/icon-192x192.png') ?>">
-    <link rel="icon" type="image/png" sizes="512x512" href="<?= url('assets/icons/icon-512x512.png') ?>">
-    <link rel="apple-touch-icon" sizes="180x180" href="<?= url('apple-touch-icon.png') ?>">
+    <link rel="icon" type="image/png" sizes="192x192" href="<?= url('assets/icons/icon-192x192.png?v=2.1') ?>">
+    <link rel="icon" type="image/png" sizes="512x512" href="<?= url('assets/icons/icon-512x512.png?v=2.1') ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?= url('apple-touch-icon.png?v=2.1') ?>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
