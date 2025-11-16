@@ -142,6 +142,74 @@
     }
 
     /**
+     * Ajoute des raccourcis pour les sélecteurs de mois/année (pour rapports, budgets)
+     * @param {HTMLElement} moisSelect - Select du mois
+     * @param {HTMLElement} anneeSelect - Select de l'année
+     */
+    function addMonthYearShortcuts(moisSelect, anneeSelect) {
+        // Vérifier si les raccourcis n'ont pas déjà été ajoutés
+        if (moisSelect.dataset.shortcutsAdded === 'true') {
+            return;
+        }
+
+        const today = new Date();
+        const shortcuts = [
+            { label: 'Mois actuel', mois: today.getMonth() + 1, annee: today.getFullYear() },
+            { label: 'Mois dernier', mois: today.getMonth() === 0 ? 12 : today.getMonth(), annee: today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear() },
+            { label: 'Année actuelle', mois: '', annee: today.getFullYear() },
+            { label: 'Année dernière', mois: '', annee: today.getFullYear() - 1 }
+        ];
+
+        // Créer le conteneur des boutons
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'btn-group btn-group-sm mt-2';
+        buttonGroup.setAttribute('role', 'group');
+        buttonGroup.setAttribute('aria-label', 'Raccourcis période');
+
+        shortcuts.forEach(shortcut => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-outline-secondary btn-sm';
+            button.textContent = shortcut.label;
+            button.title = `Sélectionner ${shortcut.label}`;
+
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Définir le mois
+                moisSelect.value = shortcut.mois;
+                
+                // Définir l'année
+                anneeSelect.value = shortcut.annee;
+                
+                // Déclencher les événements change
+                moisSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                anneeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                
+                // Feedback visuel
+                button.classList.add('active');
+                setTimeout(() => button.classList.remove('active'), 200);
+            });
+
+            buttonGroup.appendChild(button);
+        });
+
+        // Insérer après le select d'année
+        const parent = anneeSelect.parentNode;
+        if (parent.classList.contains('col-md-3') || parent.classList.contains('col-md-2')) {
+            // Si dans une colonne Bootstrap, insérer après le parent
+            parent.parentNode.insertBefore(buttonGroup, parent.nextSibling);
+            buttonGroup.classList.add('col-12', 'mt-2');
+        } else {
+            parent.insertBefore(buttonGroup, anneeSelect.nextSibling);
+        }
+
+        // Marquer comme initialisé
+        moisSelect.dataset.shortcutsAdded = 'true';
+        anneeSelect.dataset.shortcutsAdded = 'true';
+    }
+
+    /**
      * Initialise les raccourcis pour tous les champs date avec attribut data-shortcuts
      */
     function initDateShortcuts() {
@@ -159,6 +227,18 @@
 
             addDateShortcuts(input, options);
         });
+
+        // Gérer les sélecteurs de mois/année avec data-month-year-shortcuts
+        const monthSelects = document.querySelectorAll('select[data-month-year-shortcuts="month"]');
+        monthSelects.forEach(moisSelect => {
+            const yearSelectId = moisSelect.dataset.yearSelect;
+            if (yearSelectId) {
+                const anneeSelect = document.getElementById(yearSelectId);
+                if (anneeSelect) {
+                    addMonthYearShortcuts(moisSelect, anneeSelect);
+                }
+            }
+        });
     }
 
     // Initialiser au chargement du DOM
@@ -172,6 +252,7 @@
     window.DatePickerShortcuts = {
         init: initDateShortcuts,
         add: addDateShortcuts,
+        addMonthYear: addMonthYearShortcuts,
         getDate: getDateFromShortcut
     };
 
