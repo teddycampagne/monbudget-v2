@@ -130,11 +130,64 @@ vendor/bin/phpunit tests/Models/CompteTest.php
 ## 📚 Documentation
 
 - **[CHANGELOG.md](CHANGELOG.md)** : Historique des versions
+- **[SECURITY.md](SECURITY.md)** : Politiques de sécurité et consignes
 - **[docs/TODO.md](docs/TODO.md)** : Roadmap et progression
 - **[docs/INSTALL.md](docs/INSTALL.md)** : Guide d'installation détaillé
+- **[docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md)** : Guide de déploiement en production
 - **[docs/user/](docs/user/)** : Documentation utilisateur
 
-## 🔗 Accès
+## 🔒 Sécurité
+
+### Audit automatique avant push (OBLIGATOIRE)
+
+**Exécuter systématiquement avant tout `git push`** :
+
+```powershell
+.\security-audit.ps1
+```
+
+Le script vérifie :
+- ✅ `database.sql` sans données utilisateur (0 INSERT)
+- ✅ Aucun IBAN, email, téléphone dans les fichiers stagés
+- ✅ Aucun mot de passe en clair
+- ✅ `config/installed.json` non tracké
+- ✅ `.gitignore` correctement configuré
+
+**Options** :
+```powershell
+.\security-audit.ps1 -Strict  # Bloque le push en cas d'erreur
+.\security-audit.ps1 -Auto    # Corrige automatiquement (BOM UTF-8, etc.)
+```
+
+### Installation du hook pre-push (recommandé)
+
+Pour automatiser l'audit à chaque push :
+
+```powershell
+@'
+#!/usr/bin/env pwsh
+Write-Host "🔒 Audit de sécurité automatique..." -ForegroundColor Cyan
+& "$PWD\security-audit.ps1" -Strict
+exit $LASTEXITCODE
+'@ | Out-File .git/hooks/pre-push -Encoding utf8
+```
+
+### Consignes de sécurité
+
+**À NE JAMAIS commiter** :
+- `database.sql` avec INSERT INTO (données réelles)
+- Credentials en clair (mots de passe, clés API)
+- `config/installed.json` (configuration serveur spécifique)
+- Fichiers `.env*` (sauf `.env.example`)
+
+**Données de test autorisées** :
+- Utilisateur : Jean Dupont, jean.dupont@example.com
+- IBAN : FR7630006000011234567890189 (fictif valide)
+- Téléphone : 01 23 45 67 89
+
+📖 **Documentation complète** : [SECURITY.md](SECURITY.md) et [.ai-instructions](.ai-instructions)
+
+---
 
 - **Application** : <http://localhost/monbudgetV2>
 - **Tests** : `vendor/bin/phpunit --testdox`

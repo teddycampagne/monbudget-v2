@@ -23,7 +23,17 @@ Vous **NE DEVEZ JAMAIS** :
 
 ### ✅ ACTIONS REQUISES AVANT COMMIT
 
-**Checklist automatique** :
+**🔒 SCRIPT D'AUDIT AUTOMATIQUE (RECOMMANDÉ)** :
+```powershell
+# Exécuter AVANT tout push
+.\security-audit.ps1
+
+# Options disponibles
+.\security-audit.ps1 -Strict  # Bloque le push si erreur
+.\security-audit.ps1 -Auto    # Corrige automatiquement (BOM, etc.)
+```
+
+**Checklist manuelle alternative** :
 ```bash
 # 1. Vérifier database.sql (doit retourner 0)
 grep -c "INSERT INTO" database.sql
