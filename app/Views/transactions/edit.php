@@ -189,8 +189,8 @@
                 </div>
 
                 <!-- Récurrence -->
-                <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
-                    <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
+                <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'secondary' ?>">
+                    <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'light' ?>">
                         <div class="form-check">
                             <input class="form-check-input" 
                                    type="checkbox" 
@@ -198,16 +198,21 @@
                                    name="est_recurrente" 
                                    value="1" 
                                    <?= !empty($transaction['recurrence_id']) ? 'checked' : '' ?>
-                                   onchange="toggleRecurrenceFields()">
-                            <label class="form-check-label fw-bold" for="est_recurrente">
+                                   disabled
+                                   title="Utilisez le menu Récurrences pour gérer les transactions récurrentes">
+                            <label class="form-check-label fw-bold text-<?= !empty($transaction['recurrence_id']) ? 'dark' : 'muted' ?>" for="est_recurrente">
                                 <i class="bi bi-arrow-repeat"></i> Transaction récurrente
                             </label>
                             <small class="d-block text-muted">
-                                Cochez cette case pour transformer cette transaction en modèle de récurrence
+                                <?php if (!empty($transaction['recurrence_id'])): ?>
+                                    Cette transaction est liée à une récurrence. Utilisez le menu <a href="<?= url('recurrences') ?>">Récurrences</a> pour la modifier.
+                                <?php else: ?>
+                                    Utilisez le menu <a href="<?= url('recurrences') ?>">Récurrences</a> pour créer des transactions récurrentes.
+                                <?php endif; ?>
                             </small>
                         </div>
                     </div>
-                    <div class="card-body" id="recurrence_fields" style="display: <?= !empty($transaction['recurrence_id']) ? 'block' : 'none' ?>;">
+                    <div class="card-body d-none" id="recurrence_fields">
                         <div class="form-check mb-3">
                             <input class="form-check-input" 
                                    type="checkbox" 
@@ -388,27 +393,7 @@ document.getElementById('type_operation').addEventListener('change', function() 
     }
 });
 
-// Toggle des champs de récurrence
-function toggleRecurrenceFields() {
-    const isRecurrente = document.getElementById('est_recurrente').checked;
-    const recurrenceFields = document.getElementById('recurrence_fields');
-    recurrenceFields.style.display = isRecurrente ? 'block' : 'none';
-    
-    // Désactiver la validation HTML5 sur les champs cachés pour éviter les erreurs "not focusable"
-    const fieldsToToggle = recurrenceFields.querySelectorAll('input, select');
-    fieldsToToggle.forEach(field => {
-        if (isRecurrente) {
-            // Réactiver la validation si le champ était required
-            if (field.dataset.wasRequired === 'true') {
-                field.required = true;
-            }
-        } else {
-            // Sauvegarder l'état required et désactiver temporairement
-            field.dataset.wasRequired = field.required;
-            field.required = false;
-        }
-    });
-}
+// Note: Section récurrence désactivée - utiliser le menu Récurrences dédié
 
 // Afficher le compte de destination au chargement si virement est sélectionné
 if (document.getElementById('type_operation').value === 'virement') {
