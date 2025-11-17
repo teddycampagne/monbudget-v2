@@ -153,10 +153,22 @@ class Installer
                 $dsn,
                 $config['username'] ?? 'root',
                 $config['password'] ?? '',
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+                ]
             );
             
+            // Lire le fichier SQL en UTF-8
             $sql = file_get_contents($sqlFile);
+            if ($sql === false) {
+                throw new Exception("Impossible de lire le fichier SQL");
+            }
+            
+            // Convertir en UTF-8 si nécessaire (détection automatique)
+            if (!mb_check_encoding($sql, 'UTF-8')) {
+                $sql = mb_convert_encoding($sql, 'UTF-8', mb_detect_encoding($sql));
+            }
             
             // Supprimer seulement les commentaires standard (pas les directives MySQL /*! */)
             $sql = preg_replace('/--.*$/m', '', $sql);
@@ -383,7 +395,10 @@ class Installer
                 $dsn,
                 $config['username'] ?? 'root',
                 $config['password'] ?? '',
-                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci"
+                ]
             );
             
             $pdo->beginTransaction();
@@ -392,6 +407,12 @@ class Installer
             $sqlFile = dirname(__DIR__, 2) . '/database_sample_data.sql';
             if (file_exists($sqlFile)) {
                 $sql = file_get_contents($sqlFile);
+                
+                // Convertir en UTF-8 si nécessaire
+                if (!mb_check_encoding($sql, 'UTF-8')) {
+                    $sql = mb_convert_encoding($sql, 'UTF-8', mb_detect_encoding($sql));
+                }
+                
                 $pdo->exec($sql);
                 $this->steps[] = "Sample data: Static data loaded (banks, categories, suppliers)";
             }
