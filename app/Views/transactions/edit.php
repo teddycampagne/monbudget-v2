@@ -189,25 +189,26 @@
                 </div>
 
                 <!-- Récurrence -->
-                <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'secondary' ?>">
-                    <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'light' ?>">
+                <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
+                    <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
                         <div class="form-check">
                             <input class="form-check-input" 
                                    type="checkbox" 
-                                   id="est_recurrente" 
-                                   name="est_recurrente" 
+                                   id="convert_to_recurrence" 
+                                   name="convert_to_recurrence" 
                                    value="1" 
-                                   <?= !empty($transaction['recurrence_id']) ? 'checked' : '' ?>
-                                   disabled
-                                   title="Utilisez le menu Récurrences pour gérer les transactions récurrentes">
-                            <label class="form-check-label fw-bold text-<?= !empty($transaction['recurrence_id']) ? 'dark' : 'muted' ?>" for="est_recurrente">
-                                <i class="bi bi-arrow-repeat"></i> Transaction récurrente
+                                   <?= !empty($transaction['recurrence_id']) ? 'checked disabled' : '' ?>
+                                   <?= !empty($transaction['recurrence_id']) ? 'title="Cette transaction est déjà liée à une récurrence"' : '' ?>>
+                            <label class="form-check-label fw-bold" for="convert_to_recurrence">
+                                <i class="bi bi-arrow-repeat"></i> Convertir en transaction récurrente
                             </label>
                             <small class="d-block text-muted">
                                 <?php if (!empty($transaction['recurrence_id'])): ?>
-                                    Cette transaction est liée à une récurrence. Utilisez le menu <a href="<?= url('recurrences') ?>">Récurrences</a> pour la modifier.
+                                    <i class="bi bi-link"></i> Cette transaction est liée à la récurrence #<?= $transaction['recurrence_id'] ?>. 
+                                    <a href="<?= url('recurrences/' . $transaction['recurrence_id'] . '/edit') ?>">Modifier la récurrence</a>
                                 <?php else: ?>
-                                    Utilisez le menu <a href="<?= url('recurrences') ?>">Récurrences</a> pour créer des transactions récurrentes.
+                                    Cochez cette case pour utiliser cette transaction comme modèle de récurrence.
+                                    Les données actuelles seront copiées dans une nouvelle récurrence.
                                 <?php endif; ?>
                             </small>
                         </div>
@@ -400,9 +401,6 @@ if (document.getElementById('type_operation').value === 'virement') {
     document.getElementById('compte_destination_block').style.display = 'block';
     document.getElementById('compte_destination_id').required = true;
 }
-
-// Appeler toggleRecurrenceFields au chargement pour gérer l'état initial
-toggleRecurrenceFields();
 
 // Chargement dynamique des sous-catégories
 function loadSousCategories(categorieId, selectedSousCategorieId = null) {

@@ -138,7 +138,7 @@ class TransactionController extends BaseController
             'type_operation' => 'required',
             'moyen_paiement' => '',
             'beneficiaire' => 'max:255',
-            'est_recurrente' => 'numeric',
+            'convert_to_recurrence' => 'numeric',
             'frequence' => '',
             'intervalle' => 'numeric',
             'jour_execution' => 'numeric',
@@ -158,12 +158,11 @@ class TransactionController extends BaseController
         $data['tiers_id'] = !empty($data['tiers_id']) ? (int)$data['tiers_id'] : null;
         $data['compte_destination_id'] = !empty($data['compte_destination_id']) ? (int)$data['compte_destination_id'] : null;
         
-        // ✅ NOUVEAU : Détecter si c'est une récurrence
-        $estRecurrente = isset($_POST['est_recurrente']) && $_POST['est_recurrente'];
+        // ✅ NOUVEAU : Détecter si conversion en récurrence demandée
+        $convertToRecurrence = isset($_POST['convert_to_recurrence']) && $_POST['convert_to_recurrence'];
         
         // Traitement des booléens (pour transactions normales)
         $data['validee'] = 1; // Par défaut validée
-        $data['est_recurrente'] = 0; // TOUJOURS 0 maintenant (nouvelle archi)
         
         // Appliquer les règles d'automatisation sur les champs non renseignés
         $automatisation = RegleAutomatisation::applyRules($this->userId, $data['libelle']);
@@ -222,8 +221,8 @@ class TransactionController extends BaseController
                 $this->redirect("comptes/{$compteId}/transactions/create");
             }
         } else {
-            // ✅ NOUVELLE ARCHITECTURE : Si récurrence, créer dans table recurrences
-            if ($estRecurrente) {
+            // ✅ NOUVELLE ARCHITECTURE : Si conversion en récurrence, créer dans table recurrences
+            if ($convertToRecurrence) {
                 // Créer le modèle de récurrence
                 $recurrenceData = [
                     'user_id' => $this->userId,
@@ -486,7 +485,7 @@ class TransactionController extends BaseController
             'type_operation' => 'required',
             'moyen_paiement' => '',
             'beneficiaire' => 'max:255',
-            'est_recurrente' => 'numeric',
+            'convert_to_recurrence' => 'numeric',
             'frequence' => '',
             'intervalle' => 'numeric',
             'jour_execution' => 'numeric',
@@ -508,8 +507,7 @@ class TransactionController extends BaseController
         $data['compte_destination_id'] = !empty($data['compte_destination_id']) ? (int)$data['compte_destination_id'] : null;
         
         // ✅ NOUVELLE ARCHITECTURE : Détecter si conversion vers récurrence
-        $estRecurrente = isset($_POST['est_recurrente']) && $_POST['est_recurrente'];
-        $data['est_recurrente'] = 0; // TOUJOURS 0 (nouvelle archi)
+        $convertToRecurrence = isset($_POST['convert_to_recurrence']) && $_POST['convert_to_recurrence'];
         
         // Normaliser les dates vides en NULL (éviter '0000-00-00')
         if (isset($data['date_fin']) && ($data['date_fin'] === '' || $data['date_fin'] === '0000-00-00')) {
@@ -520,7 +518,7 @@ class TransactionController extends BaseController
         }
         
         // ✅ Si conversion transaction normale → récurrence
-        if ($estRecurrente && !$transaction['recurrence_id']) {
+        if ($convertToRecurrence && empty($transaction['recurrence_id'])) {
             // Créer le modèle de récurrence dans table recurrences
             $recurrenceData = [
                 'user_id' => $this->userId,
