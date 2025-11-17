@@ -77,20 +77,7 @@ class Transaction extends BaseModel
         'type_operation',
         'moyen_paiement',
         'beneficiaire',
-        'est_recurrente',
-        'frequence',
-        'intervalle',
-        'jour_execution',
-        'jour_semaine',
-        'date_debut',
-        'date_fin',
-        'prochaine_execution',
-        'derniere_execution',
-        'nb_executions',
-        'nb_executions_max',
-        'auto_validation',
-        'tolerance_weekend',
-        'recurrence_active',
+        'recurrence_id', // FK vers table recurrences
         'validee',
         'importee',
         'fichier_import'
@@ -653,94 +640,6 @@ class Transaction extends BaseModel
         return Database::select($sql, [$userId, $compteId, $dateDebut, $dateFin]);
     }
     
-    /**
-     * Supprime un modèle de récurrence avec toutes ses occurrences générées
-     * 
-     * Supprime :
-     * 1. Le modèle de récurrence (est_recurrente = 1)
-     * 2. TOUTES les transactions générées depuis ce modèle (retrouvées par similitude)
-     * 
-     * Note: Les occurrences sont identifiées par :
-     * - Même compte_id, montant, libellé que le modèle
-     * - est_recurrente = 0
-     * - date >= date_debut du modèle
-     * 
-     * @param int $recurrenceId ID du modèle de récurrence
-     * @return array Résultat ['modele' => int, 'occurrences' => int]
-     */
-    public static function deleteRecurrenceWithOccurrences(int $recurrenceId): array
-    {
-        $recurrence = static::find($recurrenceId);
-        
-        if (!$recurrence || !$recurrence['est_recurrente']) {
-            return ['modele' => 0, 'occurrences' => 0];
-        }
-        
-        // Supprimer les occurrences générées
-        // On identifie par: même compte, même montant, même libellé, date >= date_debut
-        $dateDebut = $recurrence['date_debut'] ?? $recurrence['created_at'];
-        
-        $sql = "DELETE FROM " . static::$table . " 
-                WHERE user_id = ? 
-                AND compte_id = ? 
-                AND est_recurrente = 0
-                AND ABS(montant - ?) < 0.01
-                AND libelle = ?
-                AND date_transaction >= ?";
-        
-        $occurrences = Database::delete($sql, [
-            $recurrence['user_id'],
-            $recurrence['compte_id'],
-            $recurrence['montant'],
-            $recurrence['libelle'],
-            $dateDebut
-        ]);
-        
-        // Supprimer le modèle
-        $modele = static::delete($recurrenceId);
-        
-        return [
-            'modele' => $modele,
-            'occurrences' => $occurrences
-        ];
-    }
-    
-    /**
-     * Compte le nombre d'occurrences générées depuis un modèle de récurrence
-     * 
-     * @param int $recurrenceId ID du modèle de récurrence
-     * @return int Nombre d'occurrences
-     */
-    public static function countOccurrencesFromRecurrence(int $recurrenceId): int
-    {
-        $recurrence = static::find($recurrenceId);
-        
-        if (!$recurrence || !$recurrence['est_recurrente']) {
-            return 0;
-        }
-        
-        $dateDebut = $recurrence['date_debut'] ?? $recurrence['created_at'];
-        
-        $sql = "SELECT COUNT(*) as count 
-                FROM " . static::$table . " 
-                WHERE user_id = ? 
-                AND compte_id = ? 
-                AND est_recurrente = 0
-                AND ABS(montant - ?) < 0.01
-                AND libelle = ?
-                AND date_transaction >= ?";
-        
-        $result = Database::selectOne($sql, [
-            $recurrence['user_id'],
-            $recurrence['compte_id'],
-            $recurrence['montant'],
-            $recurrence['libelle'],
-            $dateDebut
-        ]);
-        
-        return (int) ($result['count'] ?? 0);
-    }
-
     /**
      * Attacher des tags à une transaction
      * 

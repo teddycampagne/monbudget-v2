@@ -381,12 +381,11 @@ class Compte extends BaseModel
         }
         
         // Calculer les totaux séparément avec abs() pour sécuriser le calcul
-        // Exclure les modèles récurrents (est_recurrente = 1) du calcul
         $sql = "SELECT 
                     COALESCE(SUM(CASE WHEN type_operation = 'credit' THEN ABS(montant) ELSE 0 END), 0) as total_credits,
                     COALESCE(SUM(CASE WHEN type_operation = 'debit' THEN ABS(montant) ELSE 0 END), 0) as total_debits
                 FROM transactions
-                WHERE compte_id = ? AND est_recurrente = 0";
+                WHERE compte_id = ?";
         
         $result = Database::selectOne($sql, [$id]);
         

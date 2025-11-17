@@ -191,13 +191,13 @@
                 <!-- Récurrence -->
                 <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
                     <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
-                        <div class="form-check mb-0">
+                        <div class="form-check">
                             <input class="form-check-input" 
                                    type="checkbox" 
                                    id="est_recurrente" 
                                    name="est_recurrente" 
                                    value="1" 
-                                   <?= $transaction['est_recurrente'] ? 'checked' : '' ?>
+                                   <?= !empty($transaction['recurrence_id']) ? 'checked' : '' ?>
                                    onchange="toggleRecurrenceFields()">
                             <label class="form-check-label fw-bold" for="est_recurrente">
                                 <i class="bi bi-arrow-repeat"></i> Transaction récurrente
