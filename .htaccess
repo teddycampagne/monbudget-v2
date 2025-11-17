@@ -15,7 +15,12 @@ php_value max_execution_time 60
 # Réécriture d'URL
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /monbudgetV2
+    
+    # Base dynamique : détectée automatiquement
+    # En local : /monbudgetV2
+    # En production : / (racine)
+    # Si l'app est dans un sous-dossier en prod, ajuster manuellement
+    # RewriteBase /
     
     # Rediriger toutes les requêtes vers index.php sauf pour les fichiers/dossiers existants
     RewriteCond %{REQUEST_FILENAME} !-f
