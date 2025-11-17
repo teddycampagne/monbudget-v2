@@ -57,6 +57,11 @@ composer.phar
 
 # Database dumps with data
 database_sample_data.sql
+database_with_data.sql
+database_clean.sql
+database_new.sql
+database.sql.old
+database.sql.backup
 
 # Logs
 *.log
