@@ -71,18 +71,37 @@ sudo a2ensite monbudget.conf
 sudo systemctl reload apache2
 ```
 
-### 4. Ajuster .htaccess
+### 4. Ajuster .htaccess (sous-dossier uniquement)
 
-**IMPORTANT** : Le fichier `.htaccess` est maintenant configuré pour détecter automatiquement le chemin de base.
+**Par défaut**, le `.htaccess` fonctionne automatiquement pour :
+- ✅ Application à la racine : `https://budget.com/`
+- ✅ Environnement local : `http://localhost/monbudgetV2/`
 
-Si l'application est à la **racine** du domaine (ex: `https://budget.com/`) :
-- ✅ Aucune modification nécessaire
+**Si l'application est dans un sous-dossier** (ex: `https://monsite.com/monbudget/`) :
 
-Si l'application est dans un **sous-dossier** (ex: `https://monsite.com/budget/`) :
-- Décommenter et ajuster la ligne dans `.htaccess` :
-  ```apache
-  RewriteBase /budget
-  ```
+```bash
+# Utiliser le fichier .htaccess.production comme template
+cp .htaccess.production .htaccess
+
+# Éditer .htaccess et ajuster RewriteBase
+nano .htaccess
+```
+
+Modifier la ligne :
+```apache
+RewriteBase /monbudget  # Votre sous-dossier
+```
+
+**Vérification** :
+```bash
+# Tester mod_rewrite
+sudo apache2ctl -M | grep rewrite
+# Doit afficher : rewrite_module (shared)
+
+# Si absent :
+sudo a2enmod rewrite
+sudo systemctl restart apache2
+```
 
 ### 5. Configurer l'Application
 

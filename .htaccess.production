@@ -1,3 +1,6 @@
+# Configuration Apache pour MonBudget en Production
+# Remplacer .htaccess par ce fichier si problèmes de routes en sous-dossier
+
 # Désactiver l'affichage du contenu des répertoires
 Options -Indexes
 
@@ -16,9 +19,12 @@ php_value max_execution_time 60
 <IfModule mod_rewrite.c>
     RewriteEngine On
     
-    # Base dynamique automatique
-    # Apache détecte automatiquement le sous-dossier depuis SCRIPT_NAME
-    # Pas besoin de RewriteBase si l'index.php gère BASE_URL correctement
+    # ⚠️ IMPORTANT : Ajuster selon votre configuration serveur
+    # Si l'app est à https://votredomaine.com/monbudget/
+    RewriteBase /monbudget
+    
+    # Si l'app est à la racine https://votredomaine.com/
+    # RewriteBase /
     
     # Rediriger toutes les requêtes vers index.php sauf pour les fichiers/dossiers existants
     RewriteCond %{REQUEST_FILENAME} !-f
