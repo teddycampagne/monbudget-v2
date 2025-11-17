@@ -196,23 +196,25 @@
                         </div>
 
                         <!-- Section Récurrence -->
-                        <div class="card bg-light mb-3">
-                            <div class="card-header bg-light">
+                        <div class="card mb-3 border-info">
+                            <div class="card-header bg-info text-white">
                                 <div class="form-check">
                                     <input class="form-check-input" 
                                            type="checkbox" 
-                                           id="est_recurrente" 
-                                           name="est_recurrente" 
+                                           id="convert_to_recurrence" 
+                                           name="convert_to_recurrence" 
                                            value="1"
-                                           disabled
-                                           title="Utilisez le menu Récurrences pour créer des transactions récurrentes">
-                                    <label class="form-check-label text-muted" for="est_recurrente">
-                                        <i class="bi bi-arrow-repeat"></i> <strong>Transaction récurrente</strong>
-                                        <small class="d-block">Utilisez le menu <a href="<?= url('recurrences') ?>">Récurrences</a> pour créer des transactions récurrentes</small>
+                                           onchange="toggleRecurrenceFields()">
+                                    <label class="form-check-label fw-bold" for="convert_to_recurrence">
+                                        <i class="bi bi-arrow-repeat"></i> Transaction récurrente
                                     </label>
+                                    <small class="d-block text-white-50">
+                                        Cocher cette case pour créer une transaction récurrente. 
+                                        La transaction actuelle sera la 1ère occurrence.
+                                    </small>
                                 </div>
                             </div>
-                            <div class="card-body d-none" id="recurrence_section">
+                            <div class="card-body" id="recurrence_section" style="display: none;">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="frequence" class="form-label">Fréquence</label>
@@ -377,11 +379,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Gestion de l'affichage de la section récurrence
-document.getElementById('est_recurrente').addEventListener('change', function() {
+// Toggle de la section récurrence
+function toggleRecurrenceFields() {
+    const checkbox = document.getElementById('convert_to_recurrence');
     const section = document.getElementById('recurrence_section');
-    section.style.display = this.checked ? 'block' : 'none';
-});
+    
+    if (checkbox && section) {
+        section.style.display = checkbox.checked ? 'block' : 'none';
+        
+        // Gérer la validation des champs
+        const fields = section.querySelectorAll('input, select');
+        fields.forEach(field => {
+            if (checkbox.checked) {
+                if (field.dataset.wasRequired === 'true') {
+                    field.required = true;
+                }
+            } else {
+                field.dataset.wasRequired = field.required ? 'true' : 'false';
+                field.required = false;
+            }
+        });
+    }
+}
+
+// Event listener pour le changement de checkbox récurrence
+const recurrenceCheckbox = document.getElementById('convert_to_recurrence');
+if (recurrenceCheckbox) {
+    recurrenceCheckbox.addEventListener('change', toggleRecurrenceFields);
+}
 
 // Chargement dynamique des sous-catégories
 document.getElementById('categorie_id').addEventListener('change', function() {

@@ -197,20 +197,25 @@
                                    id="convert_to_recurrence" 
                                    name="convert_to_recurrence" 
                                    value="1" 
-                                   <?= !empty($transaction['recurrence_id']) ? 'checked disabled' : '' ?>
-                                   <?= !empty($transaction['recurrence_id']) ? 'title="Cette transaction est déjà liée à une récurrence"' : '' ?>>
+                                   <?= !empty($transaction['recurrence_id']) ? 'checked' : '' ?>
+                                   data-recurrence-id="<?= $transaction['recurrence_id'] ?? '' ?>"
+                                   onchange="handleRecurrenceToggle(this)">
                             <label class="form-check-label fw-bold" for="convert_to_recurrence">
-                                <i class="bi bi-arrow-repeat"></i> Convertir en transaction récurrente
+                                <i class="bi bi-arrow-repeat"></i> Transaction récurrente
                             </label>
                             <small class="d-block text-muted">
                                 <?php if (!empty($transaction['recurrence_id'])): ?>
                                     <i class="bi bi-link"></i> Cette transaction est liée à la récurrence #<?= $transaction['recurrence_id'] ?>. 
                                     <a href="<?= url('recurrences/' . $transaction['recurrence_id'] . '/edit') ?>">Modifier la récurrence</a>
+                                    <br>
+                                    <span class="text-danger"><strong>⚠️ Décocher supprimera le modèle de récurrence (les occurrences passées seront conservées)</strong></span>
                                 <?php else: ?>
                                     Cochez cette case pour utiliser cette transaction comme modèle de récurrence.
                                     Les données actuelles seront copiées dans une nouvelle récurrence.
                                 <?php endif; ?>
                             </small>
+                            <!-- Champ hidden pour signaler suppression récurrence -->
+                            <input type="hidden" id="delete_recurrence" name="delete_recurrence" value="0">
                         </div>
                     </div>
                     <div class="card-body d-none" id="recurrence_fields">
@@ -443,6 +448,28 @@ function loadSousCategories(categorieId, selectedSousCategorieId = null) {
 document.getElementById('categorie_id').addEventListener('change', function() {
     loadSousCategories(this.value);
 });
+
+// Gestion de la checkbox récurrence (création/suppression)
+function handleRecurrenceToggle(checkbox) {
+    const deleteRecurrenceInput = document.getElementById('delete_recurrence');
+    const recurrenceId = checkbox.dataset.recurrenceId;
+    
+    if (recurrenceId && !checkbox.checked) {
+        // Récurrence existante → décochée = SUPPRESSION
+        if (confirm('⚠️ Supprimer le modèle de récurrence ?\n\nLes occurrences passées seront conservées, mais aucune nouvelle occurrence ne sera générée.')) {
+            deleteRecurrenceInput.value = '1';
+        } else {
+            // Annulation = recocher
+            checkbox.checked = true;
+        }
+    } else if (!recurrenceId && checkbox.checked) {
+        // Pas de récurrence → cochée = CRÉATION
+        deleteRecurrenceInput.value = '0';
+    } else {
+        // Autres cas
+        deleteRecurrenceInput.value = '0';
+    }
+}
 
 // Charger les sous-catégories au chargement de la page si une catégorie est sélectionnée
 document.addEventListener('DOMContentLoaded', function() {

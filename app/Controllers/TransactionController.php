@@ -517,7 +517,22 @@ class TransactionController extends BaseController
             $data['date_debut'] = null;
         }
         
-        // ✅ Si conversion transaction normale → récurrence
+        // ✅ 1. SUPPRESSION : Si récurrence existante + décochée
+        $deleteRecurrence = isset($_POST['delete_recurrence']) && $_POST['delete_recurrence'] == '1' && !empty($transaction['recurrence_id']);
+        
+        if ($deleteRecurrence) {
+            $recurrenceId = $transaction['recurrence_id'];
+            
+            // Supprimer modèle de récurrence (occurrences conservées)
+            if (Recurrence::delete($recurrenceId)) {
+                $data['recurrence_id'] = null; // Délier transaction
+                flash('success', 'Modèle de récurrence supprimé. Les occurrences passées sont conservées.');
+            } else {
+                flash('error', 'Erreur lors de la suppression de la récurrence');
+            }
+        }
+        
+        // ✅ 2. CONVERSION : Si transaction normale → récurrence
         if ($convertToRecurrence && empty($transaction['recurrence_id'])) {
             // Créer le modèle de récurrence dans table recurrences
             $recurrenceData = [
