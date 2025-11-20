@@ -10,6 +10,7 @@ use MonBudget\Models\RegleAutomatisation;
 use MonBudget\Models\Recurrence;
 use MonBudget\Models\Attachment;
 use MonBudget\Services\FileUploadService;
+use MonBudget\Services\AuditLogService;
 
 /**
  * Contrôleur de gestion des transactions bancaires
@@ -196,6 +197,9 @@ class TransactionController extends BaseController
                 return;
             }
             
+            // Initialiser service audit PCI DSS
+            $audit = new AuditLogService();
+            
             // Créer la transaction de débit sur le compte source
             $dataDebit = $data;
             $dataDebit['type_operation'] = 'debit';
@@ -210,6 +214,10 @@ class TransactionController extends BaseController
             $idCredit = Transaction::create($dataCredit);
             
             if ($idDebit && $idCredit) {
+                // Logger création virement (PCI DSS audit)
+                $audit->logCreate('transactions', $idDebit, $dataDebit);
+                $audit->logCreate('transactions', $idCredit, $dataCredit);
+                
                 // Recalculer les soldes des deux comptes
                 Compte::recalculerSolde($compteId);
                 Compte::recalculerSolde($data['compte_destination_id']);
@@ -292,6 +300,12 @@ class TransactionController extends BaseController
                 $id = Transaction::create($data);
                 
                 if ($id) {
+                    // Initialiser service audit PCI DSS
+                    $audit = new AuditLogService();
+                    
+                    // Logger création (PCI DSS audit)
+                    $audit->logCreate('transactions', $id, $data);
+                    
                     // Gestion des tags
                     if (!empty($_POST['tags']) && is_array($_POST['tags'])) {
                         $transactionModel = new Transaction();
@@ -509,6 +523,12 @@ class TransactionController extends BaseController
         // ✅ NOUVELLE ARCHITECTURE : Détecter si conversion vers récurrence
         $convertToRecurrence = isset($_POST['convert_to_recurrence']) && $_POST['convert_to_recurrence'];
         
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
+        // Sauvegarder anciennes valeurs pour audit
+        $oldValues = $transaction;
+        
         // Normaliser les dates vides en NULL (éviter '0000-00-00')
         if (isset($data['date_fin']) && ($data['date_fin'] === '' || $data['date_fin'] === '0000-00-00')) {
             $data['date_fin'] = null;
@@ -597,6 +617,9 @@ class TransactionController extends BaseController
         $result = Transaction::update($id, $data);
         
         if ($result >= 0) {
+            // Logger modification (PCI DSS audit)
+            $audit->logUpdate('transactions', $id, $oldValues, $data);
+            
             // Gestion des tags
             if (isset($_POST['tags']) && is_array($_POST['tags'])) {
                 $transactionModel = new Transaction();
@@ -661,6 +684,9 @@ class TransactionController extends BaseController
             return;
         }
         
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
         // Vérifier si c'est une transaction issue d'une récurrence
         // Note: Maintenant les récurrences sont dans une table séparée
         // On vérifie si cette transaction a un recurrence_id
@@ -672,6 +698,9 @@ class TransactionController extends BaseController
             $deleted = Transaction::delete($id);
             
             if ($deleted) {
+                // Logger suppression (PCI DSS audit)
+                $audit->logDelete('transactions', $id, $transaction);
+                
                 // Recalculer le solde du compte
                 Compte::recalculerSolde($compteId);
                 flash('success', 'Transaction supprimée avec succès');
@@ -686,6 +715,9 @@ class TransactionController extends BaseController
             $result = Transaction::delete($id);
             
             if ($result > 0) {
+                // Logger suppression (PCI DSS audit)
+                $audit->logDelete('transactions', $id, $transaction);
+                
                 // Recalculer le solde du compte
                 Compte::recalculerSolde($compteId);
                 

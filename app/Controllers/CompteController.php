@@ -4,9 +4,9 @@ namespace MonBudget\Controllers;
 
 use MonBudget\Models\Compte;
 use MonBudget\Models\Banque;
-use MonBudget\Models\Titulaire;
 use MonBudget\Models\CompteTitulaire;
 use MonBudget\Models\Transaction;
+use MonBudget\Services\AuditLogService;
 use MonBudget\Services\RibGenerator;
 
 /**
@@ -175,10 +175,16 @@ class CompteController extends BaseController
         // Par défaut, compte actif
         $data['actif'] = 1;
         
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
         // Créer le compte
         $id = Compte::create($data);
         
         if ($id) {
+            // Logger création (PCI DSS audit)
+            $audit->logCreate('comptes', $id, $data);
+            
             // Associer les titulaires
             $titulaires = [];
             
@@ -300,10 +306,19 @@ class CompteController extends BaseController
         // Convertir actif en boolean
         $data['actif'] = isset($data['actif']) ? 1 : 0;
         
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
+        // Sauvegarder anciennes valeurs pour audit
+        $oldValues = $compte;
+        
         // Mettre à jour le compte
         $result = Compte::update($id, $data);
         
         if ($result >= 0) {
+            // Logger modification (PCI DSS audit)
+            $audit->logUpdate('comptes', $id, $oldValues, $data);
+            
             // Synchroniser les titulaires
             $titulaires = [];
             
@@ -349,9 +364,20 @@ class CompteController extends BaseController
         
         if (!$this->validateCsrfOrFail('comptes')) return;
         
+        // Récupérer les données avant suppression
+        $compte = Compte::find($id);
+        
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
         $result = Compte::delete($id);
         
         if ($result > 0) {
+            // Logger suppression (PCI DSS audit)
+            if ($compte) {
+                $audit->logDelete('comptes', $id, $compte);
+            }
+            
             flash('success', 'Compte supprimé avec succès');
         } else {
             flash('error', 'Impossible de supprimer ce compte');
