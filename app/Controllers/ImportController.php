@@ -63,6 +63,9 @@ class ImportController extends BaseController
     {
         $this->requireAuth();
         
+        // 🔒 SÉCURITÉ PCI DSS : Nettoyer les anciens fichiers avant nouvel import
+        $this->cleanupOldImportFiles();
+        
         if (!$this->validateCsrfOrFail('imports/upload')) return;
         
         $compteId = (int) ($_POST['compte_id'] ?? 0);
@@ -114,7 +117,10 @@ class ImportController extends BaseController
             
             if (empty($rows)) {
                 flash('error', 'Le fichier CSV est vide');
-                unlink($filePath);
+                // 🔒 SÉCURITÉ : Supprimer le fichier immédiatement
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
                 $this->redirect('imports/upload');
                 return;
             }
@@ -158,7 +164,10 @@ class ImportController extends BaseController
                 
                 if (empty($transactions)) {
                     flash('error', 'Aucune transaction trouvée dans le fichier OFX');
-                    unlink($filePath);
+                    // 🔒 SÉCURITÉ : Supprimer le fichier immédiatement
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                    }
                     $this->redirect('imports/upload');
                     return;
                 }
@@ -195,11 +204,51 @@ class ImportController extends BaseController
                 }
                 
                 flash('error', $errorMsg);
-                unlink($filePath);
+                // 🔒 SÉCURITÉ : Supprimer le fichier immédiatement
+                if (file_exists($filePath)) {
+                    unlink($filePath);
+                }
                 $this->redirect('imports/upload');
                 return;
             }
         }
+    }
+    
+    /**
+     * Nettoyer les fichiers d'import temporaires (sécurité PCI DSS)
+     * 
+     * Supprime automatiquement les fichiers CSV/OFX de plus d'1 heure
+     * pour éviter la conservation de données sensibles en clair.
+     * 
+     * Cette méthode devrait être appelée périodiquement (cron ou avant chaque import).
+     * 
+     * @return int Nombre de fichiers supprimés
+     */
+    private function cleanupOldImportFiles(): int
+    {
+        $uploadDir = __DIR__ . '/../../uploads/imports/';
+        $deleted = 0;
+        
+        if (!is_dir($uploadDir)) {
+            return 0;
+        }
+        
+        $files = glob($uploadDir . 'import_*.*');
+        $maxAge = 3600; // 1 heure en secondes
+        
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $age = time() - filemtime($file);
+                if ($age > $maxAge) {
+                    if (unlink($file)) {
+                        $deleted++;
+                        error_log("[SÉCURITÉ] Fichier import supprimé : $file (âge: " . round($age/60) . " min)");
+                    }
+                }
+            }
+        }
+        
+        return $deleted;
     }
     
     /**
@@ -253,12 +302,11 @@ class ImportController extends BaseController
         // Parser tout le fichier
         $allRows = array_slice($preview['rows'], $preview['header_index'] + 1);
         
-        // Créer l'import
+        // Créer l'import (sans chemin_fichier, fichier supprimé après traitement)
         $importId = Import::create([
             'user_id' => $this->userId,
             'compte_id' => $preview['compte_id'],
             'nom_fichier' => $preview['file_name'],
-            'chemin_fichier' => $preview['file_path'],
             'nb_lignes_total' => count($allRows),
             'statut' => 'en_cours'
         ]);
@@ -278,6 +326,11 @@ class ImportController extends BaseController
         
         // Recalculer le solde du compte
         Compte::recalculerSolde($preview['compte_id']);
+        
+        // 🔒 SÉCURITÉ PCI DSS : Supprimer le fichier importé (données sensibles en clair)
+        if (isset($preview['file_path']) && file_exists($preview['file_path'])) {
+            unlink($preview['file_path']);
+        }
         
         // Nettoyer la session
         unset($_SESSION['import_preview']);
@@ -305,17 +358,21 @@ class ImportController extends BaseController
             return;
         }
         
-        // Créer l'enregistrement d'import
+        // Créer l'enregistrement d'import (sans chemin_fichier, fichier supprimé après traitement)
         $importId = Import::create([
             'user_id' => $this->userId,
             'compte_id' => $preview['compte_id'],
             'nom_fichier' => $preview['file_name'],
-            'chemin_fichier' => $preview['file_path'],
             'statut' => 'en_cours'
         ]);
         
         // Importer les transactions
         $stats = Import::importOFXTransactions($importId, $preview['compte_id'], $this->userId, $preview['transactions']);
+        
+        // 🔒 SÉCURITÉ PCI DSS : Supprimer le fichier importé (données sensibles en clair)
+        if (isset($preview['file_path']) && file_exists($preview['file_path'])) {
+            unlink($preview['file_path']);
+        }
         
         // Nettoyer la session
         unset($_SESSION['import_preview']);
