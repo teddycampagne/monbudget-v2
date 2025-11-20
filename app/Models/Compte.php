@@ -327,7 +327,7 @@ class Compte extends BaseModel
      * Supprime un compte de la base de données
      * 
      * ⚠️ ATTENTION : La suppression est définitive.
-     * TODO: Vérifier et gérer les transactions associées avant suppression.
+     * Note: Les transactions associées sont supprimées en cascade via foreign key.
      * 
      * @param int $id ID du compte à supprimer
      * @return int Nombre de lignes supprimées (0 ou 1)

@@ -745,12 +745,6 @@ class TransactionController extends BaseController
         $this->requireAuth();
         header('Content-Type: application/json');
         
-        // DEBUG
-        error_log("=== UPLOAD ATTACHMENT DEBUG ===");
-        error_log("CompteId: $compteId, TransactionId: $transactionId");
-        error_log("UserId: " . $this->userId);
-        error_log("FILES: " . print_r($_FILES, true));
-        
         try {
             // Vérifier que la transaction existe et appartient à l'utilisateur
             $transaction = Transaction::find($transactionId);
