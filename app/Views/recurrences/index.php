@@ -32,8 +32,8 @@
                 </p>
             <?php endif; ?>
         </div>
-        <?php if (isset($compte)): ?>
-            <div class="btn-group">
+        <div class="btn-group">
+            <?php if (isset($compte)): ?>
                 <a href="<?= url("comptes/{$compte['id']}/recurrences/create") ?>" class="btn btn-primary">
                     <i class="bi bi-plus-lg"></i> Nouvelle Récurrence
                 </a>
@@ -43,8 +43,18 @@
                 <a href="<?= url("comptes/{$compte['id']}/transactions") ?>" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Retour
                 </a>
-            </div>
-        <?php endif; ?>
+            <?php else: ?>
+                <a href="<?= url('recurrences/admin') ?>" class="btn btn-primary">
+                    <i class="bi bi-graph-up"></i> Administration
+                </a>
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#selectCompteModal">
+                    <i class="bi bi-plus-lg"></i> Nouvelle Récurrence
+                </button>
+                <a href="<?= url('comptes') ?>" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Retour aux comptes
+                </a>
+            <?php endif; ?>
+        </div>
     </div>
 
     <?php if (empty($recurrences)): ?>
@@ -360,5 +370,46 @@ document.querySelectorAll('input[name="delete_mode"]').forEach(radio => {
     });
 });
 </script>
+
+<!-- Modal Sélection Compte -->
+<div class="modal fade" id="selectCompteModal" tabindex="-1" aria-labelledby="selectCompteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="selectCompteModalLabel">
+                    <i class="bi bi-plus-lg"></i> Nouvelle Récurrence
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Sélectionnez le compte pour lequel créer une nouvelle récurrence :</p>
+                <div class="list-group">
+                    <?php
+                    // Récupérer tous les comptes de l'utilisateur
+                    $userComptes = MonBudget\Models\Compte::getAllWithBanque();
+                    foreach ($userComptes as $c): ?>
+                        <a href="<?= url("comptes/{$c['id']}/recurrences/create") ?>" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">
+                                    <i class="bi bi-wallet2"></i> 
+                                    <?= htmlspecialchars($c['nom']) ?>
+                                </h6>
+                                <small class="text-muted"><?= htmlspecialchars($c['type_compte']) ?></small>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-bank2"></i> 
+                                <?= htmlspecialchars($c['banque_nom']) ?>
+                            </small>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>

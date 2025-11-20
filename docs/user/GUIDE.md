@@ -626,9 +626,13 @@ Exemple : Rapport mensuel envoyé le 1er de chaque mois.
 
 ### 💡 Sécurité
 
-1. **Sauvegardez régulièrement** : Export mensuel de vos données
-2. **Utilisez un mot de passe fort** : Changez-le tous les 6 mois
-3. **Vérifiez les accès** : Qui a accès à votre instance ?
+1. **Mot de passe fort obligatoire** : Minimum 12 caractères avec majuscules, minuscules, chiffres et caractères spéciaux
+2. **Changement régulier** : Les mots de passe expirent après 90 jours
+3. **Historique protégé** : Impossible de réutiliser les 5 derniers mots de passe
+4. **Protection anti-brute-force** : Verrouillage automatique après 5 tentatives échouées (15 min)
+5. **Données chiffrées** : Les données sensibles (IBAN) sont chiffrées en base
+6. **Audit complet** : Toutes les actions sont tracées (connexions, modifications, suppressions)
+7. **Fichiers temporaires** : Les fichiers CSV/OFX importés sont supprimés automatiquement
 
 ---
 
@@ -670,5 +674,5 @@ Pour de meilleures performances :
 
 ---
 
-**Dernière mise à jour** : 12 novembre 2025  
-**Version** : 2.0.0
+**Dernière mise à jour** : 20 novembre 2025  
+**Version** : 2.3.0

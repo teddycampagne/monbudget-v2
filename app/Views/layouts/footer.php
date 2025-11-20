@@ -124,5 +124,8 @@
     <!-- PWA Service Worker -->
     <script src="<?= url('assets/js/pwa-install.js') ?>"></script>
     
+    <!-- Version Manager -->
+    <script src="<?= url('assets/js/version-manager.js') ?>"></script>
+    
 </body>
 </html>

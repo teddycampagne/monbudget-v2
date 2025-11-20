@@ -15,7 +15,10 @@ php_value max_execution_time 60
 # Réécriture d'URL
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /monbudgetV2
+    
+    # Base dynamique automatique
+    # Apache détecte automatiquement le sous-dossier depuis SCRIPT_NAME
+    # Pas besoin de RewriteBase si l'index.php gère BASE_URL correctement
     
     # Rediriger toutes les requêtes vers index.php sauf pour les fichiers/dossiers existants
     RewriteCond %{REQUEST_FILENAME} !-f

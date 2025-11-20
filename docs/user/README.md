@@ -41,5 +41,6 @@ Pour toute question non couverte par cette documentation :
 
 ---
 
-**Dernière mise à jour** : 12 novembre 2025  
-**Version de l'application** : 2.0.0
+**Dernière mise à jour** : 20 novembre 2025  
+**Version de l'application** : 2.3.0
+

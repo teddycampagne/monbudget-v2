@@ -1,0 +1,185 @@
+# Instructions pour Assistants IA - MonBudget v2
+
+## 🚨 SÉCURITÉ : RÈGLES ABSOLUES
+
+### ❌ INTERDICTIONS STRICTES
+
+Vous **NE DEVEZ JAMAIS** :
+
+1. **Commiter/pusher des fichiers SQL avec données réelles**
+   - `database.sql` DOIT contenir UNIQUEMENT la structure (--no-data)
+   - Aucun INSERT INTO avec IBAN, noms, adresses, emails, téléphones
+   - Vérifier systématiquement avant commit : `grep -c "INSERT INTO" database.sql` = 0
+
+2. **Exposer des credentials**
+   - Aucun mot de passe en clair dans `config/app.php`
+   - Aucun credential dans `phpunit.xml`
+   - Utiliser `.env` ou variables d'environnement
+
+3. **Utiliser des données personnelles réelles**
+   - Lors de génération d'exemples SQL
+   - Dans les fixtures de tests
+   - Dans la documentation
+
+### ✅ ACTIONS REQUISES AVANT COMMIT
+
+**🔒 SCRIPT D'AUDIT AUTOMATIQUE (RECOMMANDÉ)** :
+```powershell
+# Exécuter AVANT tout push
+.\security-audit.ps1
+
+# Options disponibles
+.\security-audit.ps1 -Strict  # Bloque le push si erreur
+.\security-audit.ps1 -Auto    # Corrige automatiquement (BOM, etc.)
+```
+
+**Checklist manuelle alternative** :
+```bash
+# 1. Vérifier database.sql (doit retourner 0)
+grep -c "INSERT INTO" database.sql
+
+# 2. Vérifier absence IBAN
+git diff --cached | grep -vE "FR[0-9]{25}"
+
+# 3. Vérifier absence emails réels
+git diff --cached | grep -vE "@(gmail|outlook|hotmail|yahoo)\.(com|fr)"
+
+# 4. Vérifier absence mots de passe
+git diff --cached | grep -vi "password.*=.*['\"][^'\"]{8,}"
+```
+
+**Si l'une de ces vérifications échoue** : STOP et demander confirmation.
+
+---
+
+## 📝 Données de test autorisées
+
+### Utilisateurs fictifs
+```json
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean.dupont@example.com",
+  "telephone": "01 23 45 67 89",
+  "adresse": "123 Rue de la Paix, 75000 Paris"
+}
+```
+
+### Coordonnées bancaires fictives
+```
+IBAN: FR7630006000011234567890189 (valide mais fictif)
+BIC: BNPAFRPPXXX
+Nom banque: Banque de Test SA
+```
+
+### Transactions de test
+```sql
+-- ✅ AUTORISÉ
+INSERT INTO transactions (libelle, montant, date_transaction)
+VALUES ('Courses Supermarché', 45.50, '2025-01-15');
+
+-- ❌ INTERDIT
+INSERT INTO transactions (beneficiaire, montant)
+VALUES ('CARREFOUR WASQUEHAL RUE JEAN MACE', 45.50);  -- Adresse réelle !
+```
+
+---
+
+## 🔧 Processus de génération database.sql
+
+### Commande correcte (structure seule)
+```bash
+mysqldump -u root -p \
+  --default-character-set=utf8mb4 \
+  --no-data \
+  --single-transaction \
+  monbudget_v2 > database.sql
+```
+
+### ❌ Commande INTERDITE (avec données)
+```bash
+# NE JAMAIS FAIRE ÇA :
+mysqldump -u root -p monbudget_v2 > database.sql
+```
+
+### Vérification post-export
+```powershell
+# Supprimer BOM UTF-8
+$content = Get-Content database.sql -Raw
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$PWD\database.sql", $content, $utf8NoBom)
+
+# Vérifier absence de données
+(Get-Content database.sql | Select-String "^INSERT INTO").Count  # Doit être 0
+```
+
+---
+
+## 🚨 Incident de sécurité détecté
+
+### Si vous détectez des données sensibles dans un commit
+
+**ÉTAPE 1** : Alerter immédiatement l'utilisateur
+```
+⚠️  ALERTE SÉCURITÉ : Données sensibles détectées dans {fichier}
+- IBAN trouvés : X
+- Emails personnels : X
+- Mots de passe : X
+
+Action requise : Purge historique Git
+Voulez-vous que je procède au nettoyage ?
+```
+
+**ÉTAPE 2** : Proposer la procédure de nettoyage
+```bash
+# Purge du fichier de l'historique complet
+git filter-branch --force --index-filter \
+  "git rm --cached --ignore-unmatch {fichier}" \
+  --prune-empty --tag-name-filter cat -- --all
+
+# Force push (écrase l'historique distant)
+git push origin --force --all
+git push origin --force --tags
+
+# Nettoyage local
+rm -rf .git/refs/original/
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+```
+
+**ÉTAPE 3** : Documenter l'incident
+- Ajouter entrée dans SECURITY.md
+- Notifier dans le commit de correction
+- Suggérer rotation des secrets exposés
+
+---
+
+## 📚 Fichiers de référence
+
+**Toujours consulter avant modification** :
+- `SECURITY.md` - Politiques de sécurité complètes
+- `.gitignore` - Liste des fichiers à ne jamais tracker
+- `docs/DEPLOIEMENT.md` - Procédures sécurisées
+
+**Fichiers sensibles protégés par .gitignore** :
+- `database_with_data.sql`
+- `database_clean.sql`
+- `database_*.sql` (sauf structure)
+- `config/installed.json`
+- `.env*` (sauf .example)
+
+---
+
+## 🎯 Objectifs de cette configuration
+
+1. **Protection RGPD** : Aucune donnée personnelle identifiable sur GitHub
+2. **Sécurité credentials** : Aucun mot de passe/token exposé
+3. **Reproductibilité** : Installation propre possible sans données de test
+4. **Conformité** : Respect des bonnes pratiques OWASP
+
+---
+
+**Historique des incidents** :
+- 18/11/2025 : Exposition IBAN/coordonnées dans database.sql (commit a441678) → Résolu par purge Git
+
+**Ce fichier est lu automatiquement par les assistants IA GitHub Copilot, Cursor, Continue, etc.**

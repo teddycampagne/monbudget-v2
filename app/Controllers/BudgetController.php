@@ -74,6 +74,9 @@ class BudgetController extends BaseController
      */
     public function store(): void
     {
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
         $periode = $_POST['periode'] ?? 'mensuel';
         $annee = (int) $_POST['annee'];
         $categorieId = (int) $_POST['categorie_id'];
@@ -98,6 +101,9 @@ class BudgetController extends BaseController
             $budgetId = Budget::create($data);
             
             if ($budgetId) {
+                // Logger création (PCI DSS audit)
+                $audit->logCreate('budgets', $budgetId, $data);
+                
                 flash('success', 'Budget créé avec succès');
             } else {
                 flash('error', 'Un budget existe déjà pour cette catégorie et cette période');
@@ -129,7 +135,10 @@ class BudgetController extends BaseController
                     'mois' => (int) $mois
                 ];
                 
-                if (Budget::create($data)) {
+                $budgetId = Budget::create($data);
+                if ($budgetId) {
+                    // Logger création (PCI DSS audit)
+                    $audit->logCreate('budgets', $budgetId, $data);
                     $nbCrees++;
                 }
             }
@@ -167,6 +176,9 @@ class BudgetController extends BaseController
      */
     public function update(int $id): void
     {
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
         $budget = Budget::find($id);
         
         if (!$budget || $budget['user_id'] != $this->userId) {
@@ -192,7 +204,13 @@ class BudgetController extends BaseController
             return;
         }
         
+        // Sauvegarder anciennes valeurs pour audit
+        $oldValues = $budget;
+        
         Budget::update($id, $data);
+        
+        // Logger modification (PCI DSS audit)
+        $audit->logUpdate('budgets', $id, $oldValues, $data);
         
         flash('success', 'Budget modifié avec succès');
         $this->redirect('budgets?' . http_build_query(['annee' => $data['annee'], 'mois' => $data['mois'] ?? '']));
@@ -203,6 +221,9 @@ class BudgetController extends BaseController
      */
     public function delete(int $id): void
     {
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
         $budget = Budget::find($id);
         
         if (!$budget || $budget['user_id'] != $this->userId) {
@@ -212,6 +233,9 @@ class BudgetController extends BaseController
         }
         
         Budget::delete($id);
+        
+        // Logger suppression (PCI DSS audit)
+        $audit->logDelete('budgets', $id, $budget);
         
         flash('success', 'Budget supprimé avec succès');
         $this->redirect('budgets?' . http_build_query(['annee' => $budget['annee'], 'mois' => $budget['mois'] ?? '']));

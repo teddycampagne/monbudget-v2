@@ -10,6 +10,7 @@ use MonBudget\Models\RegleAutomatisation;
 use MonBudget\Models\Recurrence;
 use MonBudget\Models\Attachment;
 use MonBudget\Services\FileUploadService;
+use MonBudget\Services\AuditLogService;
 
 /**
  * Contrôleur de gestion des transactions bancaires
@@ -138,7 +139,7 @@ class TransactionController extends BaseController
             'type_operation' => 'required',
             'moyen_paiement' => '',
             'beneficiaire' => 'max:255',
-            'est_recurrente' => 'numeric',
+            'convert_to_recurrence' => 'numeric',
             'frequence' => '',
             'intervalle' => 'numeric',
             'jour_execution' => 'numeric',
@@ -158,12 +159,11 @@ class TransactionController extends BaseController
         $data['tiers_id'] = !empty($data['tiers_id']) ? (int)$data['tiers_id'] : null;
         $data['compte_destination_id'] = !empty($data['compte_destination_id']) ? (int)$data['compte_destination_id'] : null;
         
-        // ✅ NOUVEAU : Détecter si c'est une récurrence
-        $estRecurrente = isset($_POST['est_recurrente']) && $_POST['est_recurrente'];
+        // ✅ NOUVEAU : Détecter si conversion en récurrence demandée
+        $convertToRecurrence = isset($_POST['convert_to_recurrence']) && $_POST['convert_to_recurrence'];
         
         // Traitement des booléens (pour transactions normales)
         $data['validee'] = 1; // Par défaut validée
-        $data['est_recurrente'] = 0; // TOUJOURS 0 maintenant (nouvelle archi)
         
         // Appliquer les règles d'automatisation sur les champs non renseignés
         $automatisation = RegleAutomatisation::applyRules($this->userId, $data['libelle']);
@@ -197,6 +197,9 @@ class TransactionController extends BaseController
                 return;
             }
             
+            // Initialiser service audit PCI DSS
+            $audit = new AuditLogService();
+            
             // Créer la transaction de débit sur le compte source
             $dataDebit = $data;
             $dataDebit['type_operation'] = 'debit';
@@ -211,6 +214,10 @@ class TransactionController extends BaseController
             $idCredit = Transaction::create($dataCredit);
             
             if ($idDebit && $idCredit) {
+                // Logger création virement (PCI DSS audit)
+                $audit->logCreate('transactions', $idDebit, $dataDebit);
+                $audit->logCreate('transactions', $idCredit, $dataCredit);
+                
                 // Recalculer les soldes des deux comptes
                 Compte::recalculerSolde($compteId);
                 Compte::recalculerSolde($data['compte_destination_id']);
@@ -222,8 +229,8 @@ class TransactionController extends BaseController
                 $this->redirect("comptes/{$compteId}/transactions/create");
             }
         } else {
-            // ✅ NOUVELLE ARCHITECTURE : Si récurrence, créer dans table recurrences
-            if ($estRecurrente) {
+            // ✅ NOUVELLE ARCHITECTURE : Si conversion en récurrence, créer dans table recurrences
+            if ($convertToRecurrence) {
                 // Créer le modèle de récurrence
                 $recurrenceData = [
                     'user_id' => $this->userId,
@@ -293,6 +300,12 @@ class TransactionController extends BaseController
                 $id = Transaction::create($data);
                 
                 if ($id) {
+                    // Initialiser service audit PCI DSS
+                    $audit = new AuditLogService();
+                    
+                    // Logger création (PCI DSS audit)
+                    $audit->logCreate('transactions', $id, $data);
+                    
                     // Gestion des tags
                     if (!empty($_POST['tags']) && is_array($_POST['tags'])) {
                         $transactionModel = new Transaction();
@@ -486,7 +499,7 @@ class TransactionController extends BaseController
             'type_operation' => 'required',
             'moyen_paiement' => '',
             'beneficiaire' => 'max:255',
-            'est_recurrente' => 'numeric',
+            'convert_to_recurrence' => 'numeric',
             'frequence' => '',
             'intervalle' => 'numeric',
             'jour_execution' => 'numeric',
@@ -508,8 +521,13 @@ class TransactionController extends BaseController
         $data['compte_destination_id'] = !empty($data['compte_destination_id']) ? (int)$data['compte_destination_id'] : null;
         
         // ✅ NOUVELLE ARCHITECTURE : Détecter si conversion vers récurrence
-        $estRecurrente = isset($_POST['est_recurrente']) && $_POST['est_recurrente'];
-        $data['est_recurrente'] = 0; // TOUJOURS 0 (nouvelle archi)
+        $convertToRecurrence = isset($_POST['convert_to_recurrence']) && $_POST['convert_to_recurrence'];
+        
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
+        // Sauvegarder anciennes valeurs pour audit
+        $oldValues = $transaction;
         
         // Normaliser les dates vides en NULL (éviter '0000-00-00')
         if (isset($data['date_fin']) && ($data['date_fin'] === '' || $data['date_fin'] === '0000-00-00')) {
@@ -519,8 +537,23 @@ class TransactionController extends BaseController
             $data['date_debut'] = null;
         }
         
-        // ✅ Si conversion transaction normale → récurrence
-        if ($estRecurrente && !$transaction['recurrence_id']) {
+        // ✅ 1. SUPPRESSION : Si récurrence existante + décochée
+        $deleteRecurrence = isset($_POST['delete_recurrence']) && $_POST['delete_recurrence'] == '1' && !empty($transaction['recurrence_id']);
+        
+        if ($deleteRecurrence) {
+            $recurrenceId = $transaction['recurrence_id'];
+            
+            // Supprimer modèle de récurrence (occurrences conservées)
+            if (Recurrence::delete($recurrenceId)) {
+                $data['recurrence_id'] = null; // Délier transaction
+                flash('success', 'Modèle de récurrence supprimé. Les occurrences passées sont conservées.');
+            } else {
+                flash('error', 'Erreur lors de la suppression de la récurrence');
+            }
+        }
+        
+        // ✅ 2. CONVERSION : Si transaction normale → récurrence
+        if ($convertToRecurrence && empty($transaction['recurrence_id'])) {
             // Créer le modèle de récurrence dans table recurrences
             $recurrenceData = [
                 'user_id' => $this->userId,
@@ -584,6 +617,9 @@ class TransactionController extends BaseController
         $result = Transaction::update($id, $data);
         
         if ($result >= 0) {
+            // Logger modification (PCI DSS audit)
+            $audit->logUpdate('transactions', $id, $oldValues, $data);
+            
             // Gestion des tags
             if (isset($_POST['tags']) && is_array($_POST['tags'])) {
                 $transactionModel = new Transaction();
@@ -648,47 +684,40 @@ class TransactionController extends BaseController
             return;
         }
         
-        // Vérifier si c'est un modèle de récurrence
-        if ($transaction['est_recurrente'] == 1) {
-            // Mode de suppression : 'modele' (défaut) ou 'tout'
-            $mode = $_POST['mode_suppression'] ?? 'modele';
+        // Initialiser service audit PCI DSS
+        $audit = new AuditLogService();
+        
+        // Vérifier si c'est une transaction issue d'une récurrence
+        // Note: Maintenant les récurrences sont dans une table séparée
+        // On vérifie si cette transaction a un recurrence_id
+        if (!empty($transaction['recurrence_id'])) {
+            // Cette transaction est liée à une récurrence
+            // Pour supprimer la récurrence elle-même, utiliser /recurrences/{id}/delete
+            flash('warning', 'Cette transaction est issue d\'une récurrence. Pour modifier ou supprimer la récurrence, utilisez le menu Récurrences.');
+            // Supprimer uniquement cette occurrence
+            $deleted = Transaction::delete($id);
             
-            if ($mode === 'tout') {
-                // Supprimer le modèle + toutes les occurrences
-                $result = Transaction::deleteRecurrenceWithOccurrences($id);
+            if ($deleted) {
+                // Logger suppression (PCI DSS audit)
+                $audit->logDelete('transactions', $id, $transaction);
                 
-                if ($result['modele'] > 0) {
-                    // Recalculer le solde si des occurrences ont été supprimées
-                    if ($result['occurrences'] > 0) {
-                        Compte::recalculerSolde($compteId);
-                    }
-                    
-                    $message = "Récurrence supprimée avec succès";
-                    if ($result['occurrences'] > 0) {
-                        $message .= " ({$result['occurrences']} occurrence(s) supprimée(s))";
-                    }
-                    flash('success', $message);
-                } else {
-                    flash('error', 'Erreur lors de la suppression');
-                }
+                // Recalculer le solde du compte
+                Compte::recalculerSolde($compteId);
+                flash('success', 'Transaction supprimée avec succès');
             } else {
-                // Supprimer uniquement le modèle
-                $result = Transaction::delete($id);
-                
-                if ($result > 0) {
-                    flash('success', 'Récurrence supprimée (les transactions déjà créées sont conservées)');
-                } else {
-                    flash('error', 'Erreur lors de la suppression');
-                }
+                flash('error', 'Erreur lors de la suppression');
             }
             
-            // Rediriger vers la liste des récurrences
-            $this->redirect("comptes/{$compteId}/transactions/recurrentes");
+            // Rediriger vers la liste des transactions
+            $this->redirect("comptes/{$compteId}/transactions");
         } else {
             // Transaction normale : suppression simple
             $result = Transaction::delete($id);
             
             if ($result > 0) {
+                // Logger suppression (PCI DSS audit)
+                $audit->logDelete('transactions', $id, $transaction);
+                
                 // Recalculer le solde du compte
                 Compte::recalculerSolde($compteId);
                 
@@ -698,74 +727,6 @@ class TransactionController extends BaseController
             }
             
             $this->redirect("comptes/{$compteId}/transactions");
-        }
-    }
-    
-    /**
-     * Afficher les transactions récurrentes
-     * 
-     * Liste toutes les transactions récurrentes configurées pour un compte donné.
-     * 
-     * @param int $compteId ID du compte
-     * @return void
-     */
-    public function recurrentes(int $compteId): void
-    {
-        $this->requireAuth();
-        
-        // Vérifier que le compte existe et appartient à l'utilisateur
-        $compte = Compte::findWithBanque($compteId);
-        if (!$compte || $compte['user_id'] != $this->userId) {
-            flash('error', 'Compte non trouvé');
-            $this->redirect('comptes');
-            return;
-        }
-        
-        // Récupérer les transactions récurrentes actives du compte
-        $recurrentes = Transaction::getRecurrentesActives($compteId);
-        
-        $this->view('transactions.recurrentes', [
-            'compte' => $compte,
-            'recurrentes' => $recurrentes,
-            'title' => 'Transactions Récurrentes'
-        ]);
-    }
-    
-    /**
-     * Exécuter manuellement une transaction récurrente
-     * 
-     * Crée une nouvelle transaction basée sur le modèle de récurrence.
-     * Utile pour tester ou exécuter en avance une récurrence planifiée.
-     * 
-     * @param int $compteId ID du compte
-     * @param int $id ID de la transaction récurrente à exécuter
-     * @return void
-     */
-    public function executerRecurrence(int $compteId, int $id): void
-    {
-        $this->requireAuth();
-        
-        // Vérifier que le compte existe et appartient à l'utilisateur
-        $compte = Compte::find($compteId);
-        if (!$compte || $compte['user_id'] != $this->userId) {
-            flash('error', 'Compte non trouvé');
-            $this->redirect('comptes');
-            return;
-        }
-        
-        if (!$this->validateCsrfOrFail("comptes/{$compteId}/transactions/recurrentes")) return;
-        
-        $newId = Transaction::executerRecurrence($id);
-        
-        if ($newId) {
-            // Recalculer le solde du compte
-            Compte::recalculerSolde($compteId);
-            
-            flash('success', 'Récurrence exécutée avec succès. Transaction créée.');
-            $this->redirect("comptes/{$compteId}/transactions");
-        } else {
-            flash('error', 'Erreur lors de l\'exécution de la récurrence');
-            $this->redirect("comptes/{$compteId}/transactions/recurrentes");
         }
     }
 
@@ -783,12 +744,6 @@ class TransactionController extends BaseController
     {
         $this->requireAuth();
         header('Content-Type: application/json');
-        
-        // DEBUG
-        error_log("=== UPLOAD ATTACHMENT DEBUG ===");
-        error_log("CompteId: $compteId, TransactionId: $transactionId");
-        error_log("UserId: " . $this->userId);
-        error_log("FILES: " . print_r($_FILES, true));
         
         try {
             // Vérifier que la transaction existe et appartient à l'utilisateur

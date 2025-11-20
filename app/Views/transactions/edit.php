@@ -15,7 +15,7 @@
         <div>
             <h1 class="h3 mb-0"><i class="bi bi-pencil"></i> Modifier la Transaction</h1>
             <p class="text-muted mb-0">
-                <?= $transaction['est_recurrente'] ? 'Transaction récurrente' : 'Transaction simple' ?>
+                <?= !empty($transaction['recurrence_id']) ? 'Transaction récurrente' : 'Transaction simple' ?>
             </p>
         </div>
         <a href="<?= url("comptes/{$compte['id']}/transactions") ?>" class="btn btn-secondary">
@@ -189,25 +189,36 @@
                 </div>
 
                 <!-- Récurrence -->
-                <div class="card mb-4 border-<?= $transaction['est_recurrente'] ? 'warning' : 'info' ?>">
-                    <div class="card-header bg-<?= $transaction['est_recurrente'] ? 'warning' : 'info' ?>">
-                        <div class="form-check mb-0">
+                <div class="card mb-4 border-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
+                    <div class="card-header bg-<?= !empty($transaction['recurrence_id']) ? 'warning' : 'info' ?>">
+                        <div class="form-check">
                             <input class="form-check-input" 
                                    type="checkbox" 
-                                   id="est_recurrente" 
-                                   name="est_recurrente" 
+                                   id="convert_to_recurrence" 
+                                   name="convert_to_recurrence" 
                                    value="1" 
-                                   <?= $transaction['est_recurrente'] ? 'checked' : '' ?>
-                                   onchange="toggleRecurrenceFields()">
-                            <label class="form-check-label fw-bold" for="est_recurrente">
+                                   <?= !empty($transaction['recurrence_id']) ? 'checked' : '' ?>
+                                   data-recurrence-id="<?= $transaction['recurrence_id'] ?? '' ?>"
+                                   onchange="handleRecurrenceToggle(this)">
+                            <label class="form-check-label fw-bold" for="convert_to_recurrence">
                                 <i class="bi bi-arrow-repeat"></i> Transaction récurrente
                             </label>
                             <small class="d-block text-muted">
-                                Cochez cette case pour transformer cette transaction en modèle de récurrence
+                                <?php if (!empty($transaction['recurrence_id'])): ?>
+                                    <i class="bi bi-link"></i> Cette transaction est liée à la récurrence #<?= $transaction['recurrence_id'] ?>. 
+                                    <a href="<?= url('recurrences/' . $transaction['recurrence_id'] . '/edit') ?>">Modifier la récurrence</a>
+                                    <br>
+                                    <span class="text-danger"><strong>⚠️ Décocher supprimera le modèle de récurrence (les occurrences passées seront conservées)</strong></span>
+                                <?php else: ?>
+                                    Cochez cette case pour utiliser cette transaction comme modèle de récurrence.
+                                    Les données actuelles seront copiées dans une nouvelle récurrence.
+                                <?php endif; ?>
                             </small>
+                            <!-- Champ hidden pour signaler suppression récurrence -->
+                            <input type="hidden" id="delete_recurrence" name="delete_recurrence" value="0">
                         </div>
                     </div>
-                    <div class="card-body" id="recurrence_fields" style="display: <?= $transaction['est_recurrente'] ? 'block' : 'none' ?>;">
+                    <div class="card-body d-none" id="recurrence_fields">
                         <div class="form-check mb-3">
                             <input class="form-check-input" 
                                    type="checkbox" 
@@ -359,7 +370,7 @@
                         <li><strong>Virement :</strong> transfert entre comptes</li>
                     </ul>
 
-                    <?php if ($transaction['est_recurrente']): ?>
+                    <?php if (!empty($transaction['recurrence_id'])): ?>
                     <hr>
                     <h6>Gestion de la récurrence</h6>
                     <p class="small">
@@ -388,36 +399,13 @@ document.getElementById('type_operation').addEventListener('change', function() 
     }
 });
 
-// Toggle des champs de récurrence
-function toggleRecurrenceFields() {
-    const isRecurrente = document.getElementById('est_recurrente').checked;
-    const recurrenceFields = document.getElementById('recurrence_fields');
-    recurrenceFields.style.display = isRecurrente ? 'block' : 'none';
-    
-    // Désactiver la validation HTML5 sur les champs cachés pour éviter les erreurs "not focusable"
-    const fieldsToToggle = recurrenceFields.querySelectorAll('input, select');
-    fieldsToToggle.forEach(field => {
-        if (isRecurrente) {
-            // Réactiver la validation si le champ était required
-            if (field.dataset.wasRequired === 'true') {
-                field.required = true;
-            }
-        } else {
-            // Sauvegarder l'état required et désactiver temporairement
-            field.dataset.wasRequired = field.required;
-            field.required = false;
-        }
-    });
-}
+// Note: Section récurrence désactivée - utiliser le menu Récurrences dédié
 
 // Afficher le compte de destination au chargement si virement est sélectionné
 if (document.getElementById('type_operation').value === 'virement') {
     document.getElementById('compte_destination_block').style.display = 'block';
     document.getElementById('compte_destination_id').required = true;
 }
-
-// Appeler toggleRecurrenceFields au chargement pour gérer l'état initial
-toggleRecurrenceFields();
 
 // Chargement dynamique des sous-catégories
 function loadSousCategories(categorieId, selectedSousCategorieId = null) {
@@ -460,6 +448,28 @@ function loadSousCategories(categorieId, selectedSousCategorieId = null) {
 document.getElementById('categorie_id').addEventListener('change', function() {
     loadSousCategories(this.value);
 });
+
+// Gestion de la checkbox récurrence (création/suppression)
+function handleRecurrenceToggle(checkbox) {
+    const deleteRecurrenceInput = document.getElementById('delete_recurrence');
+    const recurrenceId = checkbox.dataset.recurrenceId;
+    
+    if (recurrenceId && !checkbox.checked) {
+        // Récurrence existante → décochée = SUPPRESSION
+        if (confirm('⚠️ Supprimer le modèle de récurrence ?\n\nLes occurrences passées seront conservées, mais aucune nouvelle occurrence ne sera générée.')) {
+            deleteRecurrenceInput.value = '1';
+        } else {
+            // Annulation = recocher
+            checkbox.checked = true;
+        }
+    } else if (!recurrenceId && checkbox.checked) {
+        // Pas de récurrence → cochée = CRÉATION
+        deleteRecurrenceInput.value = '0';
+    } else {
+        // Autres cas
+        deleteRecurrenceInput.value = '0';
+    }
+}
 
 // Charger les sous-catégories au chargement de la page si une catégorie est sélectionnée
 document.addEventListener('DOMContentLoaded', function() {

@@ -285,7 +285,6 @@ class Recurrence extends BaseModel
             'moyen_paiement' => $recurrence['moyen_paiement'],
             'beneficiaire' => $recurrence['beneficiaire'],
             'validee' => $recurrence['auto_validation'],
-            'est_recurrente' => 0, // L'occurrence n'est pas récurrente
             'recurrence_id' => $recurrenceId // ✅ LIEN VERS RÉCURRENCE
         ];
         

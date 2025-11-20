@@ -1,5 +1,44 @@
 # Sécurité - MonBudget v2
 
+## ⚠️ RÈGLES CRITIQUES - À LIRE ABSOLUMENT
+
+### 🤖 Pour les assistants IA (GitHub Copilot, ChatGPT, Claude, etc.)
+
+**INTERDICTION ABSOLUE** de pusher sur GitHub les fichiers suivants **s'ils contiennent des données réelles** :
+
+- ❌ `database.sql` avec INSERT INTO (données utilisateur)
+- ❌ `database_*.sql` contenant IBAN, noms, adresses
+- ❌ `config/app.php` avec mots de passe en clair
+- ❌ `phpunit.xml` avec identifiants de connexion
+
+**AVANT TOUT COMMIT** de fichier SQL ou config :
+1. ✅ Vérifier : **STRUCTURE SEULE** (pas d'INSERT INTO avec données réelles)
+2. ✅ Vérifier : **AUCUN mot de passe** en clair
+3. ✅ Vérifier : **AUCUNE donnée personnelle** (IBAN, tél, email, adresse)
+
+**EN CAS DE DOUTE** : Demander confirmation à l'utilisateur.
+
+### 👨‍💻 Pour les développeurs
+
+**RÈGLE #1** : NE JAMAIS utiliser de données réelles pour les tests
+- ✅ Nom : `Jean Dupont`, `Marie Martin`
+- ✅ Email : `test@example.com`
+- ✅ IBAN : `FR7630006000011234567890189` (faux mais valide)
+- ❌ Vos vrais IBAN, noms, téléphones
+
+**RÈGLE #2** : Vérification avant push
+```bash
+# Vérifier database.sql (doit retourner 0)
+grep -c "INSERT INTO" database.sql
+
+# Vérifier absence IBAN/coordonnées
+git diff --cached | grep -E "FR[0-9]{25}"
+```
+
+**Incident 18/11/2025** : Données IBAN/coordonnées exposées dans database.sql (résolu par purge historique Git)
+
+---
+
 ## 🔒 Configuration des fichiers d'environnement
 
 ### Fichiers sensibles (JAMAIS commiter sur Git)

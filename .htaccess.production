@@ -1,0 +1,33 @@
+# Configuration Apache pour MonBudget en Production
+# Remplacer .htaccess par ce fichier si problèmes de routes en sous-dossier
+
+# Désactiver l'affichage du contenu des répertoires
+Options -Indexes
+
+# Limites d'upload pour pièces jointes (max 5 MB)
+php_value upload_max_filesize 6M
+php_value post_max_size 8M
+php_value max_file_uploads 10
+php_value max_execution_time 60
+
+# Bloquer l'accès aux fichiers sensibles
+<FilesMatch "^(\.env|\.git|composer\.json|composer\.lock|\.gitignore|README\.md|INSTALL\.md|database\.sql)$">
+    Require all denied
+</FilesMatch>
+
+# Réécriture d'URL
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # ⚠️ IMPORTANT : Ajuster selon votre configuration serveur
+    # Si l'app est à https://votredomaine.com/monbudget/
+    RewriteBase /monbudget
+    
+    # Si l'app est à la racine https://votredomaine.com/
+    # RewriteBase /
+    
+    # Rediriger toutes les requêtes vers index.php sauf pour les fichiers/dossiers existants
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
