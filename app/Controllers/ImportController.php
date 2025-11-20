@@ -304,10 +304,9 @@ class ImportController extends BaseController
         
         // Créer l'import (sans chemin_fichier, fichier supprimé après traitement)
         $importId = Import::create([
-            'user_id' => $this->userId,
             'compte_id' => $preview['compte_id'],
             'nom_fichier' => $preview['file_name'],
-            'nb_lignes_total' => count($allRows),
+            'type_fichier' => 'csv',
             'statut' => 'en_cours'
         ]);
         
@@ -317,11 +316,12 @@ class ImportController extends BaseController
         // Mettre à jour le statut de l'import
         Database::update(
             "UPDATE imports SET 
-                nb_lignes_importees = ?, 
-                nb_lignes_ignorees = ?, 
+                nb_transactions = ?, 
+                nb_nouvelles_transactions = ?, 
+                nb_doublons = ?,
                 statut = 'termine' 
             WHERE id = ?",
-            [$stats['success'], ($stats['duplicates'] + $stats['errors']), $importId]
+            [($stats['success'] + $stats['duplicates'] + $stats['errors']), $stats['success'], $stats['duplicates'], $importId]
         );
         
         // Recalculer le solde du compte
@@ -360,9 +360,9 @@ class ImportController extends BaseController
         
         // Créer l'enregistrement d'import (sans chemin_fichier, fichier supprimé après traitement)
         $importId = Import::create([
-            'user_id' => $this->userId,
             'compte_id' => $preview['compte_id'],
             'nom_fichier' => $preview['file_name'],
+            'type_fichier' => 'ofx',
             'statut' => 'en_cours'
         ]);
         
