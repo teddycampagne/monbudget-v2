@@ -4,6 +4,8 @@ namespace MonBudget\Controllers;
 
 use MonBudget\Core\Database;
 use MonBudget\Services\RecurrenceService;
+use MonBudget\Services\PasswordPolicyService;
+use App\Services\AuditLogService;
 
 /**
  * Contrôleur d'authentification
@@ -42,6 +44,8 @@ class AuthController extends BaseController
      * le cookie "Remember me" si demandé. Régénère l'ID de session
      * pour la sécurité après connexion réussie.
      * 
+     * ⚠️ PCI DSS: Vérifie verrouillage compte et expiration mot de passe.
+     * 
      * @return void
      */
     public function login(): void
@@ -63,9 +67,54 @@ class AuthController extends BaseController
             [$email]
         );
         
-        if (!$user || !password_verify($password, $user['password'])) {
+        // Initialiser services PCI DSS
+        $passwordPolicy = new PasswordPolicyService();
+        $audit = new AuditLogService();
+        
+        // Vérifier si utilisateur existe
+        if (!$user) {
+            // Log tentative avec email inconnu
+            $audit->logLogin($email, false, null, 'Unknown email');
             flash('error', 'Identifiants incorrects');
             $this->redirect('login');
+        }
+        
+        // Vérifier verrouillage compte (PCI DSS 8.3)
+        if ($passwordPolicy->isAccountLocked($user['id'])) {
+            $audit->logLogin($email, false, $user['id'], 'Account locked');
+            flash('error', 'Compte verrouillé suite à trop de tentatives échouées. Réessayez plus tard.');
+            $this->redirect('login');
+        }
+        
+        // Vérifier mot de passe
+        if (!password_verify($password, $user['password'])) {
+            // Enregistrer tentative échouée
+            $passwordPolicy->recordFailedLogin($user['id']);
+            $audit->logLogin($email, false, $user['id'], 'Invalid password');
+            
+            // Vérifier si compte doit être verrouillé
+            $failedAttempts = ($user['failed_login_attempts'] ?? 0) + 1;
+            if ($failedAttempts >= 5) {
+                flash('error', 'Compte verrouillé suite à trop de tentatives échouées');
+            } else {
+                flash('error', 'Identifiants incorrects');
+            }
+            
+            $this->redirect('login');
+        }
+        
+        // Réinitialiser compteur tentatives échouées
+        Database::update(
+            "UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?",
+            [$user['id']]
+        );
+        
+        // Vérifier expiration mot de passe (PCI DSS 8.2.4)
+        if ($passwordPolicy->isPasswordExpired($user['id'])) {
+            $_SESSION['user_id_temp'] = $user['id'];
+            $_SESSION['must_change_password'] = true;
+            flash('warning', 'Votre mot de passe a expiré. Vous devez le changer.');
+            $this->redirect('change-password');
         }
         
         // Régénérer l'ID de session pour la sécurité
@@ -86,6 +135,9 @@ class AuthController extends BaseController
             
             // Stocker le token en BDD (à implémenter)
         }
+        
+        // Log succès connexion (PCI DSS 10.2.5)
+        $audit->logLogin($email, true, $user['id']);
         
         // ✨ NOUVEAU : Exécuter automatiquement les récurrences échues
         // Appel silencieux pour tous les utilisateurs (pas seulement le user connecté)
@@ -115,10 +167,18 @@ class AuthController extends BaseController
      * Nettoie complètement la session, supprime les cookies (session et "Remember me"),
      * et détruit la session. Redirige ensuite vers la page de connexion.
      * 
+     * ⚠️ PCI DSS: Log de déconnexion pour audit.
+     * 
      * @return void
      */
     public function logout(): void
     {
+        // Log déconnexion avant destruction session (PCI DSS 10.2.3)
+        if (isset($_SESSION['user_id'])) {
+            $audit = new AuditLogService();
+            $audit->logLogout($_SESSION['user_id']);
+        }
+        
         // Nettoyer la session
         $_SESSION = [];
         
@@ -160,6 +220,8 @@ class AuthController extends BaseController
      * n'est pas déjà utilisé, crée le compte avec un mot de passe haché,
      * et redirige vers la page de connexion.
      * 
+     * ⚠️ PCI DSS: Validation stricte du mot de passe (longueur, complexité).
+     * 
      * @return void
      */
     public function register(): void
@@ -178,6 +240,19 @@ class AuthController extends BaseController
             $this->redirect('register');
         }
         
+        // Initialiser services PCI DSS
+        $passwordPolicy = new PasswordPolicyService();
+        $audit = new AuditLogService();
+        
+        // Valider mot de passe (PCI DSS 8.2.3)
+        $validationErrors = $passwordPolicy->validatePassword($data['password']);
+        if (!empty($validationErrors)) {
+            foreach ($validationErrors as $error) {
+                flash('error', $error);
+            }
+            $this->redirect('register');
+        }
+        
         // Vérifier si l'email existe déjà
         $existing = Database::selectOne(
             "SELECT id FROM users WHERE email = ? LIMIT 1",
@@ -190,12 +265,23 @@ class AuthController extends BaseController
         }
         
         // Créer l'utilisateur
+        $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
         $userId = Database::insert(
-            "INSERT INTO users (username, email, password, role, created_at) VALUES (?, ?, ?, 'user', NOW())",
-            [$data['username'], $data['email'], password_hash($data['password'], PASSWORD_DEFAULT)]
+            "INSERT INTO users (username, email, password, role, created_at, last_password_change, password_expires_at) 
+             VALUES (?, ?, ?, 'user', NOW(), NOW(), DATE_ADD(NOW(), INTERVAL 90 DAY))",
+            [$data['username'], $data['email'], $passwordHash]
         );
         
         if ($userId) {
+            // Enregistrer dans historique des mots de passe
+            $passwordPolicy->savePasswordHistory($userId, $passwordHash);
+            
+            // Log création compte (PCI DSS 10.2.1)
+            $audit->logCreate('users', $userId, [
+                'username' => $data['username'],
+                'email' => $data['email']
+            ]);
+            
             flash('success', 'Compte créé avec succès. Vous pouvez maintenant vous connecter.');
             $this->redirect('login');
         } else {

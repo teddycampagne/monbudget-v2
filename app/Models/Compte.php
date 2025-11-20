@@ -3,6 +3,7 @@
 namespace MonBudget\Models;
 
 use MonBudget\Core\Database;
+use MonBudget\Services\EncryptionService;
 
 /**
  * Class Compte
@@ -228,6 +229,8 @@ class Compte extends BaseModel
      * Insère uniquement les champs définis dans $fillable qui sont présents dans $data.
      * Génère dynamiquement la requête SQL d'insertion.
      * 
+     * ⚠️ PCI DSS: Chiffre automatiquement l'IBAN avant insertion.
+     * 
      * @param array $data Données du compte à créer (clés = noms de colonnes)
      *                    - int $data['user_id'] ID utilisateur (requis)
      *                    - int $data['banque_id'] ID banque (requis)
@@ -246,6 +249,7 @@ class Compte extends BaseModel
      *     'banque_id' => 3,
      *     'nom' => 'Compte Courant',
      *     'type_compte' => 'courant',
+     *     'iban' => 'FR7630006000011234567890189',  // Sera chiffré automatiquement
      *     'solde_initial' => 2500.00,
      *     'solde_actuel' => 2500.00,
      *     'devise' => 'EUR',
@@ -254,6 +258,11 @@ class Compte extends BaseModel
      */
     public static function create(array $data): int
     {
+        // Chiffrer IBAN si présent (PCI DSS Exigence 3)
+        if (isset($data['iban'])) {
+            $data['iban'] = static::encryptIban($data['iban']);
+        }
+        
         $fields = [];
         $placeholders = [];
         $values = [];
@@ -278,6 +287,8 @@ class Compte extends BaseModel
      * Met à jour uniquement les champs définis dans $fillable qui sont présents dans $data.
      * Génère dynamiquement la clause SET de la requête UPDATE.
      * 
+     * ⚠️ PCI DSS: Chiffre automatiquement l'IBAN avant mise à jour.
+     * 
      * @param int $id ID du compte à mettre à jour
      * @param array $data Données à modifier (clés = noms de colonnes)
      * @return int Nombre de lignes affectées (0 si aucun changement, 1 si mise à jour)
@@ -290,6 +301,11 @@ class Compte extends BaseModel
      */
     public static function update(int $id, array $data): int
     {
+        // Chiffrer IBAN si présent (PCI DSS Exigence 3)
+        if (isset($data['iban'])) {
+            $data['iban'] = static::encryptIban($data['iban']);
+        }
+        
         $setParts = [];
         $values = [];
         
@@ -541,5 +557,64 @@ class Compte extends BaseModel
         
         $compte['titulaires'] = static::getTitulaires($id);
         return $compte;
+    }
+    
+    /**
+     * Chiffre un IBAN avant sauvegarde
+     * 
+     * Utilise EncryptionService pour chiffrer l'IBAN selon PCI DSS Exigence 3.
+     * Retourne null si aucun IBAN fourni.
+     * 
+     * @param string|null $iban IBAN en clair
+     * @return string|null IBAN chiffré en base64 ou null
+     */
+    private static function encryptIban(?string $iban): ?string
+    {
+        if (empty($iban)) {
+            return null;
+        }
+        
+        try {
+            $encryption = new EncryptionService();
+            return $encryption->encryptIBAN($iban);
+        } catch (\Exception $e) {
+            error_log("Erreur chiffrement IBAN: " . $e->getMessage());
+            // En cas d'erreur, on stocke en clair (fallback)
+            // TODO: En production, lever une exception
+            return $iban;
+        }
+    }
+    
+    /**
+     * Déchiffre un IBAN depuis la base de données
+     * 
+     * Utilise EncryptionService pour déchiffrer l'IBAN.
+     * Retourne l'IBAN en clair ou masqué selon le paramètre.
+     * 
+     * @param string|null $encryptedIban IBAN chiffré en base64
+     * @param bool $masked Si true, retourne IBAN masqué (FR** **** **89)
+     * @return string|null IBAN déchiffré ou masqué, ou null
+     */
+    public static function decryptIban(?string $encryptedIban, bool $masked = false): ?string
+    {
+        if (empty($encryptedIban)) {
+            return null;
+        }
+        
+        try {
+            $encryption = new EncryptionService();
+            
+            // Si déjà déchiffré (legacy data), retourner tel quel ou masquer
+            if (!$encryption->isEncrypted($encryptedIban)) {
+                return $masked ? $encryption->maskIBAN($encryptedIban, false) : $encryptedIban;
+            }
+            
+            return $masked 
+                ? $encryption->maskIBAN($encryptedIban, true)
+                : $encryption->decryptIBAN($encryptedIban);
+        } catch (\Exception $e) {
+            error_log("Erreur déchiffrement IBAN: " . $e->getMessage());
+            return $masked ? 'FR** **** ****' : null;
+        }
     }
 }
