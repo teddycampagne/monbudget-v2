@@ -39,7 +39,7 @@
     <script>
         window.APP_CONFIG = {
             baseUrl: '<?= rtrim(url(''), '/') ?>',
-            version: '2.2.0'
+            version: '2.3.0'
         };
     </script>
 </head>
