@@ -70,14 +70,29 @@
                         
                         <hr class="my-4">
                         
-                        <h5 class="mb-3">Changer le mot de passe</h5>
+                        <h5 class="mb-3">
+                            <i class="bi bi-shield-lock"></i> Sécurité PCI DSS
+                        </h5>
+                        
+                        <!-- Alerte exigences PCI DSS -->
+                        <div class="alert alert-info small">
+                            <strong>Exigences du nouveau mot de passe :</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Minimum <strong>12 caractères</strong></li>
+                                <li>Au moins 1 majuscule, 1 minuscule, 1 chiffre, 1 caractère spécial</li>
+                                <li>Différent des 5 derniers mots de passe</li>
+                                <li>L'utilisateur devra le changer à la prochaine connexion</li>
+                            </ul>
+                        </div>
+                        
                         <div class="mb-3">
                             <label for="new_password" class="form-label">Nouveau mot de passe</label>
                             <input type="password" 
                                    class="form-control" 
                                    id="new_password" 
-                                   name="new_password">
-                            <div class="form-text">Laisser vide pour conserver le mot de passe actuel. Au moins 8 caractères si renseigné.</div>
+                                   name="new_password"
+                                   minlength="12">
+                            <div class="form-text">Laisser vide pour conserver le mot de passe actuel. Minimum 12 caractères si renseigné.</div>
                         </div>
                         
                         <div class="border-top pt-3 mt-4">

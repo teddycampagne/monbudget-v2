@@ -5,7 +5,7 @@ namespace MonBudget\Controllers;
 use MonBudget\Core\Database;
 use MonBudget\Services\RecurrenceService;
 use MonBudget\Services\PasswordPolicyService;
-use App\Services\AuditLogService;
+use MonBudget\Services\AuditLogService;
 
 /**
  * Contrôleur d'authentification
@@ -80,24 +80,27 @@ class AuthController extends BaseController
         }
         
         // Vérifier verrouillage compte (PCI DSS 8.3)
-        if ($passwordPolicy->isAccountLocked($user['id'])) {
+        $lockoutStatus = PasswordPolicyService::checkLockout($email);
+        if ($lockoutStatus['locked']) {
             $audit->logLogin($email, false, $user['id'], 'Account locked');
-            flash('error', 'Compte verrouillé suite à trop de tentatives échouées. Réessayez plus tard.');
+            $remainingMinutes = ceil($lockoutStatus['remaining_time'] / 60);
+            flash('error', "Compte verrouillé suite à trop de tentatives échouées. Réessayez dans {$remainingMinutes} minute(s).");
             $this->redirect('login');
         }
         
         // Vérifier mot de passe
         if (!password_verify($password, $user['password'])) {
             // Enregistrer tentative échouée
-            $passwordPolicy->recordFailedLogin($user['id']);
+            PasswordPolicyService::recordFailedAttempt($email);
             $audit->logLogin($email, false, $user['id'], 'Invalid password');
             
             // Vérifier si compte doit être verrouillé
-            $failedAttempts = ($user['failed_login_attempts'] ?? 0) + 1;
-            if ($failedAttempts >= 5) {
+            $lockoutStatus = PasswordPolicyService::checkLockout($email);
+            if ($lockoutStatus['locked']) {
                 flash('error', 'Compte verrouillé suite à trop de tentatives échouées');
             } else {
-                flash('error', 'Identifiants incorrects');
+                $remainingAttempts = PasswordPolicyService::getRemainingAttempts($email);
+                flash('error', "Identifiants incorrects. {$remainingAttempts} tentative(s) restante(s).");
             }
             
             $this->redirect('login');
@@ -108,9 +111,10 @@ class AuthController extends BaseController
             "UPDATE users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?",
             [$user['id']]
         );
+        PasswordPolicyService::resetAttempts($email);
         
         // Vérifier expiration mot de passe (PCI DSS 8.2.4)
-        if ($passwordPolicy->isPasswordExpired($user['id'])) {
+        if (PasswordPolicyService::isExpired($user['id'])) {
             $_SESSION['user_id_temp'] = $user['id'];
             $_SESSION['must_change_password'] = true;
             flash('warning', 'Votre mot de passe a expiré. Vous devez le changer.');

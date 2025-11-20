@@ -205,7 +205,13 @@ $router->post('/tiers/{id}/delete', [TiersController::class, 'destroy']);
 
 // Routes Utilisateur
 use MonBudget\Controllers\UserController;
-$router->get('/profile', [UserController::class, 'profile']);
+use MonBudget\Controllers\ProfileController;
+$router->get('/profile', [ProfileController::class, 'show']);
+$router->post('/profile', [ProfileController::class, 'update']);
+$router->get('/change-password', [ProfileController::class, 'showChangePassword']);
+$router->post('/change-password', [ProfileController::class, 'changePassword']);
+// Routes legacy UserController (à migrer vers ProfileController)
+$router->get('/profile/legacy', [UserController::class, 'profile']);
 $router->post('/profile/update', [UserController::class, 'updateProfile']);
 $router->post('/profile/password', [UserController::class, 'updatePassword']);
 $router->post('/profile/preferences', [UserController::class, 'updatePreferences']);
@@ -300,6 +306,9 @@ $router->post('/admin/restore/upload', [AdminController::class, 'restoreUpload']
 // Routes Sécurité (Admin + UserFirst)
 $router->get('/admin/users/reset-passwords', [AdminController::class, 'resetPasswords']);
 $router->post('/admin/users/reset-passwords/process', [AdminController::class, 'processResetPasswords']);
+$router->get('/admin/locked-users', [AdminController::class, 'lockedUsers']);
+$router->post('/admin/users/unlock', [AdminController::class, 'unlockUser']);
+$router->post('/admin/users/{id}/reset-password', [AdminController::class, 'resetUserPassword']);
 
 // Routes Gestion des Icônes (Admin)
 $router->get('/admin/icons', [AdminController::class, 'icons']);

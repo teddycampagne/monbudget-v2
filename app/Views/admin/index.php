@@ -167,19 +167,53 @@
                         Gérez les comptes utilisateurs, les rôles et les permissions.
                     </div>
                     <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="<?= url('admin/users') ?>" class="btn btn-outline-primary w-100 text-start">
                                 <i class="bi bi-person-lines-fill"></i> Liste des utilisateurs
                             </a>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="<?= url('admin/users/create') ?>" class="btn btn-outline-success w-100 text-start">
                                 <i class="bi bi-person-plus"></i> Ajouter un utilisateur
                             </a>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <a href="<?= url('admin/users/roles') ?>" class="btn btn-outline-info w-100 text-start">
                                 <i class="bi bi-shield-check"></i> Gérer les rôles
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="<?= url('admin/locked-users') ?>" class="btn btn-outline-danger w-100 text-start">
+                                <i class="bi bi-shield-lock-fill"></i> Comptes verrouillés
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sécurité PCI DSS -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="bi bi-shield-fill-exclamation"></i> Sécurité & Conformité PCI DSS</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Opérations critiques</strong> - Ces actions affectent la sécurité des comptes utilisateurs.
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="<?= url('admin/users/reset-passwords') ?>" class="btn btn-outline-warning w-100 text-start">
+                                <i class="bi bi-key-fill"></i> Réinitialiser des mots de passe
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="<?= url('admin/locked-users') ?>" class="btn btn-outline-danger w-100 text-start">
+                                <i class="bi bi-unlock-fill"></i> Déverrouiller des comptes
                             </a>
                         </div>
                     </div>

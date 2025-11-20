@@ -3,6 +3,8 @@
 namespace MonBudget\Controllers;
 
 use MonBudget\Core\Database;
+use MonBudget\Services\PasswordPolicyService;
+use MonBudget\Services\AuditLogService;
 
 /**
  * Contrôleur d'administration
@@ -301,19 +303,49 @@ class AdminController extends BaseController
         
         // Construire la requête
         if (!empty($new_password)) {
-            if (strlen($new_password) < 8) {
-                flash('error', 'Le mot de passe doit contenir au moins 8 caractères');
+            // Validation PCI DSS
+            $validationErrors = PasswordPolicyService::validate($new_password);
+            if (!empty($validationErrors)) {
+                foreach ($validationErrors as $error) {
+                    flash('error', $error);
+                }
                 $this->redirect("admin/users/{$id}/edit");
                 return;
             }
             
-            $hashedPassword = password_hash($new_password, PASSWORD_ARGON2ID);
+            $hashedPassword = password_hash($new_password, PASSWORD_DEFAULT);
+            
+            // Mise à jour complète avec PCI DSS
             $stmt = $db->prepare("
                 UPDATE users 
-                SET email = ?, role = ?, is_active = ?, password = ?
+                SET email = ?, 
+                    role = ?, 
+                    is_active = ?, 
+                    password = ?,
+                    last_password_change = NOW(), 
+                    password_expires_at = DATE_ADD(NOW(), INTERVAL 90 DAY),
+                    must_change_password = 1,
+                    failed_login_attempts = 0,
+                    locked_until = NULL
                 WHERE id = ?
             ");
             $stmt->execute([$email, $role, $is_active, $hashedPassword, $id]);
+            
+            // Ajouter à l'historique
+            PasswordPolicyService::addToHistory($id, $hashedPassword);
+            
+            // Log audit
+            $audit = new AuditLogService();
+            $audit->log(
+                AuditLogService::ACTION_PASSWORD_RESET,
+                'users',
+                $id,
+                null,
+                ['reset_by_admin' => $_SESSION['user_id'], 'username' => $user['username']],
+                $_SESSION['user_id']
+            );
+            
+            flash('success', 'Utilisateur mis à jour. Il devra changer son mot de passe à la prochaine connexion.');
         } else {
             $stmt = $db->prepare("
                 UPDATE users 
@@ -321,9 +353,8 @@ class AdminController extends BaseController
                 WHERE id = ?
             ");
             $stmt->execute([$email, $role, $is_active, $id]);
+            flash('success', 'Utilisateur mis à jour avec succès');
         }
-        
-        flash('success', 'Utilisateur mis à jour avec succès');
         $this->redirect('admin/users');
     }
     
@@ -749,7 +780,7 @@ class AdminController extends BaseController
     }
     
     /**
-     * Traiter la réinitialisation des mots de passe
+     * Traiter la réinitialisation des mots de passe (PCI DSS)
      */
     public function processResetPasswords()
     {
@@ -765,14 +796,19 @@ class AdminController extends BaseController
             return;
         }
         
-        if (strlen($newPassword) < 8) {
-            flash('error', 'Le mot de passe doit contenir au moins 8 caractères');
+        // Validation PCI DSS du mot de passe
+        $validationErrors = PasswordPolicyService::validate($newPassword);
+        if (!empty($validationErrors)) {
+            foreach ($validationErrors as $error) {
+                flash('error', $error);
+            }
             $this->redirect('admin/users/reset-passwords');
             return;
         }
         
         $db = Database::getConnection();
-        $hashedPassword = password_hash($newPassword, PASSWORD_ARGON2ID);
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $audit = new AuditLogService();
         
         try {
             $updated = 0;
@@ -784,13 +820,32 @@ class AdminController extends BaseController
                 $user = $stmt->fetch();
                 
                 if ($user && $user['username'] !== 'UserFirst') {
-                    $update = $db->prepare("UPDATE users SET password = ? WHERE id = ?");
+                    // Mise à jour avec PCI DSS
+                    $update = $db->prepare("
+                        UPDATE users 
+                        SET password = ?, 
+                            last_password_change = NOW(), 
+                            password_expires_at = DATE_ADD(NOW(), INTERVAL 90 DAY),
+                            must_change_password = 1
+                        WHERE id = ?
+                    ");
                     $update->execute([$hashedPassword, $userId]);
+                    
+                    // Log audit
+                    $audit->log(
+                        AuditLogService::ACTION_PASSWORD_RESET,
+                        'users',
+                        $userId,
+                        null,
+                        ['reset_by_admin' => $_SESSION['user_id'], 'username' => $user['username']],
+                        $_SESSION['user_id']
+                    );
+                    
                     $updated++;
                 }
             }
             
-            flash('success', "Mot de passe réinitialisé pour {$updated} utilisateur(s)");
+            flash('success', "Mot de passe réinitialisé pour {$updated} utilisateur(s). Ils devront le changer à la prochaine connexion.");
         } catch (\Exception $e) {
             flash('error', 'Erreur lors de la réinitialisation : ' . $e->getMessage());
         }
@@ -951,5 +1006,189 @@ class AdminController extends BaseController
 
         header('Location: ' . url('admin/icons'));
         exit;
+    }
+    
+    /**
+     * Liste des utilisateurs verrouillés
+     */
+    public function lockedUsers(): void
+    {
+        if (!$this->requireAdminAccess()) return;
+        
+        $db = Database::getConnection();
+        
+        // Récupérer utilisateurs avec tentatives échouées ou verrouillés
+        $users = $db->query("
+            SELECT 
+                id, username, email, role, 
+                failed_login_attempts, 
+                locked_until,
+                CASE 
+                    WHEN locked_until IS NOT NULL AND locked_until > NOW() THEN 'locked'
+                    WHEN failed_login_attempts >= 5 THEN 'suspicious'
+                    ELSE 'ok'
+                END as status
+            FROM users
+            WHERE (failed_login_attempts > 0 OR locked_until IS NOT NULL)
+            AND username != 'UserFirst'
+            ORDER BY failed_login_attempts DESC, locked_until DESC
+        ")->fetchAll();
+        
+        $this->view('admin.locked_users', [
+            'users' => $users,
+            'title' => 'Utilisateurs verrouillés'
+        ]);
+    }
+    
+    /**
+     * Déverrouiller un utilisateur (PCI DSS)
+     */
+    public function unlockUser(): void
+    {
+        if (!$this->requireAdminAccess()) return;
+        if (!$this->validateCsrfOrFail('admin/users/unlock')) return;
+        
+        $userId = $_POST['user_id'] ?? null;
+        
+        if (!$userId) {
+            flash('error', 'Utilisateur non spécifié');
+            $this->redirect('admin/locked-users');
+            return;
+        }
+        
+        $db = Database::getConnection();
+        
+        // Vérifier que ce n'est pas UserFirst
+        $stmt = $db->prepare("SELECT username, email FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            flash('error', 'Utilisateur introuvable');
+            $this->redirect('admin/locked-users');
+            return;
+        }
+        
+        if ($user['username'] === 'UserFirst') {
+            flash('error', 'Le compte UserFirst ne peut pas être déverrouillé');
+            $this->redirect('admin/locked-users');
+            return;
+        }
+        
+        try {
+            // Déverrouiller le compte
+            $update = $db->prepare("
+                UPDATE users 
+                SET failed_login_attempts = 0, 
+                    locked_until = NULL
+                WHERE id = ?
+            ");
+            $update->execute([$userId]);
+            
+            // Réinitialiser les tentatives en session
+            $email = $user['email'];
+            PasswordPolicyService::resetAttempts($email);
+            
+            // Log audit
+            $audit = new AuditLogService();
+            $audit->log(
+                AuditLogService::ACTION_ACCOUNT_UNLOCKED,
+                'users',
+                $userId,
+                null,
+                ['unlocked_by_admin' => $_SESSION['user_id'], 'username' => $user['username']],
+                $_SESSION['user_id']
+            );
+            
+            flash('success', "Compte '{$user['username']}' déverrouillé avec succès");
+        } catch (\Exception $e) {
+            flash('error', 'Erreur lors du déverrouillage : ' . $e->getMessage());
+        }
+        
+        $this->redirect('admin/locked-users');
+    }
+    
+    /**
+     * Réinitialiser un mot de passe utilisateur (PCI DSS)
+     */
+    public function resetUserPassword(): void
+    {
+        if (!$this->requireAdminAccess()) return;
+        if (!$this->validateCsrfOrFail('admin/users/reset-password')) return;
+        
+        $userId = $_POST['user_id'] ?? null;
+        $newPassword = $_POST['new_password'] ?? '';
+        
+        if (!$userId || empty($newPassword)) {
+            flash('error', 'Données manquantes');
+            $this->redirect('admin/users');
+            return;
+        }
+        
+        // Validation PCI DSS
+        $validationErrors = PasswordPolicyService::validate($newPassword);
+        if (!empty($validationErrors)) {
+            foreach ($validationErrors as $error) {
+                flash('error', $error);
+            }
+            $this->redirect("admin/users/{$userId}/edit");
+            return;
+        }
+        
+        $db = Database::getConnection();
+        
+        // Vérifier que ce n'est pas UserFirst
+        $stmt = $db->prepare("SELECT username FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            flash('error', 'Utilisateur introuvable');
+            $this->redirect('admin/users');
+            return;
+        }
+        
+        if ($user['username'] === 'UserFirst') {
+            flash('error', 'Le mot de passe de UserFirst ne peut pas être réinitialisé');
+            $this->redirect('admin/users');
+            return;
+        }
+        
+        try {
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            
+            // Mise à jour avec PCI DSS
+            $update = $db->prepare("
+                UPDATE users 
+                SET password = ?, 
+                    last_password_change = NOW(), 
+                    password_expires_at = DATE_ADD(NOW(), INTERVAL 90 DAY),
+                    must_change_password = 1,
+                    failed_login_attempts = 0,
+                    locked_until = NULL
+                WHERE id = ?
+            ");
+            $update->execute([$hashedPassword, $userId]);
+            
+            // Ajouter à l'historique
+            PasswordPolicyService::addToHistory($userId, $hashedPassword);
+            
+            // Log audit
+            $audit = new AuditLogService();
+            $audit->log(
+                AuditLogService::ACTION_PASSWORD_RESET,
+                'users',
+                $userId,
+                null,
+                ['reset_by_admin' => $_SESSION['user_id'], 'username' => $user['username']],
+                $_SESSION['user_id']
+            );
+            
+            flash('success', "Mot de passe réinitialisé. L'utilisateur devra le changer à la prochaine connexion.");
+        } catch (\Exception $e) {
+            flash('error', 'Erreur lors de la réinitialisation : ' . $e->getMessage());
+        }
+        
+        $this->redirect("admin/users/{$userId}/edit");
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Services;
+namespace MonBudget\Services;
 
-use App\Core\Database;
+use MonBudget\Core\Database;
 use Exception;
 
 /**
@@ -18,8 +18,6 @@ use Exception;
  */
 class AuditLogService
 {
-    private Database $db;
-
     // Types d'actions
     public const ACTION_LOGIN_SUCCESS = 'login_success';
     public const ACTION_LOGIN_FAILED = 'login_failed';
@@ -48,11 +46,6 @@ class AuditLogService
         'budgets',
         'categories'
     ];
-
-    public function __construct()
-    {
-        $this->db = Database::getInstance();
-    }
 
     /**
      * Enregistre un événement d'audit
@@ -93,7 +86,7 @@ class AuditLogService
             $newValues = $this->sanitizeValues($newValues);
         }
 
-        $stmt = $this->db->prepare("
+        $stmt = Database::getConnection()->prepare("
             INSERT INTO audit_logs (
                 user_id, action, table_name, record_id,
                 old_values, new_values,
@@ -115,7 +108,7 @@ class AuditLogService
             $requestMethod
         ]);
 
-        return (int) $this->db->lastInsertId();
+        return (int) Database::getConnection()->lastInsertId();
     }
 
     /**
@@ -350,7 +343,7 @@ class AuditLogService
 
         $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $stmt = $this->db->prepare("
+        $stmt = Database::getConnection()->prepare("
             SELECT 
                 al.*,
                 u.email as user_email,
@@ -379,7 +372,7 @@ class AuditLogService
      */
     public function cleanOldLogs(int $retentionDays = 365): int
     {
-        $stmt = $this->db->prepare("
+        $stmt = Database::getConnection()->prepare("
             DELETE FROM audit_logs
             WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
         ");
@@ -459,7 +452,7 @@ class AuditLogService
      */
     public function getAuditReport(string $dateFrom, string $dateTo): array
     {
-        $stmt = $this->db->prepare("
+        $stmt = Database::getConnection()->prepare("
             SELECT 
                 action,
                 COUNT(*) as count,
@@ -475,7 +468,7 @@ class AuditLogService
         $actionStats = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Statistiques par utilisateur
-        $stmt = $this->db->prepare("
+        $stmt = Database::getConnection()->prepare("
             SELECT 
                 u.email,
                 u.nom,

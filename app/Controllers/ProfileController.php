@@ -4,7 +4,7 @@ namespace MonBudget\Controllers;
 
 use MonBudget\Core\Database;
 use MonBudget\Services\PasswordPolicyService;
-use App\Services\AuditLogService;
+use MonBudget\Services\AuditLogService;
 
 /**
  * Contrôleur de gestion du profil utilisateur
@@ -86,12 +86,11 @@ class ProfileController extends BaseController
             $this->redirect('change-password');
         }
         
-        // Initialiser services PCI DSS
-        $passwordPolicy = new PasswordPolicyService();
+        // Initialiser service audit PCI DSS
         $audit = new AuditLogService();
         
         // Valider nouveau mot de passe (PCI DSS 8.2.3)
-        $validationErrors = $passwordPolicy->validatePassword($newPassword, $userId);
+        $validationErrors = PasswordPolicyService::validate($newPassword);
         if (!empty($validationErrors)) {
             foreach ($validationErrors as $error) {
                 flash('error', $error);
@@ -100,7 +99,7 @@ class ProfileController extends BaseController
         }
         
         // Vérifier historique (PCI DSS 8.2.5)
-        if ($passwordPolicy->checkPasswordHistory($userId, $newPassword)) {
+        if (PasswordPolicyService::isInHistory($userId, $newPassword)) {
             flash('error', 'Vous ne pouvez pas réutiliser un de vos 5 derniers mots de passe');
             $this->redirect('change-password');
         }
@@ -119,7 +118,7 @@ class ProfileController extends BaseController
         
         if ($updated > 0) {
             // Enregistrer dans historique
-            $passwordPolicy->savePasswordHistory($userId, $newPasswordHash);
+            PasswordPolicyService::addToHistory($userId, $newPasswordHash);
             
             // Log changement (PCI DSS 10.2.5)
             $audit->logPasswordChange($userId, $forced);
@@ -150,7 +149,7 @@ class ProfileController extends BaseController
         
         // Récupérer informations utilisateur
         $user = Database::selectOne(
-            "SELECT id, username, email, role, created_at, last_password_change, password_expires_at 
+            "SELECT id, username, email, role, created_at, last_password_change 
              FROM users WHERE id = ? LIMIT 1",
             [$userId]
         );
@@ -161,15 +160,14 @@ class ProfileController extends BaseController
         }
         
         // Calculer jours avant expiration mot de passe
-        $passwordPolicy = new PasswordPolicyService();
-        $isExpired = $passwordPolicy->isPasswordExpired($userId);
+        $isExpired = PasswordPolicyService::isExpired($userId);
         
         $daysUntilExpiration = null;
-        if ($user['password_expires_at']) {
-            $expirationDate = new \DateTime($user['password_expires_at']);
-            $now = new \DateTime();
-            $interval = $now->diff($expirationDate);
-            $daysUntilExpiration = $interval->invert ? 0 : $interval->days;
+        if ($user['last_password_change']) {
+            $changedAt = strtotime($user['last_password_change']);
+            $expiresAt = strtotime('+' . PasswordPolicyService::MAX_AGE_DAYS . ' days', $changedAt);
+            $now = time();
+            $daysUntilExpiration = max(0, floor(($expiresAt - $now) / 86400));
         }
         
         $this->view('profile.show', [

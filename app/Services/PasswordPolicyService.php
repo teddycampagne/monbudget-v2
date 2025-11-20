@@ -177,14 +177,14 @@ class PasswordPolicyService
      */
     public static function addToHistory(int $userId, string $passwordHash): void
     {
-        // Ins\u00e9rer dans historique
-        Database::query(
+        // Insérer dans historique
+        Database::insert(
             "INSERT INTO password_history (user_id, password_hash) VALUES (?, ?)",
             [$userId, $passwordHash]
         );
         
         // Supprimer anciens mots de passe (garder seulement HISTORY_COUNT)
-        Database::query(
+        Database::delete(
             "DELETE FROM password_history 
              WHERE user_id = ? 
              AND id NOT IN (
@@ -208,15 +208,15 @@ class PasswordPolicyService
     public static function isExpired(int $userId): bool
     {
         $user = Database::selectOne(
-            "SELECT password_changed_at FROM users WHERE id = ?",
+            "SELECT last_password_change FROM users WHERE id = ?",
             [$userId]
         );
         
-        if (!$user || !$user['password_changed_at']) {
+        if (!$user || !$user['last_password_change']) {
             return false; // Pas de date = pas expir\u00e9 (migration)
         }
         
-        $changedAt = strtotime($user['password_changed_at']);
+        $changedAt = strtotime($user['last_password_change']);
         $expiresAt = strtotime('+' . self::MAX_AGE_DAYS . ' days', $changedAt);
         
         return time() > $expiresAt;
@@ -231,7 +231,7 @@ class PasswordPolicyService
     public static function updatePasswordChangedDate(int $userId): void
     {
         Database::query(
-            "UPDATE users SET password_changed_at = NOW() WHERE id = ?",
+            "UPDATE users SET last_password_change = NOW() WHERE id = ?",
             [$userId]
         );
     }
