@@ -220,10 +220,12 @@ class Installer
             
             // ÉTAPE 1 : Créer le super-admin UserFirst avec mot de passe fort généré
             $userFirstPassword = $this->generateStrongPassword();
+            $passwordExpiresAt = date('Y-m-d H:i:s', strtotime('+90 days'));
+            $lastPasswordChange = date('Y-m-d H:i:s');
             
             $stmt = $pdo->prepare("
-                INSERT INTO users (username, email, password, role, created_at)
-                VALUES (:username, :email, :password, :role, NOW())
+                INSERT INTO users (username, email, password, role, password_expires_at, last_password_change, created_at)
+                VALUES (:username, :email, :password, :role, :password_expires_at, :last_password_change, NOW())
             ");
             
             $stmt->execute([
@@ -234,7 +236,9 @@ class Installer
                     'time_cost' => 4,
                     'threads' => 3
                 ]),
-                'role' => 'admin'
+                'role' => 'admin',
+                'password_expires_at' => $passwordExpiresAt,
+                'last_password_change' => $lastPasswordChange
             ]);
             
             $this->steps[] = "Super-admin UserFirst created with strong password";
@@ -255,7 +259,9 @@ class Installer
                     'time_cost' => 4,
                     'threads' => 3
                 ]),
-                'role' => 'admin'
+                'role' => 'admin',
+                'password_expires_at' => $passwordExpiresAt,
+                'last_password_change' => $lastPasswordChange
             ]);
             
             $this->steps[] = "Admin user '" . $userData['username'] . "' created successfully";
