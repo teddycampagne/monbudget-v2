@@ -222,14 +222,14 @@ class Installer
             $userFirstPassword = $this->generateStrongPassword();
             
             $stmt = $pdo->prepare("
-                INSERT INTO users (username, email, password, role, created_at)
-                VALUES (:username, :email, :password, 'admin', NOW())
+                INSERT INTO users (username, email, password_hash, created_at)
+                VALUES (:username, :email, :password_hash, NOW())
             ");
             
             $stmt->execute([
                 'username' => 'UserFirst',
                 'email' => 'userfirst@monbudget.local',
-                'password' => password_hash($userFirstPassword, PASSWORD_ARGON2ID, [
+                'password_hash' => password_hash($userFirstPassword, PASSWORD_ARGON2ID, [
                     'memory_cost' => 65536,
                     'time_cost' => 4,
                     'threads' => 3
@@ -249,7 +249,7 @@ class Installer
             $stmt->execute([
                 'username' => $userData['username'],
                 'email' => $userData['email'],
-                'password' => password_hash($userData['password'], PASSWORD_ARGON2ID, [
+                'password_hash' => password_hash($userData['password'], PASSWORD_ARGON2ID, [
                     'memory_cost' => 65536,
                     'time_cost' => 4,
                     'threads' => 3
