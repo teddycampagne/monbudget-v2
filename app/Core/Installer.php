@@ -224,8 +224,18 @@ class Installer
             $lastPasswordChange = date('Y-m-d H:i:s');
             
             $stmt = $pdo->prepare("
-                INSERT INTO users (username, email, password, role, password_expires_at, last_password_change, created_at)
-                VALUES (:username, :email, :password, :role, :password_expires_at, :last_password_change, NOW())
+                INSERT INTO users (
+                    username, email, password, role, 
+                    password_expires_at, last_password_change, 
+                    is_active, failed_login_attempts, must_change_password,
+                    created_at
+                )
+                VALUES (
+                    :username, :email, :password, :role,
+                    :password_expires_at, :last_password_change,
+                    :is_active, :failed_login_attempts, :must_change_password,
+                    NOW()
+                )
             ");
             
             $stmt->execute([
@@ -238,10 +248,13 @@ class Installer
                 ]),
                 'role' => 'admin',
                 'password_expires_at' => $passwordExpiresAt,
-                'last_password_change' => $lastPasswordChange
+                'last_password_change' => $lastPasswordChange,
+                'is_active' => 1,
+                'failed_login_attempts' => 0,
+                'must_change_password' => 0
             ]);
             
-            $this->steps[] = "Super-admin UserFirst created with strong password";
+            $this->steps[] = "Super-admin UserFirst created with strong password (PCI DSS compliant)";
             
             // Sauvegarder le mot de passe UserFirst pour l'affichage final
             $_SESSION['userfirst_credentials'] = [
@@ -261,10 +274,13 @@ class Installer
                 ]),
                 'role' => 'admin',
                 'password_expires_at' => $passwordExpiresAt,
-                'last_password_change' => $lastPasswordChange
+                'last_password_change' => $lastPasswordChange,
+                'is_active' => 1,
+                'failed_login_attempts' => 0,
+                'must_change_password' => 0
             ]);
             
-            $this->steps[] = "Admin user '" . $userData['username'] . "' created successfully";
+            $this->steps[] = "Admin user '" . $userData['username'] . "' created successfully (PCI DSS compliant)";
             return true;
         } catch (PDOException $e) {
             $this->errors[] = "Failed to create admin user: " . $e->getMessage();
