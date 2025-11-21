@@ -166,6 +166,23 @@ if (!function_exists('csrf_field')) {
     }
 }
 
+if (!function_exists('csrf_check')) {
+    /**
+     * Vérifier un token CSRF
+     */
+    function csrf_check(): bool
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        $token = $_POST['csrf_token'] ?? '';
+        $sessionToken = $_SESSION['csrf_token'] ?? '';
+        
+        return !empty($token) && hash_equals($sessionToken, $token);
+    }
+}
+
 if (!function_exists('old')) {
     /**
      * Obtenir une ancienne valeur de formulaire
@@ -204,17 +221,6 @@ if (!function_exists('asset')) {
     function asset(string $path): string
     {
         return '/assets/' . ltrim($path, '/');
-    }
-}
-
-if (!function_exists('url')) {
-    /**
-     * Générer une URL
-     */
-    function url(string $path = ''): string
-    {
-        $baseUrl = defined('BASE_URL') ? BASE_URL : '';
-        return $baseUrl . '/' . ltrim($path, '/');
     }
 }
 

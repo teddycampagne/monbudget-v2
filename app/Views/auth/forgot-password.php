@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mot de passe oublié - MonBudget</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (optionnel) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/assets/css/auth.css">
     <style>
         .forgot-password-container {
@@ -125,17 +129,23 @@
 <body>
     <div class="forgot-password-container">
         <div class="forgot-password-header">
-            <h1>🔑 Mot de passe oublié</h1>
-            <p>Entrez votre adresse email pour recevoir un lien de réinitialisation</p>
+    		<h1>🔑 Mot de passe oublié</h1>
+    		<p>Entrez votre adresse email pour recevoir un lien de réinitialisation</p>
         </div>
 
-        <?php if (isset($message)): ?>
-            <div class="alert alert-<?= $message_type ?? 'info' ?>">
-                <?= htmlspecialchars($message) ?>
-            </div>
+        <!-- Affichage des messages flash -->
+        <?php if (isset($_SESSION['flash'])): ?>
+            <?php foreach ($_SESSION['flash'] as $type => $message): ?>
+                <div class="alert alert-<?= $type === 'error' ? 'danger' : $type ?> alert-dismissible fade show" role="alert" style="margin-bottom: 20px;">
+                    <?= htmlspecialchars($message) ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <?php endforeach; ?>
+            <?php unset($_SESSION['flash']); ?>
         <?php endif; ?>
 
-        <form id="forgotPasswordForm" method="POST" action="/password/forgot">
+        <form id="forgotPasswordForm" method="POST" action="<?= url('forgot-password') ?>">
+            <?= csrf_field() ?>
             <div class="form-group">
                 <label for="email">Adresse email</label>
                 <input 
@@ -167,7 +177,7 @@
         </div>
 
         <div class="back-to-login">
-            <a href="/login">← Retour à la connexion</a>
+            <a href="<?= url('login') ?>">← Retour à la connexion</a>
         </div>
     </div>
 
@@ -175,7 +185,8 @@
     <div id="adminRequestModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
         <div style="max-width: 500px; margin: 100px auto; background: white; padding: 30px; border-radius: 10px;">
             <h2>Demande de réinitialisation admin</h2>
-            <form method="POST" action="/password/admin-request">
+            <form method="POST" action="<?= url('admin-password-request') ?>">
+                <?= csrf_field() ?>
                 <div class="form-group">
                     <label for="admin_email">Votre email</label>
                     <input type="email" id="admin_email" name="email" required>
@@ -208,4 +219,6 @@
         });
     </script>
 </body>
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </html>

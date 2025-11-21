@@ -1,12 +1,31 @@
 <?php include __DIR__ . '/../layouts/header.php'; ?>
 
 <div class="container-fluid py-4">
-    <!-- En-tête Administration -->
+    <!-- En-tête Administration avec badge demandes admin -->
+    <?php
+    // Compter les demandes d'aide admin non traitées
+    try {
+        $pdo = MonBudget\Core\Database::getConnection();
+        $stmt = $pdo->query("SELECT COUNT(*) FROM admin_password_requests WHERE status = 'pending' OR status IS NULL OR status = ''");
+        $pendingAdminRequests = (int)$stmt->fetchColumn();
+    } catch (\Throwable $e) {
+        $pendingAdminRequests = 0;
+    }
+    ?>
     <div class="row mb-4">
         <div class="col-12">
             <h2>
                 <i class="bi bi-shield-lock text-danger"></i> 
                 <?= $_SESSION['user']['username'] === 'UserFirst' ? 'Administration Super-Admin' : 'Administration' ?>
+                <?php if ($pendingAdminRequests > 0): ?>
+                    <span class="badge bg-danger ms-2" title="Demandes d'aide en attente">
+                        <a href="<?= url('admin/users/reset-passwords') ?>" class="text-white text-decoration-none">
+                            <i class="bi bi-exclamation-circle"></i> <?= $pendingAdminRequests ?> demande<?= $pendingAdminRequests > 1 ? 's' : '' ?> d'aide
+                        </a>
+                        <br>
+                        <a href="<?= url('admin/admin-requests') ?>" class="text-white-50 text-decoration-underline small ms-1">Voir toutes les demandes</a>
+                    </span>
+                <?php endif; ?>
             </h2>
             <p class="text-muted mb-0">
                 <i class="bi bi-person-badge"></i> Connecté en tant que : <strong><?= htmlspecialchars($user['username']) ?></strong>

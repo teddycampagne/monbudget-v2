@@ -37,7 +37,7 @@ class Router
      * @param string|null $name Nom optionnel de la route pour génération d'URL
      * @return self Retourne l'instance pour chaînage
      */
-    public function get(string $path, string|array $handler, ?string $name = null): self
+    public function get(string $path, string|array|callable $handler, ?string $name = null): self
     {
         return $this->addRoute('GET', $path, $handler, $name);
     }
@@ -50,7 +50,7 @@ class Router
      * @param string|null $name Nom optionnel de la route
      * @return self Retourne l'instance pour chaînage
      */
-    public function post(string $path, string|array $handler, ?string $name = null): self
+    public function post(string $path, string|array|callable $handler, ?string $name = null): self
     {
         return $this->addRoute('POST', $path, $handler, $name);
     }
@@ -63,7 +63,7 @@ class Router
      * @param string|null $name Nom optionnel de la route
      * @return self Retourne l'instance pour chaînage
      */
-    public function put(string $path, string|array $handler, ?string $name = null): self
+    public function put(string $path, string|array|callable $handler, ?string $name = null): self
     {
         return $this->addRoute('PUT', $path, $handler, $name);
     }
@@ -76,7 +76,7 @@ class Router
      * @param string|null $name Nom optionnel de la route
      * @return self Retourne l'instance pour chaînage
      */
-    public function delete(string $path, string|array $handler, ?string $name = null): self
+    public function delete(string $path, string|array|callable $handler, ?string $name = null): self
     {
         return $this->addRoute('DELETE', $path, $handler, $name);
     }
@@ -89,7 +89,7 @@ class Router
      * @param string|null $name Nom optionnel de la route
      * @return self Retourne l'instance pour chaînage
      */
-    public function any(string $path, string|array $handler, ?string $name = null): self
+    public function any(string $path, string|array|callable $handler, ?string $name = null): self
     {
         return $this->addRoute('ANY', $path, $handler, $name);
     }
@@ -97,7 +97,7 @@ class Router
     /**
      * Ajouter une route au registre
      */
-    private function addRoute(string $method, string $path, string|array $handler, ?string $name = null): self
+    private function addRoute(string $method, string $path, string|array|callable $handler, ?string $name = null): self
     {
         $route = [
             'method' => $method,
@@ -182,7 +182,7 @@ class Router
     /**
      * Appeler le handler de la route
      */
-    private function callHandler(string|array $handler, array $params = []): void
+    private function callHandler(string|array|callable $handler, array $params = []): void
     {
         if (is_array($handler)) {
             [$controller, $method] = $handler;

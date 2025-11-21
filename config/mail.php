@@ -7,16 +7,16 @@
  */
 
 return [
-    // Driver (smtp, sendmail, mail)
-    'driver' => getenv('MAIL_DRIVER') ?: 'smtp',
+    // Driver (smtp, sendmail, mail, log)
+    'driver' => 'log', // Mode développement - écrit dans logs/mail.log
     
     // Configuration SMTP
     'smtp' => [
-        'host' => getenv('MAIL_HOST') ?: 'localhost',
-        'port' => getenv('MAIL_PORT') ?: 587,
-        'username' => getenv('MAIL_USERNAME') ?: '',
-        'password' => getenv('MAIL_PASSWORD') ?: '',
-        'encryption' => getenv('MAIL_ENCRYPTION') ?: 'tls', // tls, ssl, null
+        'host' => 'smtp.ethereal.email',
+        'port' => 587,
+        'username' => 'your-ethereal-username',
+        'password' => 'your-ethereal-password',
+        'encryption' => 'tls',
         'auth' => true,
         'timeout' => 30,
     ],

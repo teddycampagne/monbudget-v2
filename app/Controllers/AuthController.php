@@ -6,6 +6,7 @@ use MonBudget\Core\Database;
 use MonBudget\Services\RecurrenceService;
 use MonBudget\Services\PasswordPolicyService;
 use MonBudget\Services\AuditLogService;
+use MonBudget\Controllers\PasswordResetController;
 
 /**
  * Contrôleur d'authentification
@@ -307,44 +308,89 @@ class AuthController extends BaseController
     /**
      * Traiter la demande de réinitialisation de mot de passe
      * 
-     * Vérifie l'existence de l'utilisateur et génère un token de réinitialisation.
-     * Utilise un message générique pour éviter l'énumération d'adresses email.
-     * Note : L'envoi d'email et le stockage du token sont à implémenter.
+     * Utilise PasswordResetController pour gérer la réinitialisation
      * 
      * @return void
-     * @todo Implémenter la table password_resets et l'envoi d'email
      */
     public function forgotPassword(): void
     {
         if (!$this->verifyCsrf()) {
             flash('error', 'Token CSRF invalide');
             $this->redirect('forgot-password');
+            return;
         }
         
         $email = $_POST['email'] ?? '';
         
-        if (empty($email)) {
-            flash('error', 'Email requis');
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('error', 'Adresse email invalide');
+            $this->redirect('forgot-password');
+            return;
+        }
+        
+        try {
+            // Utiliser le PasswordResetController
+            $passwordResetController = new PasswordResetController();
+            $result = $passwordResetController->requestReset($email);
+            
+            if ($result['success']) {
+                flash('success', $result['message']);
+                $this->redirect('login');
+            } else {
+                // Si fallback admin proposé
+                if (isset($result['fallback']) && $result['fallback'] === 'admin') {
+                    flash('warning', $result['message']);
+                    flash('info', 'Vous pouvez demander l\'aide d\'un administrateur en bas de page.');
+                } else {
+                    flash('error', $result['message']);
+                }
+                $this->redirect('forgot-password');
+            }
+        } catch (\Exception $e) {
+            error_log("AuthController::forgotPassword - Erreur: " . $e->getMessage());
+            flash('error', 'Une erreur est survenue. Veuillez réessayer plus tard.');
             $this->redirect('forgot-password');
         }
-        
-        // Vérifier si l'utilisateur existe
-        $user = Database::selectOne(
-            "SELECT id, email FROM users WHERE email = ? LIMIT 1",
-            [$email]
-        );
-        
-        if ($user) {
-            // Générer un token
-            $token = bin2hex(random_bytes(32));
-            $expires = date('Y-m-d H:i:s', time() + 3600); // 1 heure
-            
-            // Stocker le token (à implémenter avec une table password_resets)
-            // Pour l'instant, message de succès générique
+    }
+    
+    /**
+     * Traiter une demande de réinitialisation via admin (fallback)
+     * 
+     * @return void
+     */
+    public function adminPasswordRequest(): void
+    {
+        if (!$this->verifyCsrf()) {
+            flash('error', 'Token CSRF invalide');
+            $this->redirect('forgot-password');
+            return;
         }
         
-        // Message générique pour éviter l'énumération d'emails
-        flash('success', 'Si cet email existe, vous recevrez un lien de réinitialisation');
-        $this->redirect('login');
+        $email = $_POST['email'] ?? '';
+        $reason = $_POST['reason'] ?? '';
+        
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            flash('error', 'Adresse email invalide');
+            $this->redirect('forgot-password');
+            return;
+        }
+        
+        try {
+            $passwordResetController = new PasswordResetController();
+            $result = $passwordResetController->requestAdminReset($email, $reason);
+            
+            if ($result['success']) {
+                flash('success', $result['message']);
+            } else {
+                flash('error', $result['message']);
+            }
+            
+            $this->redirect('forgot-password');
+            
+        } catch (\Exception $e) {
+            error_log("AuthController::adminPasswordRequest - Erreur: " . $e->getMessage());
+            flash('error', 'Une erreur est survenue. Veuillez réessayer plus tard.');
+            $this->redirect('forgot-password');
+        }
     }
 }

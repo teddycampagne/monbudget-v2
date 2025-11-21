@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace MonBudget\Services;
 
 use Exception;
 
@@ -82,6 +82,11 @@ class MailService
      */
     public function send($to, $subject, $body, $options = [])
     {
+        // Mode développement - log dans fichier
+        if ($this->config['driver'] === 'log') {
+            return $this->sendToLog($to, $subject, $body, $options);
+        }
+        
         if (!$this->mailer) {
             error_log("MailService: PHPMailer non disponible");
             return false;
@@ -217,27 +222,62 @@ class MailService
     }
     
     /**
-     * Charge un template depuis la base de données
+     * Envoie un email en utilisant un template PHP
+     * 
+     * @param string $templateName Nom du template (sans .php)
+     * @param array $data Données à passer au template
+     * @param string $to Destinataire
+     * @param array $options Options supplémentaires
+     * @return bool
      */
-    private function loadTemplate($name)
+    public function sendTemplateFromFile($templateName, $data, $to, $options = [])
     {
-        if (!$this->db) {
+        try {
+            // Charger le template
+            $template = $this->loadTemplateFromFile($templateName);
+            if (!$template) {
+                error_log("MailService: Template '$templateName' introuvable");
+                return false;
+            }
+            
+            // Extraire les variables pour le template
+            extract($data);
+            
+            // Inclure le template pour obtenir le sujet et le message
+            $result = include(__DIR__ . '/../Emails/' . $templateName . '.php');
+            
+            if (!is_array($result) || !isset($result['subject']) || !isset($result['message'])) {
+                error_log("MailService: Template '$templateName' mal formé");
+                return false;
+            }
+            
+            $subject = $result['subject'];
+            $body = $result['message'];
+            
+            // HTML par défaut pour les templates
+            $options['html'] = true;
+            
+            // Envoyer
+            return $this->send($to, $subject, $body, $options);
+            
+        } catch (Exception $e) {
+            error_log("MailService: Erreur sendTemplateFromFile '$templateName' - " . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Charge un template PHP depuis le dossier Emails
+     */
+    private function loadTemplateFromFile($name)
+    {
+        $filePath = __DIR__ . '/../Emails/' . $name . '.php';
+        
+        if (!file_exists($filePath)) {
             return null;
         }
         
-        try {
-            $stmt = $this->db->prepare("
-                SELECT subject, body_html, body_text 
-                FROM email_templates 
-                WHERE name = ? AND is_active = 1
-            ");
-            $stmt->execute([$name]);
-            return $stmt->fetch(\PDO::FETCH_ASSOC);
-            
-        } catch (Exception $e) {
-            error_log("MailService: Erreur chargement template - " . $e->getMessage());
-            return null;
-        }
+        return true; // Le template existe
     }
     
     /**
@@ -318,6 +358,41 @@ class MailService
     }
     
     /**
+     * Envoie un email en utilisant la fonction mail() de PHP (pour développement)
+     * 
+     * @param string $to Destinataire
+     * @param string $subject Sujet
+     * @param string $body Corps du message
+     * @param array $options Options
+     * @return bool
+     */
+    public function sendWithMail($to, $subject, $body, $options = [])
+    {
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-type: text/html; charset=UTF-8',
+            'From: ' . $this->config['from']['name'] . ' <' . $this->config['from']['address'] . '>',
+            'Reply-To: ' . $this->config['from']['address'],
+            'X-Mailer: MonBudget v2.4.0'
+        ];
+        
+        $headersString = implode("\r\n", $headers);
+        
+        // Log de l'envoi
+        error_log("MailService: Envoi email via mail() - To: $to, Subject: $subject");
+        
+        $result = mail($to, $subject, $body, $headersString);
+        
+        if ($result) {
+            $this->logEmail($to, $subject, 'sent');
+        } else {
+            $this->logEmail($to, $subject, 'failed', 'mail() function failed');
+        }
+        
+        return $result;
+    }
+    
+    /**
      * Envoie un email de test
      * 
      * @param string $to Destinataire
@@ -336,6 +411,46 @@ class MailService
                  </p>';
         
         return $this->send($to, $subject, $body, ['html' => true]);
+    }
+    
+    /**
+     * Envoie un email en mode log (pour développement)
+     * 
+     * @param string $to Destinataire
+     * @param string $subject Sujet
+     * @param string $body Corps du message
+     * @param array $options Options
+     * @return bool
+     */
+    private function sendToLog($to, $subject, $body, $options = [])
+    {
+        $logDir = __DIR__ . '/../../storage/logs';
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0755, true);
+        }
+        
+        $logFile = $logDir . '/mail.log';
+        $timestamp = date('Y-m-d H:i:s');
+        
+        $logEntry = "=== EMAIL SENT ===\n";
+        $logEntry .= "Date: $timestamp\n";
+        $logEntry .= "To: $to\n";
+        $logEntry .= "Subject: $subject\n";
+        $logEntry .= "From: {$this->config['from']['name']} <{$this->config['from']['address']}>\n";
+        $logEntry .= "Options: " . json_encode($options) . "\n";
+        $logEntry .= "Body:\n$body\n";
+        $logEntry .= "=== END EMAIL ===\n\n";
+        
+        $result = file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX) !== false;
+        
+        if ($result) {
+            // Ne pas logger dans la DB en mode développement
+            error_log("MailService: Email loggé dans $logFile");
+        } else {
+            error_log("MailService: Impossible d'écrire dans le fichier log");
+        }
+        
+        return $result;
     }
     
     /**

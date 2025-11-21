@@ -95,6 +95,7 @@ $router->get('/register', [AuthController::class, 'showRegister']);
 $router->post('/register', [AuthController::class, 'register']);
 $router->get('/forgot-password', [AuthController::class, 'showForgotPassword']);
 $router->post('/forgot-password', [AuthController::class, 'forgotPassword']);
+$router->post('/admin-password-request', [AuthController::class, 'adminPasswordRequest']);
 
 // Routes principales
 $router->get('/', [HomeController::class, 'index']);
@@ -337,14 +338,42 @@ $router->get('/documentation/{document}', [DocumentationController::class, 'show
 $router->get('/documentation/{document}/pdf', [DocumentationController::class, 'downloadPdf']);
 $router->post('/documentation/feedback', [DocumentationController::class, 'feedback']);
 
+// === Route gestion demandes d'aide admin (tickets) ===
+$router->post('/admin/admin-requests/{id}/close', function ($id) {
+    if (!csrf_check()) {
+        http_response_code(403);
+        exit('CSRF invalide');
+    }
+    $pdo = MonBudget\Core\Database::getConnection();
+    $stmt = $pdo->prepare('UPDATE admin_password_requests SET status = :status, processed_at = NOW() WHERE id = :id');
+    $stmt->execute([
+        'status' => 'approved',
+        'id' => $id
+    ]);
+    header('Location: ' . url('admin/admin-requests'));
+    exit;
+});
+$router->get('/admin/admin-requests', function () {
+    require __DIR__ . '/app/Views/admin/admin_requests.php';
+});
+
 // Dispatcher la requête
+// Debug temporaire : afficher l'URI vue par le Router
+if (isset($_GET['debug_router_uri'])) {
+    $reflection = new ReflectionClass($router);
+    $method = $reflection->getMethod('getUri');
+    $method->setAccessible(true);
+    $uri = $method->invoke($router);
+    echo '<div style="background:#222;color:#fff;padding:10px;">Router URI: <b>' . htmlspecialchars($uri) . '</b></div>';
+}
+
 try {
     $router->dispatch();
 } catch (Exception $e) {
     // Gestion des erreurs
     http_response_code(500);
     
-    if (Environment::isDevelopment()) {
+    if (class_exists('MonBudget\\Core\\Environment') && MonBudget\Core\Environment::isDevelopment()) {
         echo '<h1>Erreur</h1>';
         echo '<p>' . $e->getMessage() . '</p>';
         echo '<pre>' . $e->getTraceAsString() . '</pre>';

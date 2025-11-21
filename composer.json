@@ -19,6 +19,7 @@
         "erusev/parsedown": "^1.7",
         "firebase/php-jwt": "^6.8",
         "monolog/monolog": "^3.5",
+        "phpmailer/phpmailer": "^7.0",
         "respect/validation": "^2.2",
         "tecnickcom/tcpdf": "^6.10",
         "twig/twig": "^3.7",

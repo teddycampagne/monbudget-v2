@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Controllers;
+namespace MonBudget\Controllers;
 
-use App\Core\Database;
-use App\Services\MailService;
+use MonBudget\Core\Database;
+use MonBudget\Services\MailService;
 use PDO;
 use Exception;
 
@@ -23,11 +23,13 @@ class PasswordResetController
     
     const TOKEN_EXPIRATION_HOURS = 1;
     const TOKEN_LENGTH = 64;
-    const MAX_ATTEMPTS_PER_DAY = 5; // Max 5 demandes par jour par IP
+    // Nombre max de demandes par jour par IP (configurable via .env)
+    const DEFAULT_MAX_ATTEMPTS_PER_DAY = 5;
     
     public function __construct()
     {
-        $this->db = Database::getInstance()->getConnection();
+        // Obtenir la connexion PDO via Database
+        $this->db = Database::getConnection();
         $this->mailService = new MailService($this->db);
     }
     
@@ -87,14 +89,14 @@ class PasswordResetController
             $resetUrl = $this->buildResetUrl($token);
             
             // Envoyer l'email
-            $emailSent = $this->mailService->sendTemplate(
-                $user['email'],
-                'password_reset',
+            $emailSent = $this->mailService->sendTemplateFromFile(
+                'password_reset_request',
                 [
-                    'username' => $user['username'],
-                    'reset_url' => $resetUrl,
-                    'year' => date('Y')
-                ]
+                    'user' => $user,
+                    'resetUrl' => $resetUrl,
+                    'expiresAt' => date('d/m/Y à H:i', strtotime($expiresAt))
+                ],
+                $user['email']
             );
             
             if (!$emailSent) {
@@ -308,17 +310,17 @@ class PasswordResetController
             
             // Envoyer une notification à tous les admins
             foreach ($admins as $admin) {
-                $this->mailService->sendTemplate(
-                    $admin['email'],
-                    'admin_password_request',
+                $this->mailService->sendTemplateFromFile(
+                    'admin_help_request',
                     [
-                        'username' => $user['username'],
-                        'user_email' => $email,
-                        'request_date' => date('d/m/Y à H:i'),
-                        'reason' => $reason ?: 'Non spécifiée',
-                        'admin_url' => $this->buildAdminUrl($requestId),
-                        'year' => date('Y')
-                    ]
+                        'user' => $user,
+                        'request' => [
+                            'subject' => 'Demande de réinitialisation de mot de passe',
+                            'message' => $reason ?: 'Demande de réinitialisation de mot de passe',
+                            'created_at' => date('d/m/Y à H:i')
+                        ]
+                    ],
+                    $admin['email']
                 );
             }
             
@@ -411,11 +413,12 @@ class PasswordResetController
                 // Envoyer le nouveau mot de passe par email
                 $user = $this->getUserById($request['user_id']);
                 
-                $this->mailService->send(
-                    $user['email'],
-                    'Nouveau mot de passe temporaire - MonBudget',
-                    $this->buildPasswordResetEmail($user['username'], $tempPassword),
-                    ['html' => true]
+                $this->mailService->sendTemplateFromFile(
+                    'password_reset_success',
+                    [
+                        'user' => $user
+                    ],
+                    $user['email']
                 );
                 
                 // Marquer l'envoi
@@ -557,7 +560,12 @@ class PasswordResetController
     private function checkRateLimiting()
     {
         $ip = $this->getIpAddress();
-        
+        // Lire la valeur depuis .env (PASSWORD_RESET_MAX_ATTEMPTS)
+        $maxAttempts = env('PASSWORD_RESET_MAX_ATTEMPTS', self::DEFAULT_MAX_ATTEMPTS_PER_DAY);
+        if ($maxAttempts === '-1' || $maxAttempts === -1) {
+            return true; // Illimité pour le dev
+        }
+        $maxAttempts = (int)$maxAttempts;
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as count
             FROM password_resets
@@ -566,8 +574,7 @@ class PasswordResetController
         ");
         $stmt->execute([$ip]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        return ($result['count'] < self::MAX_ATTEMPTS_PER_DAY);
+        return ($result['count'] < $maxAttempts);
     }
     
     /**
