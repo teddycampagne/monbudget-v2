@@ -179,8 +179,16 @@ class AuthController extends BaseController
     {
         // Log déconnexion avant destruction session (PCI DSS 10.2.3)
         if (isset($_SESSION['user_id'])) {
-            $audit = new AuditLogService();
-            $audit->logLogout($_SESSION['user_id']);
+            // Vérifier que l'utilisateur existe encore en base avant de logger
+            $userExists = Database::selectOne(
+                "SELECT id FROM users WHERE id = ?",
+                [$_SESSION['user_id']]
+            );
+
+            if ($userExists) {
+                $audit = new AuditLogService();
+                $audit->logLogout($_SESSION['user_id']);
+            }
         }
         
         // Nettoyer la session
