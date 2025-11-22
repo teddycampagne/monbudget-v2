@@ -328,7 +328,7 @@ class BudgetAlertService
 
         // Vérifier si l'alerte dépassement est activée
         $settings = getUserNotificationSettings($budget['user_id']);
-        if (!$settings || !$settings['budget_exceeded']) {
+        if (!$settings || !$settings['budget_exceeded'] || $settings['budget_exceeded_method'] === 'none') {
             return null;
         }
 
@@ -447,8 +447,11 @@ class BudgetAlertService
         $settings = getUserNotificationSettings($budget['user_id']);
         $sent = false;
 
+        // Déterminer les méthodes de notification pour les alertes de dépassement
+        $notificationMethod = $settings['budget_exceeded_method'] ?? 'both';
+
         // Email
-        if ($settings['notify_email']) {
+        if ($notificationMethod === 'email_only' || $notificationMethod === 'both') {
             $this->mailService->sendTemplateFromFile(
                 'budget_alert_exceeded',
                 [
@@ -463,7 +466,7 @@ class BudgetAlertService
         }
 
         // Notification web
-        if ($settings['notify_web']) {
+        if ($notificationMethod === 'web_only' || $notificationMethod === 'both') {
             $this->notificationService->setUserId($budget['user_id']);
             $this->notificationService->createBudgetAlertNotification(
                 $budget['id'],

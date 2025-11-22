@@ -16,6 +16,7 @@ $defaults = [
     'budget_threshold_80' => 1,
     'budget_threshold_90' => 1,
     'budget_exceeded' => 1,
+    'budget_exceeded_method' => 'both',
     'weekly_summary' => 0,
     'monthly_summary' => 1,
     'notify_email' => 1,
@@ -130,6 +131,54 @@ $settings = array_merge($defaults, $settings ?? []);
                                     </label>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Configuration des méthodes de notification pour dépassement -->
+                        <div class="mt-3" id="budget_exceeded_method_section" style="display: <?= $settings['budget_exceeded'] ? 'block' : 'none' ?>;">
+                            <label class="form-label fw-bold">Méthode de notification pour les dépassements :</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio"
+                                               id="budget_exceeded_method_none" name="budget_exceeded_method" value="none"
+                                               <?= ($settings['budget_exceeded_method'] ?? 'both') === 'none' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="budget_exceeded_method_none">
+                                            <i class="bi bi-x-circle text-muted"></i> Aucune
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio"
+                                               id="budget_exceeded_method_web_only" name="budget_exceeded_method" value="web_only"
+                                               <?= ($settings['budget_exceeded_method'] ?? 'both') === 'web_only' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="budget_exceeded_method_web_only">
+                                            <i class="bi bi-bell text-primary"></i> Notifications in-app seules
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio"
+                                               id="budget_exceeded_method_email_only" name="budget_exceeded_method" value="email_only"
+                                               <?= ($settings['budget_exceeded_method'] ?? 'both') === 'email_only' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="budget_exceeded_method_email_only">
+                                            <i class="bi bi-envelope text-warning"></i> Mails seuls
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio"
+                                               id="budget_exceeded_method_both" name="budget_exceeded_method" value="both"
+                                               <?= ($settings['budget_exceeded_method'] ?? 'both') === 'both' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="budget_exceeded_method_both">
+                                            <i class="bi bi-bell-fill text-success"></i> Mail + notification in-app
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted">Choisissez comment vous souhaitez être notifié en cas de dépassement de budget.</small>
                         </div>
                     </div>
                 </div>
@@ -250,9 +299,24 @@ document.getElementById('budget_alert_enabled').addEventListener('change', funct
     });
 });
 
+// Gérer l'affichage de la section des méthodes de notification pour dépassement
+document.getElementById('budget_exceeded').addEventListener('change', function() {
+    const methodSection = document.getElementById('budget_exceeded_method_section');
+    const methodRadios = document.querySelectorAll('input[name="budget_exceeded_method"]');
+
+    if (this.checked) {
+        methodSection.style.display = 'block';
+        methodRadios.forEach(radio => radio.disabled = false);
+    } else {
+        methodSection.style.display = 'none';
+        methodRadios.forEach(radio => radio.disabled = true);
+    }
+});
+
 // État initial
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('budget_alert_enabled').dispatchEvent(new Event('change'));
+    document.getElementById('budget_exceeded').dispatchEvent(new Event('change'));
 });
 </script>
 

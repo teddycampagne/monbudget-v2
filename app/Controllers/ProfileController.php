@@ -277,6 +277,7 @@ class ProfileController extends BaseController
             'budget_threshold_80' => isset($_POST['budget_threshold_80']) ? 1 : 0,
             'budget_threshold_90' => isset($_POST['budget_threshold_90']) ? 1 : 0,
             'budget_exceeded' => isset($_POST['budget_exceeded']) ? 1 : 0,
+            'budget_exceeded_method' => $_POST['budget_exceeded_method'] ?? 'both',
             'weekly_summary' => isset($_POST['weekly_summary']) ? 1 : 0,
             'monthly_summary' => isset($_POST['monthly_summary']) ? 1 : 0,
             'notify_email' => isset($_POST['notify_email']) ? 1 : 0,
@@ -285,6 +286,11 @@ class ProfileController extends BaseController
         ];
         
         // Validation
+        $validMethods = ['none', 'web_only', 'email_only', 'both'];
+        if (!in_array($data['budget_exceeded_method'], $validMethods)) {
+            $data['budget_exceeded_method'] = 'both'; // Valeur par défaut
+        }
+        
         if ($data['max_emails_per_day'] < 1 || $data['max_emails_per_day'] > 20) {
             flash('error', 'Le nombre maximum d\'emails par jour doit être entre 1 et 20');
             $this->redirect('profile/notifications');
@@ -304,6 +310,7 @@ class ProfileController extends BaseController
                     budget_threshold_80 = ?,
                     budget_threshold_90 = ?,
                     budget_exceeded = ?,
+                    budget_exceeded_method = ?,
                     weekly_summary = ?,
                     monthly_summary = ?,
                     notify_email = ?,
@@ -315,6 +322,7 @@ class ProfileController extends BaseController
                     $data['budget_threshold_80'],
                     $data['budget_threshold_90'],
                     $data['budget_exceeded'],
+                    $data['budget_exceeded_method'],
                     $data['weekly_summary'],
                     $data['monthly_summary'],
                     $data['notify_email'],
@@ -328,15 +336,16 @@ class ProfileController extends BaseController
             Database::insert(
                 "INSERT INTO notifications_settings 
                     (user_id, budget_alert_enabled, budget_threshold_80, budget_threshold_90, 
-                     budget_exceeded, weekly_summary, monthly_summary, notify_email, 
-                     notify_web, max_emails_per_day) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     budget_exceeded, budget_exceeded_method, weekly_summary, monthly_summary, 
+                     notify_email, notify_web, max_emails_per_day) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     $userId,
                     $data['budget_alert_enabled'],
                     $data['budget_threshold_80'],
                     $data['budget_threshold_90'],
                     $data['budget_exceeded'],
+                    $data['budget_exceeded_method'],
                     $data['weekly_summary'],
                     $data['monthly_summary'],
                     $data['notify_email'],
