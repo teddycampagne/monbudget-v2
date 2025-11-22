@@ -185,6 +185,126 @@
                 </div>
             </div>
 
+            <!-- Personnalisation -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-palette"></i>
+                        Personnalisation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Personnalisez votre expérience utilisateur avec les paramètres suivants.
+                    </p>
+
+                    <!-- Notifications de Budget -->
+                    <div class="mb-4">
+                        <h6 class="mb-3">
+                            <i class="bi bi-bell"></i>
+                            Notifications de Budget
+                        </h6>
+
+                        <form method="POST" action="<?= url('profile/notifications') ?>" id="notificationsForm">
+                            <?= csrf_field() ?>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="notification_type" class="form-label">
+                                        <i class="bi bi-bell-fill"></i> Type de notification
+                                    </label>
+                                    <select name="notification_type" id="notification_type" class="form-control" required>
+                                        <?php foreach ($notification_types as $value => $label): ?>
+                                            <option value="<?= $value ?>" <?= $notification_preference === $value ? 'selected' : '' ?>>
+                                                <?= htmlspecialchars($label) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Choisissez comment recevoir les notifications de dépassement de budget.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="warning_threshold" class="form-label">
+                                        <i class="bi bi-exclamation-triangle text-warning"></i>
+                                        Seuil d'avertissement (%)
+                                    </label>
+                                    <input type="number" name="warning_threshold" id="warning_threshold"
+                                           class="form-control" min="0" max="99" step="1"
+                                           value="<?= $notification_thresholds['warning'] ?>" required>
+                                    <small class="form-text text-muted">
+                                        Pourcentage d'utilisation déclenchant un avertissement.
+                                    </small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="alert_threshold" class="form-label">
+                                        <i class="bi bi-exclamation-circle text-danger"></i>
+                                        Seuil d'alerte (%)
+                                    </label>
+                                    <input type="number" name="alert_threshold" id="alert_threshold"
+                                           class="form-control" min="1" max="99" step="1"
+                                           value="<?= $notification_thresholds['alert'] ?>" required>
+                                    <small class="form-text text-muted">
+                                        Pourcentage d'utilisation déclenchant une alerte.
+                                    </small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="critical_threshold" class="form-label">
+                                        <i class="bi bi-times-circle text-dark"></i>
+                                        Seuil critique (%)
+                                    </label>
+                                    <input type="number" name="critical_threshold" id="critical_threshold"
+                                           class="form-control" min="1" max="100" step="1"
+                                           value="<?= $notification_thresholds['critical'] ?>" required>
+                                    <small class="form-text text-muted">
+                                        Pourcentage d'utilisation déclenchant une alerte critique.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-circle"></i>
+                                    Enregistrer les préférences
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Placeholder pour futures fonctionnalités -->
+                    <div class="border-top pt-3">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light">
+                                    <i class="bi bi-palette fs-3 text-primary"></i>
+                                    <h6 class="mt-2">Thèmes</h6>
+                                    <p class="text-muted small mb-0">Bientôt disponible</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light">
+                                    <i class="bi bi-calendar-event fs-3 text-info"></i>
+                                    <h6 class="mt-2">Format de Date</h6>
+                                    <p class="text-muted small mb-0">Bientôt disponible</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light">
+                                    <i class="bi bi-cash-coin fs-3 text-success"></i>
+                                    <h6 class="mt-2">Devise</h6>
+                                    <p class="text-muted small mb-0">Bientôt disponible</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Activité -->
             <div class="card mb-4">
                 <div class="card-header bg-info text-white">
@@ -243,5 +363,58 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation des seuils de notification
+    const warningInput = document.getElementById('warning_threshold');
+    const alertInput = document.getElementById('alert_threshold');
+    const criticalInput = document.getElementById('critical_threshold');
+    const notificationsForm = document.getElementById('notificationsForm');
+
+    if (notificationsForm) {
+        function validateThresholds() {
+            const warning = parseFloat(warningInput.value) || 0;
+            const alert = parseFloat(alertInput.value) || 0;
+            const critical = parseFloat(criticalInput.value) || 0;
+
+            let isValid = true;
+
+            // Reset validation states
+            [warningInput, alertInput, criticalInput].forEach(input => {
+                input.classList.remove('is-invalid');
+            });
+
+            // Validate order: warning < alert < critical
+            if (warning >= alert) {
+                warningInput.classList.add('is-invalid');
+                alertInput.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (alert >= critical) {
+                alertInput.classList.add('is-invalid');
+                criticalInput.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Add validation on input change
+        [warningInput, alertInput, criticalInput].forEach(input => {
+            input.addEventListener('input', validateThresholds);
+        });
+
+        // Validate on form submit
+        notificationsForm.addEventListener('submit', function(e) {
+            if (!validateThresholds()) {
+                e.preventDefault();
+                alert('Les seuils doivent être dans l\'ordre croissant : avertissement < alerte < critique');
+            }
+        });
+    }
+});
+</script>
 
 <?php require_once BASE_PATH . '/app/Views/layouts/footer.php'; ?>

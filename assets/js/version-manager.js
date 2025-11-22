@@ -35,7 +35,7 @@ class VersionManager {
     async checkForUpdates() {
         try {
             const baseUrl = window.APP_CONFIG?.baseUrl || '';
-            const response = await fetch(`${baseUrl}/version/check-update`);
+            const response = await fetch(`${baseUrl}/api/version/check-update`);
             const data = await response.json();
             
             if (data.success && data.update_available) {
@@ -236,7 +236,7 @@ class VersionManager {
             formData.append('version', this.updateData.version);
             
             const baseUrl = window.APP_CONFIG?.baseUrl || '';
-            const response = await fetch(`${baseUrl}/version/deploy`, {
+            const response = await fetch(`${baseUrl}/api/version/deploy`, {
                 method: 'POST',
                 body: formData
             });

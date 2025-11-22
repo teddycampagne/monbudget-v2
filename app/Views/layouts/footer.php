@@ -4,7 +4,7 @@
     <footer class="bg-light mt-5 py-4">
         <div class="container text-center text-muted">
             <p class="mb-0">
-                <i class="bi bi-piggy-bank-fill"></i> MonBudget v2.0 - 
+                <i class="bi bi-piggy-bank-fill"></i> MonBudget <?= get_app_version() ?> - 
                 Gestion financière personnelle
             </p>
             <small>&copy; <?= date('Y') ?> - Tous droits réservés</small>

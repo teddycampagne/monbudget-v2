@@ -6,6 +6,7 @@ use MonBudget\Core\Database;
 use MonBudget\Services\RecurrenceService;
 use MonBudget\Services\PasswordPolicyService;
 use MonBudget\Services\AuditLogService;
+use MonBudget\Services\EmailService;
 
 /**
  * Contrôleur d'authentification
@@ -315,12 +316,11 @@ class AuthController extends BaseController
     /**
      * Traiter la demande de réinitialisation de mot de passe
      * 
-     * Vérifie l'existence de l'utilisateur et génère un token de réinitialisation.
+     * Vérifie l'existence de l'utilisateur, génère un token de réinitialisation,
+     * stocke le token et envoie l'email de réinitialisation.
      * Utilise un message générique pour éviter l'énumération d'adresses email.
-     * Note : L'envoi d'email et le stockage du token sont à implémenter.
      * 
      * @return void
-     * @todo Implémenter la table password_resets et l'envoi d'email
      */
     public function forgotPassword(): void
     {
@@ -338,21 +338,246 @@ class AuthController extends BaseController
         
         // Vérifier si l'utilisateur existe
         $user = Database::selectOne(
-            "SELECT id, email FROM users WHERE email = ? LIMIT 1",
+            "SELECT id, username, email FROM users WHERE email = ? LIMIT 1",
             [$email]
         );
         
         if ($user) {
-            // Générer un token
+            // Générer un token sécurisé
             $token = bin2hex(random_bytes(32));
             $expires = date('Y-m-d H:i:s', time() + 3600); // 1 heure
-            
-            // Stocker le token (à implémenter avec une table password_resets)
-            // Pour l'instant, message de succès générique
+
+            // Stocker le token dans la base de données
+            Database::insert(
+                "INSERT INTO password_resets (user_id, token, expires_at) VALUES (?, ?, ?)",
+                [$user['id'], password_hash($token, PASSWORD_DEFAULT), $expires]
+            );
+
+            // Envoyer l'email de réinitialisation
+            $emailService = new EmailService();
+            $emailSent = $emailService->sendPasswordReset(
+                $user['email'],
+                $token,
+                $user['username']
+            );
+
+            if ($emailSent) {
+                // Log succès seulement en mode debug
+                if (config('app.debug', false)) {
+                    error_log("Email de réinitialisation envoyé à: " . $user['email']);
+                }
+            } else {
+                // Log échec seulement en mode debug
+                if (config('app.debug', false)) {
+                    error_log("Échec envoi email de réinitialisation à: " . $user['email']);
+                }
+                // Créer un ticket admin pour signaler l'échec d'envoi
+                $this->createEmailFailureTicket($user['email'], $user['username']);
+            }
         }
         
         // Message générique pour éviter l'énumération d'emails
         flash('success', 'Si cet email existe, vous recevrez un lien de réinitialisation');
         $this->redirect('login');
+    }    /**
+     * Afficher le formulaire de réinitialisation de mot de passe
+     *
+     * @return void
+     */
+    public function showResetPassword(): void
+    {
+        $token = $_GET['token'] ?? '';
+
+        if (empty($token)) {
+            flash('error', 'Token de réinitialisation manquant');
+            $this->redirect('login');
+        }
+
+        // Vérifier si le token existe et n'est pas expiré
+        $reset = Database::selectOne(
+            "SELECT pr.*, u.username FROM password_resets pr
+             JOIN users u ON pr.user_id = u.id
+             WHERE pr.token IS NOT NULL AND pr.used_at IS NULL AND pr.expires_at > NOW()
+             ORDER BY pr.created_at DESC LIMIT 1",
+            []
+        );
+
+        if (!$reset) {
+            flash('error', 'Token de réinitialisation invalide ou expiré');
+            $this->redirect('login');
+        }
+
+        // Vérifier le token
+        if (!password_verify($token, $reset['token'])) {
+            flash('error', 'Token de réinitialisation invalide');
+            $this->redirect('login');
+        }
+
+        $this->view('auth.reset-password', [
+            'token' => $token,
+            'username' => $reset['username']
+        ]);
+    }
+
+    /**
+     * Traiter la réinitialisation de mot de passe
+     *
+     * @return void
+     */
+    public function resetPassword(): void
+    {
+        if (!$this->verifyCsrf()) {
+            flash('error', 'Token CSRF invalide');
+            $this->redirect('login');
+        }
+
+        $token = $_POST['token'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $passwordConfirm = $_POST['password_confirm'] ?? '';
+
+        if (empty($token) || empty($password) || empty($passwordConfirm)) {
+            flash('error', 'Tous les champs sont requis');
+            $this->redirect('reset-password?token=' . urlencode($token));
+        }
+
+        if ($password !== $passwordConfirm) {
+            flash('error', 'Les mots de passe ne correspondent pas');
+            $this->redirect('reset-password?token=' . urlencode($token));
+        }
+
+        // Vérifier la politique de mot de passe
+        $passwordPolicy = new PasswordPolicyService();
+        $policyCheck = $passwordPolicy->validatePassword($password);
+
+        if (!$policyCheck['valid']) {
+            flash('error', 'Mot de passe invalide: ' . implode(', ', $policyCheck['errors']));
+            $this->redirect('reset-password?token=' . urlencode($token));
+        }
+
+        // Vérifier le token et récupérer l'utilisateur
+        $reset = Database::selectOne(
+            "SELECT pr.*, u.username FROM password_resets pr
+             JOIN users u ON pr.user_id = u.id
+             WHERE pr.token IS NOT NULL AND pr.used_at IS NULL AND pr.expires_at > NOW()
+             ORDER BY pr.created_at DESC LIMIT 1",
+            []
+        );
+
+        if (!$reset || !password_verify($token, $reset['token'])) {
+            flash('error', 'Token de réinitialisation invalide ou expiré');
+            $this->redirect('login');
+        }
+
+        // Hasher le nouveau mot de passe
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Mettre à jour le mot de passe
+        Database::update(
+            "UPDATE users SET password = ?, password_changed_at = NOW() WHERE id = ?",
+            [$hashedPassword, $reset['user_id']]
+        );
+
+        // Marquer le token comme utilisé
+        Database::update(
+            "UPDATE password_resets SET used_at = NOW() WHERE id = ?",
+            [$reset['id']]
+        );
+
+        // Nettoyer les anciens tokens expirés
+        Database::execute(
+            "DELETE FROM password_resets WHERE expires_at < NOW() OR used_at IS NOT NULL"
+        );
+
+        // Logger l'action
+        $audit = new AuditLogService();
+        $audit->logPasswordChange($reset['user_id'], 'password_reset', 'Mot de passe réinitialisé via email');
+
+        flash('success', 'Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter.');
+        $this->redirect('login');
+    }
+
+    /**
+     * Créer un ticket admin en cas d'échec d'envoi d'email de réinitialisation
+     *
+     * @param string $userEmail Email de l'utilisateur
+     * @param string $username Nom d'utilisateur
+     * @return void
+     */
+    private function createEmailFailureTicket(string $userEmail, string $username): void
+    {
+        try {
+            // Récupérer l'ID de l'utilisateur
+            $user = Database::selectOne(
+                "SELECT id FROM users WHERE email = ? LIMIT 1",
+                [$userEmail]
+            );
+
+            if (!$user) {
+                error_log("Utilisateur non trouvé pour créer ticket d'échec email: $userEmail");
+                return;
+            }
+
+            // Créer le ticket dans la base de données
+            $ticketId = Database::insert(
+                "INSERT INTO admin_tickets (user_id, subject, message, category, priority, status) VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    $user['id'], // Utiliser l'ID de l'utilisateur réel
+                    "Échec envoi email de réinitialisation de mot de passe",
+                    "L'utilisateur $username ($userEmail) a demandé une réinitialisation de mot de passe, mais l'envoi de l'email a échoué.\n\n" .
+                    "Veuillez vérifier la configuration email et contacter l'utilisateur manuellement si nécessaire.\n\n" .
+                    "Email: $userEmail\n" .
+                    "Utilisateur: $username\n" .
+                    "Date: " . date('Y-m-d H:i:s'),
+                    "system",
+                    "high",
+                    "open"
+                ]
+            );
+
+            // Notifier les administrateurs
+            $this->notifyAdminsOfEmailFailure($ticketId, $userEmail, $username);
+
+            error_log("Ticket admin #$ticketId créé pour échec envoi email à: $userEmail");
+        } catch (\Exception $e) {
+            error_log("Erreur lors de la création du ticket admin pour échec email: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notifier les administrateurs d'un échec d'envoi d'email
+     *
+     * @param int $ticketId ID du ticket créé
+     * @param string $userEmail Email de l'utilisateur concerné
+     * @param string $username Nom d'utilisateur
+     * @return void
+     */
+    private function notifyAdminsOfEmailFailure(int $ticketId, string $userEmail, string $username): void
+    {
+        // Récupérer tous les administrateurs
+        $admins = Database::select(
+            "SELECT id, username, email FROM users WHERE role IN ('admin', 'super_admin')"
+        );
+
+        if (empty($admins)) {
+            error_log("Aucun administrateur trouvé pour notification d'échec email");
+            return;
+        }
+
+        $emailService = new EmailService();
+
+        foreach ($admins as $admin) {
+            $emailService->sendAdminTicket(
+                $admin['email'],
+                $ticketId,
+                "Échec envoi email de réinitialisation - $username",
+                "Un utilisateur a demandé une réinitialisation de mot de passe, mais l'envoi de l'email a échoué.\n\n" .
+                "Détails :\n" .
+                "- Utilisateur: $username\n" .
+                "- Email: $userEmail\n" .
+                "- Date: " . date('Y-m-d H:i:s') . "\n\n" .
+                "Veuillez vérifier la configuration email et contacter l'utilisateur si nécessaire.",
+                $admin['username']
+            );
+        }
     }
 }

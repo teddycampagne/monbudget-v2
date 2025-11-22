@@ -8,7 +8,7 @@
     <!-- PWA Meta Tags -->
     <meta name="description" content="Application de gestion de budget personnel et suivi des dépenses">
     <meta name="theme-color" content="#0d6efd">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="MonBudget">
     
@@ -39,7 +39,7 @@
     <script>
         window.APP_CONFIG = {
             baseUrl: '<?= rtrim(url(''), '/') ?>',
-            version: '2.3.0'
+            version: '<?= get_app_version() ?>'
         };
     </script>
 </head>
@@ -129,6 +129,104 @@
                             <span class="theme-toggle-slider"></span>
                         </label>
                     </li>
+
+                    <!-- Notifications -->
+                    <?php
+                    $notificationService = new \MonBudget\Services\BudgetNotificationService();
+                    $unreadCount = $notificationService->countUnreadNotifications($_SESSION['user_id'] ?? 0);
+                    ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell"></i>
+                            <?php if ($unreadCount > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    <?= $unreadCount ?>
+                                    <span class="visually-hidden">notifications non lues</span>
+                                </span>
+                            <?php endif; ?>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="min-width: 350px;">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-bell"></i>
+                                    Notifications Budget
+                                    <?php if ($unreadCount > 0): ?>
+                                        <span class="badge bg-danger ms-2"><?= $unreadCount ?></span>
+                                    <?php endif; ?>
+                                </h6>
+                            </li>
+                            <?php
+                            $recentNotifications = $notificationService->getUnreadNotificationsWithBudgetInfo($_SESSION['user_id'] ?? 0, 5);
+                            if (empty($recentNotifications)):
+                            ?>
+                                <li>
+                                    <a class="dropdown-item text-center text-muted" href="#">
+                                        <i class="bi bi-info-circle"></i>
+                                        Aucune notification
+                                    </a>
+                                </li>
+                            <?php else: ?>
+                                <?php foreach ($recentNotifications as $notification): ?>
+                                    <li>
+                                        <a class="dropdown-item" href="<?= url('budget-notifications') ?>">
+                                            <div class="d-flex align-items-start">
+                                                <div class="flex-shrink-0 me-2">
+                                                    <?php
+                                                    $iconClass = match($notification['type']) {
+                                                        'warning' => 'bi bi-exclamation-triangle text-warning',
+                                                        'alert' => 'bi bi-exclamation-circle text-danger',
+                                                        'critical' => 'bi bi-x-circle text-dark',
+                                                        default => 'bi bi-bell text-info'
+                                                    };
+                                                    ?>
+                                                    <i class="<?= $iconClass ?> fs-5"></i>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <div class="fw-bold small">
+                                                        <?php
+                                                        $typeLabel = match($notification['type']) {
+                                                            'warning' => 'Avertissement',
+                                                            'alert' => 'Alerte',
+                                                            'critical' => 'Dépassement',
+                                                            default => 'Notification'
+                                                        };
+                                                        echo htmlspecialchars($typeLabel);
+                                                        ?>
+                                                    </div>
+                                                    <div class="text-truncate small text-muted" style="max-width: 250px;">
+                                                        <?= htmlspecialchars($notification['message']) ?>
+                                                    </div>
+                                                    <?php if (!empty($notification['budget_nom'])): ?>
+                                                        <div class="small text-primary">
+                                                            <i class="bi bi-piggy-bank"></i>
+                                                            <?= htmlspecialchars($notification['budget_nom']) ?>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                    <div class="small text-muted">
+                                                        <?= date('d/m H:i', strtotime($notification['created_at'])) ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-center" href="<?= url('budget-notifications') ?>">
+                                    <i class="bi bi-eye"></i>
+                                    Voir toutes les notifications
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-center" href="<?= url('budget-notifications/settings') ?>">
+                                    <i class="bi bi-gear"></i>
+                                    Paramètres des notifications
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     <li class="nav-item">
                         <a class="nav-link" href="<?= url('documentation') ?>">
                             <i class="bi bi-question-circle"></i> Aide

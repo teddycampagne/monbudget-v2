@@ -17,7 +17,15 @@ if (file_exists(BASE_PATH . '/vendor/autoload.php')) {
 
 // Détecter le base URL (pour fonctionner en sous-dossier)
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
-define('BASE_URL', $scriptName === '/' ? '' : $scriptName);
+$baseUrl = $scriptName === '/' ? '' : $scriptName;
+
+// Pour le développement avec serveur PHP intégré depuis public/
+// Si on sert depuis public/ mais que l'app est dans un sous-dossier
+if ($baseUrl === '' && strpos(BASE_PATH, 'monbudgetV2') !== false) {
+    $baseUrl = '/monbudgetV2';
+}
+
+define('BASE_URL', $baseUrl);
 
 // Autoloader simple (en attendant Composer)
 spl_autoload_register(function ($class) {
@@ -95,6 +103,8 @@ $router->get('/register', [AuthController::class, 'showRegister']);
 $router->post('/register', [AuthController::class, 'register']);
 $router->get('/forgot-password', [AuthController::class, 'showForgotPassword']);
 $router->post('/forgot-password', [AuthController::class, 'forgotPassword']);
+$router->get('/reset-password', [AuthController::class, 'showResetPassword']);
+$router->post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Routes principales
 $router->get('/', [HomeController::class, 'index']);
@@ -208,6 +218,7 @@ use MonBudget\Controllers\UserController;
 use MonBudget\Controllers\ProfileController;
 $router->get('/profile', [ProfileController::class, 'show']);
 $router->post('/profile', [ProfileController::class, 'update']);
+$router->post('/profile/notifications', [ProfileController::class, 'updateNotifications']);
 $router->get('/change-password', [ProfileController::class, 'showChangePassword']);
 $router->post('/change-password', [ProfileController::class, 'changePassword']);
 // Routes legacy UserController (à migrer vers ProfileController)
@@ -240,6 +251,14 @@ $router->get('/budgets/{id}/edit', [BudgetController::class, 'edit']);
 $router->post('/budgets/{id}/update', [BudgetController::class, 'update']);
 $router->get('/budgets/{id}/delete', [BudgetController::class, 'delete']);
 $router->get('/budgets/delete-annual', [BudgetController::class, 'deleteAnnual']);
+
+// Routes Notifications de Budget
+use MonBudget\Controllers\BudgetNotificationController;
+$router->get('/budget-notifications', [BudgetNotificationController::class, 'index'], 'budget-notifications');
+$router->get('/budget-notifications/settings', [BudgetNotificationController::class, 'settings'], 'budget-notifications/settings');
+$router->post('/budget-notifications/update-settings', [BudgetNotificationController::class, 'updateSettings'], 'budget-notifications/update-settings');
+$router->post('/budget-notifications/mark-as-read', [BudgetNotificationController::class, 'markAsRead'], 'budget-notifications/mark-as-read');
+$router->get('/api/budget-notifications/check-overruns', [BudgetNotificationController::class, 'checkOverruns'], 'api/budget-notifications/check-overruns');
 
 // Routes Rapports
 use MonBudget\Controllers\RapportController;
@@ -315,6 +334,13 @@ $router->get('/admin/icons', [AdminController::class, 'icons']);
 $router->post('/admin/icons/add', [AdminController::class, 'addIcon']);
 $router->post('/admin/icons/delete', [AdminController::class, 'deleteIcon']);
 
+// Routes Tickets d'administration
+$router->get('/admin/tickets', [AdminController::class, 'tickets']);
+$router->get('/admin/tickets/{id}', [AdminController::class, 'showTicket']);
+$router->post('/admin/tickets/{id}/status', [AdminController::class, 'updateTicketStatus']);
+$router->post('/admin/tickets/{id}/reply', [AdminController::class, 'replyToTicket']);
+$router->post('/support/create-ticket', [AdminController::class, 'createTicket']);
+
 // Routes API (création rapide)
 use MonBudget\Controllers\ApiController;
 $router->post('/api/categories', [ApiController::class, 'createCategorie']);
@@ -323,10 +349,10 @@ $router->get('/api/bootstrap-icons', [ApiController::class, 'getBootstrapIcons']
 
 // Routes Version Manager
 use MonBudget\Controllers\VersionController;
-$router->get('/version/check-update', [VersionController::class, 'checkUpdate']);
-$router->post('/version/deploy', [VersionController::class, 'deploy']);
-$router->post('/version/rollback', [VersionController::class, 'rollback']);
-$router->get('/version/info', [VersionController::class, 'info']);
+$router->get('/api/version/check-update', [VersionController::class, 'checkUpdate']);
+$router->post('/api/version/deploy', [VersionController::class, 'deploy']);
+$router->post('/api/version/rollback', [VersionController::class, 'rollback']);
+$router->get('/api/version/info', [VersionController::class, 'info']);
 
 // Routes Documentation
 use MonBudget\Controllers\DocumentationController;

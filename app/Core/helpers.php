@@ -281,3 +281,34 @@ if (!function_exists('asset')) {
         return url('assets/' . ltrim($path, '/'));
     }
 }
+
+if (!function_exists('get_app_version')) {
+    /**
+     * Obtenir la version actuelle de l'application depuis installed.json
+     * 
+     * @return string Version de l'application ou 'dev' si non trouvée
+     */
+    function get_app_version(): string
+    {
+        static $version = null;
+        
+        if ($version === null) {
+            $installedPath = dirname(__DIR__, 2) . '/config/installed.json';
+            
+            if (file_exists($installedPath)) {
+                $installed = json_decode(file_get_contents($installedPath), true);
+                $version = $installed['version'] ?? 'dev';
+            } else {
+                // Fallback vers VERSION.txt
+                $versionPath = dirname(__DIR__, 2) . '/VERSION.txt';
+                if (file_exists($versionPath)) {
+                    $version = trim(file_get_contents($versionPath));
+                } else {
+                    $version = 'dev';
+                }
+            }
+        }
+        
+        return $version;
+    }
+}

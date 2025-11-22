@@ -888,6 +888,12 @@ class AdminController extends BaseController
             // Budgets
             $stats['budgets_total'] = $db->query("SELECT COUNT(*) as count FROM budgets")->fetch()['count'] ?? 0;
             
+            // Tickets admin
+            $stats['tickets_total'] = $db->query("SELECT COUNT(*) as count FROM admin_tickets")->fetch()['count'] ?? 0;
+            $stats['tickets_open'] = $db->query("SELECT COUNT(*) as count FROM admin_tickets WHERE status = 'open'")->fetch()['count'] ?? 0;
+            $stats['tickets_in_progress'] = $db->query("SELECT COUNT(*) as count FROM admin_tickets WHERE status = 'in_progress'")->fetch()['count'] ?? 0;
+            $stats['tickets_high_priority'] = $db->query("SELECT COUNT(*) as count FROM admin_tickets WHERE priority = 'high' OR priority = 'urgent'")->fetch()['count'] ?? 0;
+            
             // Taille de la BDD
             $dbName = $db->query("SELECT DATABASE() as db")->fetch()['db'];
             $sizeQuery = $db->query("
@@ -1190,5 +1196,249 @@ class AdminController extends BaseController
         }
         
         $this->redirect("admin/users/{$userId}/edit");
+    }
+
+    /**
+     * Gestion des tickets d'administration
+     */
+    public function tickets()
+    {
+        if (!$this->requireAdminAccess()) return;
+
+        $status = $_GET['status'] ?? 'open';
+        $page = (int)($_GET['page'] ?? 1);
+        $perPage = 20;
+        $offset = ($page - 1) * $perPage;
+
+        // Récupérer les tickets
+        $tickets = Database::select(
+            "SELECT t.*, u.username as user_name, u.email as user_email,
+                    a.username as admin_name
+             FROM admin_tickets t
+             JOIN users u ON t.user_id = u.id
+             LEFT JOIN users a ON t.admin_id = a.id
+             WHERE t.status = ?
+             ORDER BY
+                 CASE t.priority
+                     WHEN 'urgent' THEN 1
+                     WHEN 'high' THEN 2
+                     WHEN 'normal' THEN 3
+                     WHEN 'low' THEN 4
+                 END,
+                 t.created_at DESC
+             LIMIT ? OFFSET ?",
+            [$status, $perPage, $offset]
+        );
+
+        // Compter le total
+        $total = Database::selectOne(
+            "SELECT COUNT(*) as count FROM admin_tickets WHERE status = ?",
+            [$status]
+        )['count'];
+
+        $totalPages = ceil($total / $perPage);
+
+        // Statistiques
+        $stats = Database::selectOne(
+            "SELECT
+                COUNT(CASE WHEN status = 'open' THEN 1 END) as open_count,
+                COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_count,
+                COUNT(CASE WHEN status = 'waiting_user' THEN 1 END) as waiting_count,
+                COUNT(CASE WHEN status = 'resolved' THEN 1 END) as resolved_count,
+                COUNT(CASE WHEN status = 'urgent' THEN 1 END) as urgent_count
+             FROM admin_tickets"
+        );
+
+        $this->view('admin.tickets.index', [
+            'user' => $_SESSION['user'],
+            'tickets' => $tickets,
+            'status' => $status,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'stats' => $stats
+        ]);
+    }
+
+    /**
+     * Voir un ticket spécifique
+     */
+    public function showTicket($id)
+    {
+        if (!$this->requireAdminAccess()) return;
+
+        $ticket = Database::selectOne(
+            "SELECT t.*, u.username as user_name, u.email as user_email,
+                    a.username as admin_name
+             FROM admin_tickets t
+             JOIN users u ON t.user_id = u.id
+             LEFT JOIN users a ON t.admin_id = a.id
+             WHERE t.id = ?",
+            [$id]
+        );
+
+        if (!$ticket) {
+            flash('error', 'Ticket non trouvé');
+            $this->redirect('admin/tickets');
+        }
+
+        // Récupérer les réponses
+        $replies = Database::select(
+            "SELECT r.*, u.username, u.email
+             FROM admin_ticket_replies r
+             JOIN users u ON r.user_id = u.id
+             WHERE r.ticket_id = ?
+             ORDER BY r.created_at ASC",
+            [$id]
+        );
+
+        $this->view('admin.tickets.show', [
+            'user' => $_SESSION['user'],
+            'ticket' => $ticket,
+            'replies' => $replies
+        ]);
+    }
+
+    /**
+     * Mettre à jour le statut d'un ticket
+     */
+    public function updateTicketStatus($id)
+    {
+        if (!$this->requireAdminAccess()) return;
+
+        if (!$this->verifyCsrf()) {
+            flash('error', 'Token CSRF invalide');
+            $this->redirect("admin/tickets/{$id}");
+        }
+
+        $status = $_POST['status'] ?? '';
+        $adminId = $_POST['admin_id'] ?? null;
+        $priority = $_POST['priority'] ?? null;
+
+        $validStatuses = ['open', 'in_progress', 'waiting_user', 'resolved', 'closed'];
+        if (!in_array($status, $validStatuses)) {
+            flash('error', 'Statut invalide');
+            $this->redirect("admin/tickets/{$id}");
+        }
+
+        // Mettre à jour le ticket
+        $updateData = ['status' => $status];
+        if ($adminId) $updateData['admin_id'] = $adminId;
+        if ($priority) $updateData['priority'] = $priority;
+
+        if ($status === 'resolved' || $status === 'closed') {
+            $updateData['resolved_at'] = date('Y-m-d H:i:s');
+        }
+
+        Database::update(
+            "UPDATE admin_tickets SET " . implode(' = ?, ', array_keys($updateData)) . " = ? WHERE id = ?",
+            array_merge(array_values($updateData), [$id])
+        );
+
+        flash('success', 'Ticket mis à jour avec succès');
+        $this->redirect("admin/tickets/{$id}");
+    }
+
+    /**
+     * Répondre à un ticket
+     */
+    public function replyToTicket($id)
+    {
+        if (!$this->requireAdminAccess()) return;
+
+        if (!$this->verifyCsrf()) {
+            flash('error', 'Token CSRF invalide');
+            $this->redirect("admin/tickets/{$id}");
+        }
+
+        $message = trim($_POST['message'] ?? '');
+        $isInternal = isset($_POST['is_internal']) ? 1 : 0;
+
+        if (empty($message)) {
+            flash('error', 'Le message ne peut pas être vide');
+            $this->redirect("admin/tickets/{$id}");
+        }
+
+        // Ajouter la réponse
+        Database::insert(
+            "INSERT INTO admin_ticket_replies (ticket_id, user_id, message, is_internal) VALUES (?, ?, ?, ?)",
+            [$id, $_SESSION['user']['id'], $message, $isInternal]
+        );
+
+        // Mettre à jour la date du ticket
+        Database::update(
+            "UPDATE admin_tickets SET updated_at = NOW() WHERE id = ?",
+            [$id]
+        );
+
+        flash('success', 'Réponse ajoutée avec succès');
+        $this->redirect("admin/tickets/{$id}");
+    }
+
+    /**
+     * Créer un ticket (pour les utilisateurs)
+     */
+    public function createTicket()
+    {
+        if (!$this->isAuthenticated()) {
+            $this->redirect('login');
+        }
+
+        if (!$this->verifyCsrf()) {
+            flash('error', 'Token CSRF invalide');
+            $this->redirect('dashboard');
+        }
+
+        $subject = trim($_POST['subject'] ?? '');
+        $message = trim($_POST['message'] ?? '');
+        $category = $_POST['category'] ?? 'general';
+
+        if (empty($subject) || empty($message)) {
+            flash('error', 'Sujet et message sont requis');
+            $this->redirect('dashboard');
+        }
+
+        // Créer le ticket
+        $ticketId = Database::insert(
+            "INSERT INTO admin_tickets (user_id, subject, message, category) VALUES (?, ?, ?, ?)",
+            [$_SESSION['user']['id'], $subject, $message, $category]
+        );
+
+        // Envoyer un email aux administrateurs
+        $this->notifyAdminsOfNewTicket($ticketId);
+
+        flash('success', 'Votre ticket a été créé. Un administrateur vous répondra bientôt.');
+        $this->redirect('dashboard');
+    }
+
+    /**
+     * Notifier les administrateurs d'un nouveau ticket
+     */
+    private function notifyAdminsOfNewTicket($ticketId)
+    {
+        $ticket = Database::selectOne(
+            "SELECT t.*, u.username, u.email FROM admin_tickets t
+             JOIN users u ON t.user_id = u.id
+             WHERE t.id = ?",
+            [$ticketId]
+        );
+
+        if (!$ticket) return;
+
+        // Récupérer tous les administrateurs
+        $admins = Database::select(
+            "SELECT id, username, email FROM users WHERE role IN ('admin', 'super_admin')"
+        );
+
+        $emailService = new \MonBudget\Services\EmailService();
+
+        foreach ($admins as $admin) {
+            $emailService->sendAdminTicket(
+                $admin['email'],
+                $ticketId,
+                $ticket['subject'],
+                $ticket['message'],
+                $admin['username']
+            );
+        }
     }
 }

@@ -49,6 +49,9 @@ $mois_actuel = $mois_fr[date('n')] . ' ' . date('Y');
                         <a href="<?= url('imports') ?>" class="btn btn-outline-secondary btn-lg">
                             <i class="bi bi-upload"></i> Importer des transactions
                         </a>
+                        <button type="button" class="btn btn-outline-info btn-lg" data-bs-toggle="modal" data-bs-target="#supportModal">
+                            <i class="bi bi-question-circle"></i> Besoin d'aide ?
+                        </button>
                     </div>
                 </div>
             </div>
@@ -491,6 +494,74 @@ $mois_actuel = $mois_fr[date('n')] . ' ' . date('Y');
     font-size: 1.5rem;
 }
 </style>
+
+<!-- Modal Support -->
+<div class="modal fade" id="supportModal" tabindex="-1" aria-labelledby="supportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="supportModalLabel">
+                    <i class="bi bi-question-circle text-info"></i> Support MonBudget
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Ressources d'aide</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <a href="/docs" class="text-decoration-none">
+                                    <i class="bi bi-book"></i> Documentation
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="https://github.com/teddycampagne/monbudget-v2" target="_blank" class="text-decoration-none">
+                                    <i class="bi bi-github"></i> GitHub
+                                </a>
+                            </li>
+                            <li class="mb-2">
+                                <a href="mailto:support@monbudget.local" class="text-decoration-none">
+                                    <i class="bi bi-envelope"></i> Email support
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Créer un ticket de support</h6>
+                        <p class="text-muted small">Pour des problèmes techniques ou des demandes spécifiques</p>
+
+                        <form id="supportForm" method="POST" action="/support/create-ticket">
+                            <?php echo csrf_field(); ?>
+                            <div class="mb-3">
+                                <label for="ticketSubject" class="form-label">Sujet</label>
+                                <input type="text" class="form-control" id="ticketSubject" name="subject" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ticketCategory" class="form-label">Catégorie</label>
+                                <select class="form-select" id="ticketCategory" name="category">
+                                    <option value="general">Général</option>
+                                    <option value="technical">Technique</option>
+                                    <option value="import">Import de données</option>
+                                    <option value="budget">Budgets</option>
+                                    <option value="reports">Rapports</option>
+                                    <option value="other">Autre</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ticketMessage" class="form-label">Description</label>
+                                <textarea class="form-control" id="ticketMessage" name="message" rows="4" placeholder="Décrivez votre problème ou votre demande..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Créer le ticket
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php endif; ?>
 

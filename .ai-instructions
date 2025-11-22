@@ -52,6 +52,35 @@ git diff --cached | grep -vi "password.*=.*['\"][^'\"]{8,}"
 
 ---
 
+## 🖥️ ENVIRONNEMENT DE DÉVELOPPEMENT
+
+### ✅ SERVEUR OBLIGATOIRE : WAMP
+
+**Vous DEVEZ utiliser WAMP et NON le serveur PHP intégré (`php -S`)** :
+
+- **Raison** : Le serveur PHP intégré ne simule pas correctement Apache avec les sous-répertoires
+- **Problèmes évités** : Erreurs de routage en boucle, redirections incorrectes, headers déjà envoyés
+- **URL correcte** : `http://localhost/monbudgetV2/` (avec sous-répertoire)
+- **URL incorrecte** : `http://localhost:8000/` (serveur PHP intégré)
+
+**Commande à utiliser** :
+
+```powershell
+# Démarrer WAMP Apache
+Start-Process "C:\wamp64\apache\bin\httpd.exe"
+
+# OU utiliser l'interface WAMP
+# Clic droit sur icône WAMP → Apache → Service → Start
+```
+
+**Vérification** :
+
+- Accéder à `http://localhost/monbudgetV2/`
+- Vérifier que les formulaires fonctionnent sans erreurs de headers
+- Tester les redirections POST/GET
+
+---
+
 ## 📝 Données de test autorisées
 
 ### Utilisateurs fictifs

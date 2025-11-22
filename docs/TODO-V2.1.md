@@ -888,8 +888,50 @@ function showErrorModal(titre, message) {
 
 ---
 
-**Dernière mise à jour** : 16 novembre 2025  
+**Dernière mise à jour** : 22 novembre 2025  
 **Prochaine session** : Implémenter todos #4, #5, #6  
-**Version actuelle** : V2.0.0 (20+ bugs corrigés, 3/6 features V2.1)  
+**Version actuelle** : V2.4.0 (nettoyage complet effectué)  
 **Vision** : De l'application personnelle à la plateforme IA globale (2025-2028)
+
+---
+
+## 🧹 NETTOYAGE COMPLET (22 novembre 2025)
+
+### ✅ Fichiers supprimés
+**MonBudgetV2** :
+- ❌ `test_email.php` (script test email)
+- ❌ `test_email_notifications.php` (script test notifications)
+- ❌ `test_profile.php` (script test profil)
+- ❌ `test_simple.php` (script test simple)
+- ❌ `test_thresholds.php` (script test seuils)
+- ❌ `test_thresholds_simple.php` (script test seuils simplifié)
+- ❌ `test_user.php` (script test utilisateur)
+- ❌ `create_test_notifications.php` (script création notifications test)
+- ❌ `create_new_tables.php` (script migration temporaire)
+- ❌ `app/Core/ui_helpers.php` (helpers UI obsolètes)
+
+**MonBudget (legacy)** :
+- ❌ `debug-mvc.php` (script debug legacy)
+- ❌ `verification-mvc.php` (script vérification legacy)
+- ❌ `test-db.php`, `test-final.php`, `test-mvc.php`, `test-router.php`, `test-routes.php`, `test-simple.php` (scripts test legacy)
+
+### ✅ Logs de debug nettoyés
+**Rendus conditionnels (uniquement en mode debug)** :
+- ❌ `EmailService.php` : Logs envoi email (succès/échec/logging)
+- ❌ `AuthController.php` : Logs réinitialisation mot de passe
+- ❌ `BudgetNotificationService.php` : Tous les logs de débogage (8 logs)
+- ❌ `app/Views/recherche/index.php` : console.log JavaScript
+
+**Logs conservés (légitimes)** :
+- ✅ Erreurs chiffrement/déchiffrement IBAN (sécurité)
+- ✅ Erreurs base de données (diagnostic)
+- ✅ Erreurs exécution récurrences (monitoring)
+
+### ✅ Code optimisé
+- ✅ Fonction `get_app_version()` ajoutée pour version dynamique
+- ✅ Version affichée partout (footer, title, APP_CONFIG)
+- ✅ Suppression fonctions helper obsolètes (cardStart, submitButton, etc.)
+- ✅ Suppression appels console.log de développement
+
+**Total nettoyé** : 18 fichiers supprimés, 15+ logs conditionnés, code optimisé
 

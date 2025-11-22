@@ -1,4 +1,4 @@
-<?php include __DIR__ . '/../layouts/header.php'; ?>
+<?php require __DIR__ . '/../layouts/header.php'; ?>
 
 <div class="container-fluid py-4">
     <!-- En-tête Administration -->
@@ -38,6 +38,19 @@
                 'bi-arrow-down-up',
                 'success',
                 'dont ' . number_format($stats['transactions_importees'] ?? 0, 0, ',', ' ') . ' importées'
+            ) ?>
+        </div>
+        
+        <!-- Tickets admin -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <?= statsCard(
+                'TICKETS ADMIN',
+                $stats['tickets_open'] ?? 0,
+                'bi-exclamation-triangle',
+                ($stats['tickets_open'] ?? 0) > 0 ? 'danger' : 'secondary',
+                ($stats['tickets_open'] ?? 0) > 0 ? 
+                    ($stats['tickets_open'] ?? 0) . ' ouvert(s) - ' . ($stats['tickets_high_priority'] ?? 0) . ' priorité haute' : 
+                    'Aucun ticket ouvert'
             ) ?>
         </div>
         
@@ -82,6 +95,15 @@
                             <tr>
                                 <td><i class="bi bi-download"></i> Imports réalisés</td>
                                 <td class="text-end"><strong><?= $stats['imports_total'] ?? 0 ?></strong></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-ticket-perforated"></i> Tickets admin</td>
+                                <td class="text-end">
+                                    <strong>
+                                        <?= $stats['tickets_total'] ?? 0 ?> total 
+                                        (<?= $stats['tickets_open'] ?? 0 ?> ouvert<?= ($stats['tickets_open'] ?? 0) != 1 ? 's' : '' ?>)
+                                    </strong>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -143,7 +165,7 @@
                                 <i class="bi bi-box-arrow-up-right float-end"></i>
                             </a>
                             <small class="text-muted d-block mt-2">
-                                <i class="bi bi-check-circle text-success"></i> 13 modèles documentés
+                                <i class="bi bi-check-circle text-success"></i> 143 fichiers documentés
                                 • <i class="bi bi-check-circle text-success"></i> Navigation par namespace
                                 • <i class="bi bi-check-circle text-success"></i> Index des classes et méthodes
                             </small>
@@ -222,6 +244,39 @@
         </div>
     </div>
 
+    <!-- Support et tickets -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-headset"></i> Support et tickets</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Gérez les tickets de support utilisateur et les demandes d'assistance.
+                        <?php if (($stats['tickets_open'] ?? 0) > 0): ?>
+                            <br><strong class="text-danger">
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                <?= $stats['tickets_open'] ?> ticket(s) ouvert(s) nécessitent votre attention !
+                            </strong>
+                        <?php endif; ?>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="<?= url('admin/tickets') ?>" class="btn btn-outline-primary w-100 text-start">
+                                <i class="bi bi-ticket-perforated"></i> Gestion des tickets
+                                <?php if (($stats['tickets_open'] ?? 0) > 0): ?>
+                                    <span class="badge bg-danger ms-2"><?= $stats['tickets_open'] ?></span>
+                                <?php endif; ?>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Personnalisation de l'interface -->
     <div class="row mb-4">
         <div class="col-12">
@@ -284,38 +339,14 @@
                                 <i class="bi bi-lightning-charge"></i> Appliquer index performance
                             </button>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Récupération et sécurité -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="bi bi-shield-exclamation"></i> Récupération et sécurité</h5>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i>
-                        Sauvegardez régulièrement vos données pour éviter toute perte.
-                    </div>
-                    <div class="row g-3">
-                        <div class="col-md-4">
+                        <div class="col-md-6 col-lg-3">
                             <a href="<?= url('admin/backup') ?>" class="btn btn-outline-primary w-100 text-start">
                                 <i class="bi bi-cloud-download"></i> Sauvegarder la BDD
                             </a>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6 col-lg-3">
                             <a href="<?= url('admin/restore') ?>" class="btn btn-outline-info w-100 text-start">
                                 <i class="bi bi-cloud-upload"></i> Restaurer une sauvegarde
-                            </a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="<?= url('admin/users/reset-passwords') ?>" class="btn btn-outline-warning w-100 text-start">
-                                <i class="bi bi-key"></i> Réinitialiser les mots de passe
                             </a>
                         </div>
                     </div>
@@ -517,4 +548,4 @@ document.getElementById('confirmResetModal')?.addEventListener('hidden.bs.modal'
 <?php endif; ?>
 </script>
 
-<?php include __DIR__ . '/../layouts/footer.php'; ?>
+<?php require __DIR__ . '/../layouts/footer.php'; ?>

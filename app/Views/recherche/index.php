@@ -756,7 +756,6 @@ async function sauvegarderTransaction() {
         });
         
         const responseText = await response.text();
-        console.log('Response:', responseText);
         
         if (response.ok || response.redirected) {
             editModal.hide();
