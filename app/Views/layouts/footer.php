@@ -119,6 +119,156 @@
             });
         }
     })();
+    
+    // Gestionnaire de notifications
+    (function() {
+        let notificationCheckInterval;
+        
+        function loadNotifications() {
+            fetch('<?= url('notifications/latest') ?>')
+                .then(response => response.json())
+                .then(data => {
+                    updateNotificationDropdown(data.notifications || []);
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des notifications:', error);
+                });
+        }
+        
+        function updateNotificationDropdown(notifications) {
+            const badge = document.getElementById('notificationBadge');
+            const list = document.getElementById('notificationList');
+            const noNotifications = document.getElementById('noNotifications');
+            
+            // Compter les non lues
+            const unreadCount = notifications.filter(n => !n.is_read).length;
+            
+            // Mettre à jour le badge
+            if (unreadCount > 0) {
+                badge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                badge.style.display = 'block';
+            } else {
+                badge.style.display = 'none';
+            }
+            
+            // Nettoyer les anciennes notifications
+            const existingItems = list.querySelectorAll('.notification-item');
+            existingItems.forEach(item => item.remove());
+            
+            if (notifications.length === 0) {
+                noNotifications.style.display = 'block';
+                return;
+            }
+            
+            noNotifications.style.display = 'none';
+            
+            // Ajouter les nouvelles notifications
+            notifications.slice(0, 5).forEach(notification => {
+                const li = document.createElement('li');
+                li.className = 'notification-item';
+                
+                const a = document.createElement('a');
+                a.className = 'dropdown-item d-flex align-items-start';
+                a.href = '#';
+                a.onclick = () => markAsRead(notification.id);
+                
+                const icon = document.createElement('i');
+                icon.className = `bi bi-${getNotificationIcon(notification.type)} me-2 mt-1`;
+                a.appendChild(icon);
+                
+                const content = document.createElement('div');
+                content.className = 'flex-grow-1';
+                
+                const title = document.createElement('div');
+                title.className = 'fw-bold small';
+                title.textContent = notification.title;
+                content.appendChild(title);
+                
+                const message = document.createElement('div');
+                message.className = 'small text-muted';
+                message.textContent = notification.message.length > 50 ? 
+                    notification.message.substring(0, 50) + '...' : 
+                    notification.message;
+                content.appendChild(message);
+                
+                const time = document.createElement('small');
+                time.className = 'text-muted';
+                time.textContent = formatTimeAgo(notification.created_at);
+                content.appendChild(time);
+                
+                a.appendChild(content);
+                
+                if (!notification.is_read) {
+                    const unreadDot = document.createElement('span');
+                    unreadDot.className = 'badge bg-primary ms-2';
+                    unreadDot.textContent = 'Nouveau';
+                    a.appendChild(unreadDot);
+                }
+                
+                li.appendChild(a);
+                list.insertBefore(li, list.lastElementChild);
+            });
+        }
+        
+        function markAsRead(notificationId) {
+            fetch('<?= url('notifications/mark-read') ?>', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'notification_id=' + notificationId
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadNotifications();
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors du marquage:', error);
+            });
+        }
+        
+        function getNotificationIcon(type) {
+            switch(type) {
+                case 'budget_alert': return 'exclamation-triangle';
+                case 'system': return 'gear';
+                case 'info': return 'info-circle';
+                case 'warning': return 'exclamation-circle';
+                case 'error': return 'x-circle';
+                default: return 'bell';
+            }
+        }
+        
+        function formatTimeAgo(dateString) {
+            const now = new Date();
+            const date = new Date(dateString);
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+            
+            if (diffMins < 1) return 'À l\'instant';
+            if (diffMins < 60) return `Il y a ${diffMins} min`;
+            if (diffHours < 24) return `Il y a ${diffHours} h`;
+            return `Il y a ${diffDays} j`;
+        }
+        
+        // Charger les notifications au chargement de la page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotifications();
+            
+            // Vérifier les nouvelles notifications toutes les 30 secondes
+            notificationCheckInterval = setInterval(loadNotifications, 30000);
+        });
+        
+        // Nettoyer l'intervalle quand la page se ferme
+        window.addEventListener('beforeunload', function() {
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+            }
+        });
+    })();
     </script>
     
     <!-- PWA Service Worker -->

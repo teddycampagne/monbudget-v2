@@ -17,6 +17,7 @@ class BudgetAlertService
 {
     private $db;
     private $mailService;
+    private $notificationService;
 
     // Seuils d'alerte par défaut
     const THRESHOLD_80 = 80.0;
@@ -26,6 +27,7 @@ class BudgetAlertService
     {
         $this->db = Database::getConnection();
         $this->mailService = new MailService($this->db);
+        $this->notificationService = new NotificationService($this->db);
     }
 
     /**
@@ -414,9 +416,19 @@ class BudgetAlertService
             $sent = true;
         }
 
-        // Notification web (sera implémenté dans Phase 4)
+        // Notification web
         if ($settings['notify_web']) {
-            // TODO: Implémenter notification web
+            $alertType = $threshold == self::THRESHOLD_80 ? 'threshold_80' : 'threshold_90';
+            $this->notificationService->setUserId($budget['user_id']);
+            $this->notificationService->createBudgetAlertNotification(
+                $budget['id'],
+                $budget['name'],
+                $alertType,
+                $usage['spent'],
+                $usage['budget'],
+                $usage['percentage']
+            );
+            $sent = true;
         }
 
         return $sent;
@@ -450,9 +462,18 @@ class BudgetAlertService
             $sent = true;
         }
 
-        // Notification web (sera implémenté dans Phase 4)
+        // Notification web
         if ($settings['notify_web']) {
-            // TODO: Implémenter notification web
+            $this->notificationService->setUserId($budget['user_id']);
+            $this->notificationService->createBudgetAlertNotification(
+                $budget['id'],
+                $budget['name'],
+                'exceeded',
+                $usage['spent'],
+                $usage['budget'],
+                $usage['percentage']
+            );
+            $sent = true;
         }
 
         return $sent;

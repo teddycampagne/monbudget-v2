@@ -219,6 +219,15 @@ $router->post('/profile/update', [UserController::class, 'updateProfile']);
 $router->post('/profile/password', [UserController::class, 'updatePassword']);
 $router->post('/profile/preferences', [UserController::class, 'updatePreferences']);
 
+// Routes Notifications
+use MonBudget\Controllers\NotificationController;
+$router->get('/notifications', [NotificationController::class, 'index']);
+$router->post('/notifications/mark-read', [NotificationController::class, 'markAsRead']);
+$router->post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+$router->post('/notifications/delete', [NotificationController::class, 'delete']);
+$router->get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount']);
+$router->get('/notifications/latest', [NotificationController::class, 'getLatest']);
+
 // Routes Automatisation
 use MonBudget\Controllers\AutomatisationController;
 $router->get('/automatisation', [AutomatisationController::class, 'index']);

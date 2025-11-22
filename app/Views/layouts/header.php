@@ -134,6 +134,19 @@
                             <i class="bi bi-question-circle"></i> Aide
                         </a>
                     </li>
+                    <!-- Notifications Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge bg-danger position-absolute top-0 start-100 translate-middle" id="notificationBadge" style="display: none;"></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" id="notificationList">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><a class="dropdown-item text-center" href="<?= url('notifications') ?>">Voir toutes les notifications</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><p class="text-center text-muted mb-0" id="noNotifications">Aucune notification</p></li>
+                        </ul>
+                    </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
                             <i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user']['username'] ?? 'Utilisateur') ?>
