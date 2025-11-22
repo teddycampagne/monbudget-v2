@@ -211,6 +211,8 @@ $router->get('/profile', [ProfileController::class, 'show']);
 $router->post('/profile', [ProfileController::class, 'update']);
 $router->get('/change-password', [ProfileController::class, 'showChangePassword']);
 $router->post('/change-password', [ProfileController::class, 'changePassword']);
+$router->get('/profile/notifications', [ProfileController::class, 'notifications']);
+$router->post('/profile/notifications', [ProfileController::class, 'notifications']);
 // Routes legacy UserController (à migrer vers ProfileController)
 $router->get('/profile/legacy', [UserController::class, 'profile']);
 $router->post('/profile/update', [UserController::class, 'updateProfile']);

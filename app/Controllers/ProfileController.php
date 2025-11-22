@@ -242,4 +242,111 @@ class ProfileController extends BaseController
         
         $this->redirect('profile');
     }
+    
+    /**
+     * Afficher les paramètres de notifications
+     * 
+     * @return void
+     */
+    public function notifications(): void
+    {
+        if (!$this->isAuthenticated()) {
+            $this->redirect('login');
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->updateNotifications();
+            return;
+        }
+        
+        $this->view('profile.notifications');
+    }
+    
+    /**
+     * Mettre à jour les paramètres de notifications
+     * 
+     * @return void
+     */
+    private function updateNotifications(): void
+    {
+        $userId = $_SESSION['user_id'];
+        
+        // Récupérer les données du formulaire
+        $data = [
+            'budget_alert_enabled' => isset($_POST['budget_alert_enabled']) ? 1 : 0,
+            'budget_threshold_80' => isset($_POST['budget_threshold_80']) ? 1 : 0,
+            'budget_threshold_90' => isset($_POST['budget_threshold_90']) ? 1 : 0,
+            'budget_exceeded' => isset($_POST['budget_exceeded']) ? 1 : 0,
+            'weekly_summary' => isset($_POST['weekly_summary']) ? 1 : 0,
+            'monthly_summary' => isset($_POST['monthly_summary']) ? 1 : 0,
+            'notify_email' => isset($_POST['notify_email']) ? 1 : 0,
+            'notify_web' => isset($_POST['notify_web']) ? 1 : 0,
+            'max_emails_per_day' => (int)($_POST['max_emails_per_day'] ?? 5)
+        ];
+        
+        // Validation
+        if ($data['max_emails_per_day'] < 1 || $data['max_emails_per_day'] > 20) {
+            flash('error', 'Le nombre maximum d\'emails par jour doit être entre 1 et 20');
+            $this->redirect('profile/notifications');
+        }
+        
+        // Vérifier si les paramètres existent déjà
+        $existing = Database::selectOne(
+            "SELECT id FROM notifications_settings WHERE user_id = ? LIMIT 1",
+            [$userId]
+        );
+        
+        if ($existing) {
+            // Mise à jour
+            $updated = Database::update(
+                "UPDATE notifications_settings SET 
+                    budget_alert_enabled = ?,
+                    budget_threshold_80 = ?,
+                    budget_threshold_90 = ?,
+                    budget_exceeded = ?,
+                    weekly_summary = ?,
+                    monthly_summary = ?,
+                    notify_email = ?,
+                    notify_web = ?,
+                    max_emails_per_day = ?
+                WHERE user_id = ?",
+                [
+                    $data['budget_alert_enabled'],
+                    $data['budget_threshold_80'],
+                    $data['budget_threshold_90'],
+                    $data['budget_exceeded'],
+                    $data['weekly_summary'],
+                    $data['monthly_summary'],
+                    $data['notify_email'],
+                    $data['notify_web'],
+                    $data['max_emails_per_day'],
+                    $userId
+                ]
+            );
+        } else {
+            // Insertion
+            Database::insert(
+                "INSERT INTO notifications_settings 
+                    (user_id, budget_alert_enabled, budget_threshold_80, budget_threshold_90, 
+                     budget_exceeded, weekly_summary, monthly_summary, notify_email, 
+                     notify_web, max_emails_per_day) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [
+                    $userId,
+                    $data['budget_alert_enabled'],
+                    $data['budget_threshold_80'],
+                    $data['budget_threshold_90'],
+                    $data['budget_exceeded'],
+                    $data['weekly_summary'],
+                    $data['monthly_summary'],
+                    $data['notify_email'],
+                    $data['notify_web'],
+                    $data['max_emails_per_day']
+                ]
+            );
+        }
+        
+        flash('success', 'Paramètres de notifications mis à jour avec succès');
+        $this->redirect('profile/notifications');
+    }
 }

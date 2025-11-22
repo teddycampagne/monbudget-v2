@@ -287,3 +287,28 @@ if (!function_exists('asset')) {
         return url('assets/' . ltrim($path, '/'));
     }
 }
+
+if (!function_exists('getUserNotificationSettings')) {
+    /**
+     * Récupérer les paramètres de notifications d'un utilisateur
+     * 
+     * @param int $userId ID de l'utilisateur
+     * @return array|null Paramètres de notifications ou null si non configuré
+     */
+    function getUserNotificationSettings(int $userId): ?array
+    {
+        static $db = null;
+        
+        if ($db === null) {
+            $db = \MonBudget\Core\Database::getConnection();
+        }
+        
+        $stmt = $db->prepare("
+            SELECT * FROM notifications_settings 
+            WHERE user_id = ? LIMIT 1
+        ");
+        $stmt->execute([$userId]);
+        
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
+    }
+}
