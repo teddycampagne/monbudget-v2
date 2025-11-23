@@ -17,8 +17,8 @@ class IconPicker {
     
     async loadIcons() {
         try {
-            // Utiliser la route API
-            const baseUrl = window.location.pathname.includes('/monbudgetV2') ? '/monbudgetV2' : '';
+            // Utiliser la route API avec l'URL de base depuis la config
+            const baseUrl = window.APP_CONFIG?.baseUrl || '';
             const response = await fetch(`${baseUrl}/api/bootstrap-icons`);
             if (response.ok) {
                 bootstrapIcons = await response.json();
