@@ -60,3 +60,41 @@ if (!function_exists('formInput')) {
         ";
     }
 }
+
+if (!function_exists('formSelect')) {
+    /**
+     * Génère un champ select Bootstrap
+     *
+     * @param string $name Nom du champ
+     * @param string $label Label du champ
+     * @param array $options Tableau des options [value => label]
+     * @param string $selected Valeur sélectionnée
+     * @param bool $required Si le champ est requis
+     * @param string $placeholder Placeholder (option vide)
+     * @return string HTML du select
+     */
+    function formSelect(string $name, string $label, array $options, string $selected = '', bool $required = false, string $placeholder = ''): string
+    {
+        $requiredAttr = $required ? 'required' : '';
+        $requiredStar = $required ? ' *' : '';
+        $optionsHtml = '';
+        
+        if ($placeholder) {
+            $optionsHtml .= "<option value=\"\">$placeholder</option>";
+        }
+        
+        foreach ($options as $value => $text) {
+            $sel = ($selected == $value) ? 'selected' : '';
+            $optionsHtml .= "<option value=\"" . htmlspecialchars($value) . "\" $sel>" . htmlspecialchars($text) . "</option>";
+        }
+        
+        return "
+        <div class=\"mb-3\">
+            <label for=\"$name\" class=\"form-label\">$label$requiredStar</label>
+            <select class=\"form-select\" id=\"$name\" name=\"$name\" $requiredAttr>
+                $optionsHtml
+            </select>
+        </div>
+        ";
+    }
+}
