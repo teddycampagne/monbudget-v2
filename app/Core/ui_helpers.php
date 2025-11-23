@@ -35,3 +35,28 @@ if (!function_exists('statsCard')) {
         </div>';
     }
 }
+
+if (!function_exists('formInput')) {
+    /**
+     * Génère un champ de formulaire Bootstrap
+     *
+     * @param string $name Nom du champ
+     * @param string $label Label du champ
+     * @param string $type Type du champ (text, email, etc.)
+     * @param string $value Valeur par défaut
+     * @param bool $required Si le champ est requis
+     * @param string $placeholder Placeholder
+     * @return string HTML du champ
+     */
+    function formInput(string $name, string $label, string $type = 'text', string $value = '', bool $required = false, string $placeholder = ''): string
+    {
+        $requiredAttr = $required ? 'required' : '';
+        $requiredStar = $required ? ' *' : '';
+        return "
+        <div class=\"mb-3\">
+            <label for=\"$name\" class=\"form-label\">$label$requiredStar</label>
+            <input type=\"$type\" class=\"form-control\" id=\"$name\" name=\"$name\" value=\"" . htmlspecialchars($value) . "\" placeholder=\"$placeholder\" $requiredAttr>
+        </div>
+        ";
+    }
+}
