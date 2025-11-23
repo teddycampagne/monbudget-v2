@@ -6,7 +6,7 @@ use MonBudget\Models\Compte;
 use MonBudget\Models\Banque;
 use MonBudget\Models\CompteTitulaire;
 use MonBudget\Models\Transaction;
-use MonBudget\Services\AuditLogService;
+use MonBudget\Services\RibGenerator;
 use MonBudget\Models\Titulaire;
 
 /**
