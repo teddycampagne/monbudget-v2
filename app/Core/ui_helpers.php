@@ -137,6 +137,31 @@ if (!function_exists('actionButtons')) {
             }
         }
         
-        return $buttons;
+        return "<div class=\"text-end\">$buttons</div>";
+    }
+}
+
+if (!function_exists('formTextarea')) {
+    /**
+     * Génère un champ textarea Bootstrap
+     *
+     * @param string $name Nom du champ
+     * @param string $label Label du champ
+     * @param string $value Valeur par défaut
+     * @param int $rows Nombre de lignes
+     * @param bool $required Si le champ est requis
+     * @param string $placeholder Placeholder
+     * @return string HTML du textarea
+     */
+    function formTextarea(string $name, string $label, string $value = '', int $rows = 3, bool $required = false, string $placeholder = ''): string
+    {
+        $requiredAttr = $required ? 'required' : '';
+        $requiredStar = $required ? ' *' : '';
+        return "
+        <div class=\"mb-3\">
+            <label for=\"$name\" class=\"form-label\">$label$requiredStar</label>
+            <textarea class=\"form-control\" id=\"$name\" name=\"$name\" rows=\"$rows\" placeholder=\"$placeholder\" $requiredAttr>" . htmlspecialchars($value) . "</textarea>
+        </div>
+        ";
     }
 }
