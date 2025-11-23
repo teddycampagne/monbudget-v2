@@ -1,6 +1,4 @@
 <?php
-
-<?php
 /**
  * UI Helpers
  *
@@ -19,8 +17,9 @@ if (!function_exists('statsCard')) {
      * @param string $subtitle Sous-titre descriptif
      * @return string HTML de la carte
      */
-    function statsCard(string $title, $value, string $icon, string $color, string $subtitle): string
+    function statsCard(string $title, $value, string $icon, string $color, ?string $subtitle = null): string
     {
+        $subtitleHtml = $subtitle ? '<small class="text-muted">' . htmlspecialchars($subtitle) . '</small>' : '';
         return '
         <div class="card border-' . htmlspecialchars($color) . ' h-100">
             <div class="card-body text-center">
@@ -31,7 +30,7 @@ if (!function_exists('statsCard')) {
                         <h3 class="mb-0 text-' . htmlspecialchars($color) . '">' . htmlspecialchars($value) . '</h3>
                     </div>
                 </div>
-                <small class="text-muted">' . htmlspecialchars($subtitle) . '</small>
+                ' . $subtitleHtml . '
             </div>
         </div>';
     }
