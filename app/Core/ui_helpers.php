@@ -98,3 +98,45 @@ if (!function_exists('formSelect')) {
         ";
     }
 }
+
+if (!function_exists('actionButtons')) {
+    /**
+     * Génère des boutons d'action Bootstrap
+     *
+     * @param array $actions Tableau des actions ['action' => 'url']
+     * @param int $id ID de l'élément
+     * @return string HTML des boutons
+     */
+    function actionButtons(array $actions, int $id): string
+    {
+        $buttons = '';
+        
+        $icons = [
+            'show' => 'bi-eye',
+            'edit' => 'bi-pencil',
+            'delete' => 'bi-trash',
+            'download' => 'bi-download'
+        ];
+        
+        $colors = [
+            'show' => 'info',
+            'edit' => 'warning',
+            'delete' => 'danger',
+            'download' => 'success'
+        ];
+        
+        foreach ($actions as $action => $url) {
+            $icon = $icons[$action] ?? 'bi-gear';
+            $color = $colors[$action] ?? 'secondary';
+            $title = ucfirst($action);
+            
+            if ($action === 'delete') {
+                $buttons .= "<a href=\"$url\" class=\"btn btn-sm btn-$color me-1\" onclick=\"return confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')\" title=\"$title\"><i class=\"bi $icon\"></i></a>";
+            } else {
+                $buttons .= "<a href=\"$url\" class=\"btn btn-sm btn-$color me-1\" title=\"$title\"><i class=\"bi $icon\"></i></a>";
+            }
+        }
+        
+        return $buttons;
+    }
+}
